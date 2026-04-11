@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// MULTI-TENANCY: Todos os modelos (exceto Tenant e SuperAdmin) têm tenantId
+// ============================================================================
+
+model Tenant {
+  id                String   @id @default(uuid())
+  subdomain         String   @unique
+  estado            String   @default("em_setup") // ativa, suspensa, em_setup, cancelada
+  configMarca       Json     @default("{}")
+  configPreco       Json     @default("{}")
+  configAgenda      Json     @default("{}")
+  adminUserId       String?
+  dataCriacao       DateTime @default(now())
+  dataUltimoAcesso  DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  users             User[]
+  mudancas          Mudanca[]
+  clientes          Cliente[]
+  motoristas        Motorista[]
+  veiculos          Veiculo[]
+  ajudantes         Ajudante[]
+  slotsAgenda       SlotAgenda[]
+  bloqueiosAgenda   BloqueioAgenda[]
+  movimentosFin     MovimentoFinanceiro[]
+  emailTemplates    EmailTemplate[]
+  tenantLogs        TenantLog[]
+
+  @@index([subdomain])
+  @@index([estado])
+}
+
+model User {
+  id            String   @id @default(uuid())
+  tenantId      String
+  nome          String
+  email         String
+  passwordHash  String
+  perfil        String   // admin, gerente, financeiro, operacional, motorista
+  permissoes    Json?
+  eAtivo        Boolean  @default(true)
+  ultimaSessao  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  motorista     Motorista?
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Cliente {
+  id              String   @id @default(uuid())
+  tenantId        String
+  nome            String
+  apelido         String
+  email           String
+  telefone        String
+  moradas         Json?
+  numeroMudancas  Int      @default(0)
+  eRecorrente     Boolean  @default(false)
+  ultimaMudanca   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mudancas        Mudanca[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Mudanca {
+  id            String   @id @default(uuid())
+  tenantId      String
+  estado        String   @default("pendente") // pendente, aprovada, a_caminho, em_servico, concluida, recusada, cancelada
+  tipoServico   String   // normal, urgente
+
+  // Dados do formulário
+  clienteNome   String
+  clienteEmail  String
+  clienteTelefone String
+
+  moradaRecolha Json
+  moradaEntrega Json
+
+  dataPretendida String
+  horaPretendida String?
+
+  veiculoId     String?
+  equipa        String   // motorista, motorista_1_ajudante, motorista_2_ajudantes
+
+  materiais     Json     @default("{}")
+  observacoes   String?
+  eInternacional Boolean @default(false)
+  documentacao  String?
+
+  // Aprovação
+  aprovadoPor   String?  @map("aprovadoPor")
+  aprovadoEm    DateTime?
+  motoristaId   String?
+  ajudantesIds  String[]
+  tempoEstimadoHoras Float?
+  observacoesAdmin String?
+
+  // Conclusão
+  conclusao     Json?
+  concluidoPor  String?
+  concluidoEm   DateTime?
+
+  // Financeiro (calculado)
+  receitaPrevista Float?
+  receitaRealizada Float?
+  custosOperacionais Float?
+  margem        Float?
+
+  // Cliente
+  clienteId     String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  motorista     Motorista? @relation(fields: [motoristaId], references: [id])
+  veiculo       Veiculo? @relation(fields: [veiculoId], references: [id])
+  cliente       Cliente? @relation(fields: [clienteId], references: [id])
+
+  @@index([tenantId])
+  @@index([estado])
+  @@index([tenantId, estado])
+  @@index([motoristaId])
+  @@index([dataPretendida])
+  @@index([clienteId])
+}
+
+model Motorista {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  userId             String?  // ligação ao User (para motoristas com conta no sistema)
+  nome               String
+  email              String
+  telefone           String
+  cartaConducao      String
+  validadeCarta      String
+  veiculoId          String?
+  estado             String   @default("disponivel") // disponivel, em_servico, indisponivel
+  mudancasRealizadas Int      @default(0)
+  horasTrabalhadasMes Float   @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  veiculo            Veiculo? @relation(fields: [veiculoId], references: [id])
+  mudancas           Mudanca[]
+
+  @@index([tenantId])
+  @@index([estado])
+  @@index([veiculoId])
+  @@index([userId])
+}
+
+model Ajudante {
+  id          String   @id @default(uuid())
+  tenantId    String
+  nome        String
+  telefone    String
+  disponivel  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([disponivel])
+}
+
+model Veiculo {
+  id            String   @id @default(uuid())
+  tenantId      String
+  nome          String
+  marca         String
+  modelo        String?
+  matricula     String
+  metrosCubicos Float
+  precoHora     Float
+  estado        String   @default("disponivel") // disponivel, em_servico, em_manutencao
+  eParaUrgencias Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  motoristas    Motorista[]
+  mudancas      Mudanca[]
+
+  @@index([tenantId])
+  @@index([estado])
+  @@index([eParaUrgencias])
+}
+
+model SlotAgenda {
+  id              String   @id @default(uuid())
+  tenantId        String
+  data            String
+  horaInicio      String
+  horaFim         String
+  capacidadeTotal Int      @default(1)
+  capacidadeOcupada Int    @default(0)
+  eBloqueado      Boolean  @default(false)
+  motivoBloqueio  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, data, horaInicio])
+  @@index([tenantId])
+  @@index([data])
+  @@index([eBloqueado])
+}
+
+model BloqueioAgenda {
+  id          String   @id @default(uuid())
+  tenantId    String
+  dataInicio  String
+  dataFim     String
+  motivo      String
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([dataInicio, dataFim])
+}
+
+model MovimentoFinanceiro {
+  id          String   @id @default(uuid())
+  tenantId    String
+  mudancaId   String?
+  tipo        String   // receita, custo
+  categoria   String   // servico, materiais, combustivel, alimentacao, manutencao, outros
+  descricao   String
+  valor       Float
+  data        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tipo])
+  @@index([categoria])
+  @@index([data])
+  @@index([mudancaId])
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  tenantId    String
+  nome        String   // identificacao do template
+  assunto     String
+  corpo       String
+  eAtivo      Boolean  @default(true)
+  variaveis   String[] // lista de variaveis disponiveis
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+}
+
+model TenantLog {
+  id          String   @id @default(uuid())
+  tenantId    String
+  userId      String?
+  acao        String
+  entidade    String
+  entidadeId  String?
+  detalhes    Json?
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([createdAt])
+  @@index([acao])
+}

@@ -1,0 +1,29 @@
+version: '3.8'
+
+# Override para desenvolvimento com mais serviços
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mudancas_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mudancas_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: mudancas_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_dev_data:
+  redis_data:
