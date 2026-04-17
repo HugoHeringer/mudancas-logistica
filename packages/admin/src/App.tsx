@@ -1,63 +1,112 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/toaster';
 import { useAuthStore } from './stores/auth.store';
+import { usePermissao } from './hooks/use-permissao';
+import { TenantProvider } from './theme/TenantProvider';
 
-// Layouts
+// Layouts (not lazy — needed immediately)
 import { DashboardLayout } from './layouts/dashboard.layout';
 import { AuthLayout } from './layouts/auth.layout';
+import { SuperAdminLayout } from './layouts/super-admin.layout';
 
-// Pages
-import { LoginPage } from './pages/auth/login.page';
-import { DashboardPage } from './pages/dashboard/dashboard.page';
-import { AprovacoesPage } from './pages/aprovacoes/aprovacoes.page';
-import { AgendaPage } from './pages/agenda/agenda.page';
-import { MudancasPage } from './pages/mudancas/mudancas.page';
-import { MudancaDetalhePage } from './pages/mudancas/mudanca-detalhe.page';
-import { ClientesPage } from './pages/clientes/clientes.page';
-import { MotoristasPage } from './pages/motoristas/motoristas.page';
-import { VeiculosPage } from './pages/veiculos/veiculos.page';
-import { FinanceiroPage } from './pages/financeiro/financeiro.page';
-import { ComunicacaoPage } from './pages/comunicacao/comunicacao.page';
-import { UtilizadoresPage } from './pages/utilizadores/utilizadores.page';
-import { ConfiguracoesPage } from './pages/configuracoes/configuracoes.page';
+// Pages — lazy loaded for performance
+const LoginPage = lazy(() => import('./pages/auth/login.page').then(m => ({ default: m.LoginPage })));
+const DashboardPage = lazy(() => import('./pages/dashboard/dashboard.page').then(m => ({ default: m.DashboardPage })));
+const AprovacoesPage = lazy(() => import('./pages/aprovacoes/aprovacoes.page').then(m => ({ default: m.AprovacoesPage })));
+const AgendaPage = lazy(() => import('./pages/agenda/agenda.page').then(m => ({ default: m.AgendaPage })));
+const MudancasPage = lazy(() => import('./pages/mudancas/mudancas.page').then(m => ({ default: m.MudancasPage })));
+const MudancaDetalhePage = lazy(() => import('./pages/mudancas/mudanca-detalhe.page').then(m => ({ default: m.MudancaDetalhePage })));
+const ClientesPage = lazy(() => import('./pages/clientes/clientes.page').then(m => ({ default: m.ClientesPage })));
+const MotoristasPage = lazy(() => import('./pages/motoristas/motoristas.page').then(m => ({ default: m.MotoristasPage })));
+const VeiculosPage = lazy(() => import('./pages/veiculos/veiculos.page').then(m => ({ default: m.VeiculosPage })));
+const FinanceiroPage = lazy(() => import('./pages/financeiro/financeiro.page').then(m => ({ default: m.FinanceiroPage })));
+const ComunicacaoPage = lazy(() => import('./pages/comunicacao/comunicacao.page').then(m => ({ default: m.ComunicacaoPage })));
+const UtilizadoresPage = lazy(() => import('./pages/utilizadores/utilizadores.page').then(m => ({ default: m.UtilizadoresPage })));
+const AjudantesPage = lazy(() => import('./pages/ajudantes/ajudantes.page').then(m => ({ default: m.AjudantesPage })));
+const ConfiguracoesPage = lazy(() => import('./pages/configuracoes/configuracoes.page').then(m => ({ default: m.ConfiguracoesPage })));
+const RelatoriosPage = lazy(() => import('./pages/relatorios/relatorios.page').then(m => ({ default: m.RelatoriosPage })));
+const SuperAdminLoginPage = lazy(() => import('./pages/super-admin/super-admin-login.page').then(m => ({ default: m.SuperAdminLoginPage })));
+const SuperAdminDashboardPage = lazy(() => import('./pages/super-admin/super-admin-dashboard.page').then(m => ({ default: m.SuperAdminDashboardPage })));
+const SuperAdminEmpresasPage = lazy(() => import('./pages/super-admin/super-admin-empresas.page').then(m => ({ default: m.SuperAdminEmpresasPage })));
+const SuperAdminEmpresaDetalhePage = lazy(() => import('./pages/super-admin/super-admin-empresa-detalhe.page').then(m => ({ default: m.SuperAdminEmpresaDetalhePage })));
+const OnboardingWizardPage = lazy(() => import('./pages/configuracoes/onboarding-wizard.page').then(m => ({ default: m.OnboardingWizardPage })));
+import { useSuperAdminStore } from './stores/super-admin.store';
 
-// Protected Route
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+// Page loading fallback
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex items-center gap-3 text-brown-medium">
+        <div className="w-5 h-5 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+        <span className="text-sm tracking-wide">A carregar...</span>
+      </div>
+    </div>
+  );
+}
+
+// Protected Route with role gating
+function ProtectedRoute({ children, path }: { children: React.ReactNode; path?: string }) {
   const { isAuthenticated } = useAuthStore();
+  const { podeVerRota, rotasPermitidas } = usePermissao();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  if (path && !podeVerRota(path)) {
+    return <Navigate to={rotasPermitidas[0] || '/'} replace />;
+  }
+
   return <DashboardLayout>{children}</DashboardLayout>;
+}
+
+// Super-Admin Protected Route
+function SuperAdminRoute() {
+  const { isAuthenticated } = useSuperAdminStore();
+  if (!isAuthenticated) return <Navigate to="/super-admin/login" replace />;
+  return <SuperAdminLayout />;
 }
 
 function App() {
   return (
-    <>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
+    <TenantProvider>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
 
-        {/* Protected Routes */}
-        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/aprovacoes" element={<ProtectedRoute><AprovacoesPage /></ProtectedRoute>} />
-        <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
-        <Route path="/mudancas" element={<ProtectedRoute><MudancasPage /></ProtectedRoute>} />
-        <Route path="/mudancas/:id" element={<ProtectedRoute><MudancaDetalhePage /></ProtectedRoute>} />
-        <Route path="/clientes" element={<ProtectedRoute><ClientesPage /></ProtectedRoute>} />
-        <Route path="/motoristas" element={<ProtectedRoute><MotoristasPage /></ProtectedRoute>} />
-        <Route path="/veiculos" element={<ProtectedRoute><VeiculosPage /></ProtectedRoute>} />
-        <Route path="/financeiro" element={<ProtectedRoute><FinanceiroPage /></ProtectedRoute>} />
-        <Route path="/comunicacao" element={<ProtectedRoute><ComunicacaoPage /></ProtectedRoute>} />
-        <Route path="/utilizadores" element={<ProtectedRoute><UtilizadoresPage /></ProtectedRoute>} />
-        <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
+          {/* Super-Admin Routes */}
+          <Route path="/super-admin/login" element={<SuperAdminLoginPage />} />
+          <Route path="/super-admin" element={<SuperAdminRoute />}>
+            <Route index element={<SuperAdminDashboardPage />} />
+            <Route path="empresas" element={<SuperAdminEmpresasPage />} />
+            <Route path="empresas/:id" element={<SuperAdminEmpresaDetalhePage />} />
+          </Route>
 
-        {/* 404 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Protected Routes */}
+          <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/aprovacoes" element={<ProtectedRoute path="/aprovacoes"><AprovacoesPage /></ProtectedRoute>} />
+          <Route path="/agenda" element={<ProtectedRoute path="/agenda"><AgendaPage /></ProtectedRoute>} />
+          <Route path="/mudancas" element={<ProtectedRoute path="/mudancas"><MudancasPage /></ProtectedRoute>} />
+          <Route path="/mudancas/:id" element={<ProtectedRoute path="/mudancas"><MudancaDetalhePage /></ProtectedRoute>} />
+          <Route path="/clientes" element={<ProtectedRoute path="/clientes"><ClientesPage /></ProtectedRoute>} />
+          <Route path="/motoristas" element={<ProtectedRoute path="/motoristas"><MotoristasPage /></ProtectedRoute>} />
+          <Route path="/veiculos" element={<ProtectedRoute path="/veiculos"><VeiculosPage /></ProtectedRoute>} />
+          <Route path="/financeiro" element={<ProtectedRoute path="/financeiro"><FinanceiroPage /></ProtectedRoute>} />
+          <Route path="/comunicacao" element={<ProtectedRoute path="/comunicacao"><ComunicacaoPage /></ProtectedRoute>} />
+          <Route path="/relatorios" element={<ProtectedRoute path="/relatorios"><RelatoriosPage /></ProtectedRoute>} />
+          <Route path="/utilizadores" element={<ProtectedRoute path="/utilizadores"><UtilizadoresPage /></ProtectedRoute>} />
+          <Route path="/ajudantes" element={<ProtectedRoute path="/ajudantes"><AjudantesPage /></ProtectedRoute>} />
+          <Route path="/configuracoes" element={<ProtectedRoute path="/configuracoes"><ConfiguracoesPage /></ProtectedRoute>} />
+          <Route path="/onboarding" element={<ProtectedRoute path="/configuracoes"><OnboardingWizardPage /></ProtectedRoute>} />
+
+          {/* 404 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
       <Toaster />
-    </>
+    </TenantProvider>
   );
 }
 

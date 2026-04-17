@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1e40af"/>
+  <g transform="translate(256,256)">
+    <!-- Truck body -->
+    <rect x="-120" y="-60" width="160" height="100" rx="8" fill="white" opacity="0.95"/>
+    <!-- Truck cabin -->
+    <rect x="40" y="-40" width="80" height="80" rx="8" fill="white" opacity="0.95"/>
+    <!-- Windshield -->
+    <rect x="50" y="-30" width="60" height="40" rx="4" fill="#1e40af"/>
+    <!-- Wheels -->
+    <circle cx="-80" cy="60" r="24" fill="white"/>
+    <circle cx="-80" cy="60" r="14" fill="#1e40af"/>
+    <circle cx="80" cy="60" r="24" fill="white"/>
+    <circle cx="80" cy="60" r="14" fill="#1e40af"/>
+  </g>
+</svg>

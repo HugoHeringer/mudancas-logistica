@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'Mudanças - Motorista',
         short_name: 'Mudanças',
         description: 'App para motoristas de mudanças',
-        theme_color: '#1e40af',
-        background_color: '#ffffff',
+        theme_color: '#0A0F1E',
+        background_color: '#F5EDE0',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
@@ -42,7 +42,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\..*/i,
+            urlPattern: /^https?:\/\/(api\.|localhost:\d+\/api)/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

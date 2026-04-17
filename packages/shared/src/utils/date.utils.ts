@@ -2,7 +2,7 @@
  * Utilitários de data
  */
 
-export const PT_LOCALE = 'pt-PT';
+const PT_LOCALE = 'pt-PT';
 
 /**
  * Formata uma data para o formato pt-PT

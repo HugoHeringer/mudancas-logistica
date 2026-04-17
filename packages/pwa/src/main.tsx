@@ -10,18 +10,20 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60, // 1 minute for PWA
       retry: 2,
+      networkMode: 'offlineFirst',
+    },
+    mutations: {
+      networkMode: 'online',
     },
   },
 });
 
-// Register service worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // SW registration failed — non-critical
-    });
-  });
-}
+// Service worker registration handled by vite-plugin-pwa (registerType: 'autoUpdate')
+
+// Online/offline detection
+window.addEventListener('online', () => {
+  queryClient.invalidateQueries();
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

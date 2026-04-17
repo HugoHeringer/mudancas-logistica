@@ -20,6 +20,10 @@ export * from './types/financeiro.types';
 export * from './types/user.types';
 export * from './types/tenant.types';
 export * from './types/common.types';
+export * from './types/tenant-brand.types';
+
+// Theme
+export * from './theme/default-theme';
 
 // Utils
 export * from './utils/date.utils';

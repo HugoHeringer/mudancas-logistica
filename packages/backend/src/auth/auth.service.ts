@@ -13,10 +13,23 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string, tenantId: string) {
+    // Resolve subdomain to tenant UUID if needed
+    let resolvedTenantId = tenantId;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId);
+    if (!isUuid) {
+      const tenant = await this.prisma.tenant.findFirst({
+        where: { subdomain: tenantId },
+      });
+      if (!tenant) {
+        throw new UnauthorizedException('Credenciais inválidas');
+      }
+      resolvedTenantId = tenant.id;
+    }
+
     const user = await this.prisma.user.findFirst({
       where: {
         email,
-        tenantId,
+        tenantId: resolvedTenantId,
       },
     });
 

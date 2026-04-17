@@ -1,0 +1,399 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// MULTI-TENANCY: Todos os modelos (exceto Tenant e SuperAdmin) têm tenantId
+// ============================================================================
+
+model Tenant {
+  id                String   @id @default(uuid())
+  subdomain         String   @unique
+  estado            String   @default("em_setup") // ativa, suspensa, em_setup, cancelada
+  configMarca       Json     @default("{}")
+  configPreco       Json     @default("{}")
+  configAgenda      Json     @default("{}")
+  adminUserId       String?
+  dataCriacao       DateTime @default(now())
+  dataUltimoAcesso  DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  users             User[]
+  mudancas          Mudanca[]
+  clientes          Cliente[]
+  motoristas        Motorista[]
+  veiculos          Veiculo[]
+  ajudantes         Ajudante[]
+  slotsAgenda       SlotAgenda[]
+  bloqueiosAgenda   BloqueioAgenda[]
+  movimentosFin     MovimentoFinanceiro[]
+  emailTemplates    EmailTemplate[]
+  ficheiros         Ficheiro[]
+  tenantLogs        TenantLog[]
+  notificacoes      Notificacao[]
+  emailLogs         EmailLog[]
+  camposFormulario  CampoFormulario[]
+
+  @@index([subdomain])
+  @@index([estado])
+}
+
+model User {
+  id            String   @id @default(uuid())
+  tenantId      String
+  nome          String
+  email         String
+  passwordHash  String
+  perfil        String   // admin, gerente, financeiro, operacional, motorista
+  permissoes    Json?    // { motoristasPermitidos: ['id1', 'id2'], verTodosMotoristas: true }
+  eAtivo        Boolean  @default(true)
+  ultimaSessao  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  motorista     Motorista?
+  notificacoes  Notificacao[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Cliente {
+  id              String   @id @default(uuid())
+  tenantId        String
+  nome            String
+  apelido         String
+  email           String
+  telefone        String
+  moradas         Json?
+  numeroMudancas  Int      @default(0)
+  eRecorrente     Boolean  @default(false)
+  ultimaMudanca   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mudancas        Mudanca[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Mudanca {
+  id            String   @id @default(uuid())
+  tenantId      String
+  estado        String   @default("pendente") // pendente, aprovada, a_caminho, em_servico, concluida, recusada, cancelada
+  tipoServico   String   // normal, urgente
+
+  // Dados do formulário
+  clienteNome   String
+  clienteEmail  String
+  clienteTelefone String
+
+  moradaRecolha Json
+  moradaEntrega Json
+
+  dataPretendida DateTime
+  horaPretendida String?
+
+  veiculoId     String?
+  equipa        String   // motorista, motorista_1_ajudante, motorista_2_ajudantes
+
+  materiais     Json     @default("{}")
+  observacoes   String?
+  eInternacional Boolean @default(false)
+  documentacao  String?
+
+  // Aprovação
+  aprovadoPor   String?  @map("aprovadoPor")
+  aprovadoEm    DateTime?
+  motoristaId   String?
+  ajudantesIds  String[]
+  tempoEstimadoHoras Float?
+  observacoesAdmin String?
+
+  // Deslocamento
+  previsaoChegadaMinutos Int?
+  iniciadoEm             DateTime?
+
+  // Conclusão
+  conclusao     Json?
+  concluidoPor  String?
+  concluidoEm   DateTime?
+
+  // Valores salvos na data da mudança (snapshot)
+  valorHoraMotorista   Float?   // valor/hora do motorista no dia da mudança
+  valorHoraAjudante    Float?   // valor/hora do ajudante no dia da mudança
+  totalPagoMotorista   Float?   // total pago ao motorista (horas x valorHora)
+  totalPagoAjudantes   Float?   // total pago a todos os ajudantes
+
+  // Financeiro (calculado)
+  receitaPrevista Float?
+  receitaRealizada Float?
+  custosOperacionais Float?
+  margem        Float?
+
+  // Cliente
+  clienteId     String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  motorista     Motorista? @relation(fields: [motoristaId], references: [id])
+  veiculo       Veiculo? @relation(fields: [veiculoId], references: [id])
+  cliente       Cliente? @relation(fields: [clienteId], references: [id])
+
+  @@index([tenantId])
+  @@index([estado])
+  @@index([tenantId, estado])
+  @@index([motoristaId])
+  @@index([dataPretendida])
+  @@index([clienteId])
+}
+
+model Motorista {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  userId             String?  @unique // ligação ao User (para motoristas com conta no sistema)
+  nome               String
+  email              String
+  telefone           String
+  cartaConducao      String
+  validadeCarta      String
+  valorHora          Float    @default(0) // valor pago ao motorista por hora trabalhada
+  veiculoId          String?
+  estado             String   @default("disponivel") // disponivel, em_servico, indisponivel
+  mudancasRealizadas Int      @default(0)
+  horasTrabalhadasMes Float   @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  veiculo            Veiculo? @relation(fields: [veiculoId], references: [id])
+  mudancas           Mudanca[]
+
+  @@index([tenantId])
+  @@index([estado])
+  @@index([veiculoId])
+  @@index([userId])
+}
+
+model Ajudante {
+  id          String   @id @default(uuid())
+  tenantId    String
+  nome        String
+  email       String?
+  telefone    String
+  valorHora   Float    @default(0) // valor pago ao ajudante por hora trabalhada
+  disponivel  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([disponivel])
+}
+
+model Veiculo {
+  id            String   @id @default(uuid())
+  tenantId      String
+  nome          String
+  marca         String
+  modelo        String?
+  matricula     String
+  metrosCubicos Float
+  precoHora     Float
+  estado        String   @default("disponivel") // disponivel, em_servico, em_manutencao
+  eParaUrgencias Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  motoristas    Motorista[]
+  mudancas      Mudanca[]
+
+  @@index([tenantId])
+  @@index([estado])
+  @@index([eParaUrgencias])
+}
+
+model SlotAgenda {
+  id              String   @id @default(uuid())
+  tenantId        String
+  data            DateTime
+  horaInicio      String
+  horaFim         String
+  capacidadeTotal Int      @default(1)
+  capacidadeOcupada Int    @default(0)
+  eBloqueado      Boolean  @default(false)
+  motivoBloqueio  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, data, horaInicio])
+  @@index([tenantId])
+  @@index([data])
+  @@index([eBloqueado])
+}
+
+model BloqueioAgenda {
+  id          String   @id @default(uuid())
+  tenantId    String
+  dataInicio  DateTime
+  dataFim     DateTime
+  motivo      String
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([dataInicio, dataFim])
+}
+
+model MovimentoFinanceiro {
+  id          String   @id @default(uuid())
+  tenantId    String
+  mudancaId   String?
+  tipo        String   // receita, custo
+  categoria   String   // servico, materiais, combustivel, alimentacao, manutencao, outros
+  descricao   String
+  valor       Float
+  data        DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tipo])
+  @@index([categoria])
+  @@index([data])
+  @@index([mudancaId])
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  tenantId    String
+  nome        String   // identificacao do template
+  assunto     String
+  corpo       String
+  eAtivo      Boolean  @default(true)
+  variaveis   String[] // lista de variaveis disponiveis
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, nome])
+  @@index([tenantId])
+}
+
+model TenantLog {
+  id          String   @id @default(uuid())
+  tenantId    String
+  userId      String?
+  acao        String
+  entidade    String
+  entidadeId  String?
+  detalhes    Json?
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([createdAt])
+  @@index([acao])
+}
+
+model Ficheiro {
+  id          String   @id @default(uuid())
+  tenantId    String
+  url         String
+  tipo        String   // imagem, documento, outro
+  tamanho     Int?     // bytes
+  nomeOriginal String?
+  entidade    String?  // mudanca, cliente, veiculo, etc
+  entidadeId  String?
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([entidade])
+  @@index([entidadeId])
+}
+
+model Notificacao {
+  id          String    @id @default(uuid())
+  tenantId    String
+  userId      String
+  tipo        String    // mudanca_criada, mudanca_aprovada, mudanca_recusada, motorista_a_caminho, mudanca_concluida, mudanca_alterada
+  mensagem    String
+  lida        Boolean   @default(false)
+  link        String?   // e.g. "/mudancas/abc-123"
+  mudancaId   String?
+  criadaEm    DateTime  @default(now())
+  lidaEm      DateTime?
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([tenantId, userId, lida])
+  @@index([criadaEm])
+}
+
+model EmailLog {
+  id            String   @id @default(uuid())
+  tenantId      String
+  mudancaId     String?
+  destinatario  String
+  templateNome  String
+  assunto       String
+  status        String   @default("enviado") // enviado, falhou
+  erroMensagem  String?
+  criadoEm      DateTime @default(now())
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([mudancaId])
+  @@index([destinatario])
+  @@index([criadoEm])
+}
+
+model CampoFormulario {
+  id            String   @id @default(uuid())
+  tenantId      String
+  nome          String
+  tipo          String   // texto, checkbox, selector, numero
+  obrigatorio   Boolean  @default(false)
+  ordem         Int      @default(0)
+  opcoes        String[] // para tipo selector
+  eBase         Boolean  @default(false) // campo do sistema, nao removivel
+  eAtivo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, ordem])
+}

@@ -48,7 +48,7 @@ export class TenantMiddleware implements NestMiddleware {
 
     try {
       // Validar token
-      const payload = this.jwtService.verify(this.jwtService.decode(token) as any);
+      const payload = this.jwtService.verify(token);
 
       if (!payload || !payload.tenantId) {
         throw new UnauthorizedException('Token inválido');

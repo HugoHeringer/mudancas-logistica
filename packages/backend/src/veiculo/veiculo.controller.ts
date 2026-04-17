@@ -8,20 +8,20 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
   Request,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { VeiculoService } from './veiculo.service';
 import { CreateVeiculoDto } from './dto/create-veiculo.dto';
 import { UpdateVeiculoDto } from './dto/update-veiculo.dto';
-import { TenantRequest } from '../prisma/prisma.middleware';
+import { TenantRequest, getTenantId } from '../prisma';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('veiculos')
 @Controller('veiculos')
 @ApiBearerAuth()
+@Roles('admin', 'gerente', 'operacional')
 export class VeiculoController {
   constructor(private readonly veiculoService: VeiculoService) {}
 
@@ -29,13 +29,13 @@ export class VeiculoController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Criar novo veículo' })
   create(@Request() req: TenantRequest, @Body() createVeiculoDto: CreateVeiculoDto) {
-    return this.veiculoService.create(req.tenantId, createVeiculoDto);
+    return this.veiculoService.create(getTenantId(req), createVeiculoDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Listar veículos com filtros' })
   findAll(@Request() req: TenantRequest, @Query() filters: any) {
-    return this.veiculoService.findAll(req.tenantId, filters);
+    return this.veiculoService.findAll(getTenantId(req), filters);
   }
 
   @Get('disponiveis')
@@ -45,7 +45,7 @@ export class VeiculoController {
     @Query('paraUrgencias') paraUrgencias?: string,
   ) {
     return this.veiculoService.getDisponiveis(
-      req.tenantId,
+      getTenantId(req),
       paraUrgencias === 'true',
     );
   }
@@ -53,7 +53,7 @@ export class VeiculoController {
   @Get(':id')
   @ApiOperation({ summary: 'Obter veículo por ID' })
   findOne(@Request() req: TenantRequest, @Param('id') id: string) {
-    return this.veiculoService.findOne(req.tenantId, id);
+    return this.veiculoService.findOne(getTenantId(req), id);
   }
 
   @Patch(':id')
@@ -63,7 +63,7 @@ export class VeiculoController {
     @Param('id') id: string,
     @Body() updateVeiculoDto: UpdateVeiculoDto,
   ) {
-    return this.veiculoService.update(req.tenantId, id, updateVeiculoDto);
+    return this.veiculoService.update(getTenantId(req), id, updateVeiculoDto);
   }
 
   @Patch(':id/estado')
@@ -80,6 +80,6 @@ export class VeiculoController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remover veículo' })
   remove(@Request() req: TenantRequest, @Param('id') id: string) {
-    return this.veiculoService.remove(req.tenantId, id);
+    return this.veiculoService.remove(getTenantId(req), id);
   }
 }

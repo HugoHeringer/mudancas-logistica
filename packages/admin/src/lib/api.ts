@@ -79,9 +79,15 @@ export const mudancasApi = {
   startService: (id: string) => api.post(`/mudancas/${id}/em-servico`),
   conclude: (id: string, data: any) => api.post(`/mudancas/${id}/concluir`, data),
   refuse: (id: string, motivo: string) => api.post(`/mudancas/${id}/recusar`, { motivo }),
-  cancel: (id: string) => api.post(`/mudancas/${id}/cancelar`),
+  cancel: (id: string, motivo?: string) => api.post(`/mudancas/${id}/cancelar`, { motivo }),
   delete: (id: string) => api.delete(`/mudancas/${id}`),
   getDashboard: () => api.get('/mudancas/dashboard'),
+  exportExcel: (filters?: any) =>
+    api.get('/mudancas/export', { params: { ...filters, formato: 'xlsx' }, responseType: 'blob' }),
+  exportCsv: (filters?: any) =>
+    api.get('/mudancas/export', { params: { ...filters, formato: 'csv' }, responseType: 'blob' }),
+  exportPdf: (filters?: any) =>
+    api.get('/mudancas/export', { params: { ...filters, formato: 'pdf' }, responseType: 'blob' }),
 };
 
 export const clientesApi = {
@@ -92,6 +98,10 @@ export const clientesApi = {
   update: (id: string, data: any) => api.patch(`/clientes/${id}`, data),
   merge: (sourceId: string, targetId: string) => api.post(`/clientes/${sourceId}/merge/${targetId}`),
   delete: (id: string) => api.delete(`/clientes/${id}`),
+  exportExcel: (filters?: any) =>
+    api.get('/clientes/export', { params: { ...filters, formato: 'xlsx' }, responseType: 'blob' }),
+  exportCsv: (filters?: any) =>
+    api.get('/clientes/export', { params: { ...filters, formato: 'csv' }, responseType: 'blob' }),
 };
 
 export const motoristasApi = {
@@ -121,6 +131,8 @@ export const veiculosApi = {
 
 export const agendaApi = {
   getSlots: (data: string) => api.get(`/agenda/slots/${data}`),
+  getBloqueios: (dataInicio?: string, dataFim?: string) =>
+    api.get('/agenda/bloqueios', { params: { dataInicio, dataFim } }),
   getSlotsRange: (dataInicio: string, dataFim: string) =>
     api.get('/agenda/slots', { params: { dataInicio, dataFim } }),
   getDisponibilidade: (data: string, horaInicio?: string) =>
@@ -146,6 +158,12 @@ export const financeiroApi = {
     api.get('/financeiro/gastos-detalhados', { params: { dataInicio, dataFim } }),
   createMovimento: (data: any) => api.post('/financeiro/movimentos', data),
   deleteMovimento: (id: string) => api.delete(`/financeiro/movimentos/${id}`),
+  exportExcel: (dataInicio?: string, dataFim?: string) =>
+    api.get('/financeiro/export', { params: { dataInicio, dataFim, formato: 'xlsx' }, responseType: 'blob' }),
+  exportCsv: (dataInicio?: string, dataFim?: string) =>
+    api.get('/financeiro/export', { params: { dataInicio, dataFim, formato: 'csv' }, responseType: 'blob' }),
+  exportPdf: (dataInicio?: string, dataFim?: string) =>
+    api.get('/financeiro/export', { params: { dataInicio, dataFim, formato: 'pdf' }, responseType: 'blob' }),
 };
 
 export const comunicacaoApi = {
@@ -158,6 +176,13 @@ export const comunicacaoApi = {
   renderTemplate: (nome: string, variaveis: any) =>
     api.post(`/comunicacao/templates/${nome}/render`, { variaveis }),
   initializeTemplates: () => api.post('/comunicacao/templates/initialize'),
+  getEmailLogs: (filters?: any) => api.get('/comunicacao/emails', { params: filters }),
+};
+
+export const notificacoesApi = {
+  findAll: (naoLidas?: boolean) => api.get('/notificacoes', { params: { naoLidas } }),
+  markAsRead: (id: string) => api.patch(`/notificacoes/${id}/lida`),
+  markAllAsRead: () => api.patch('/notificacoes/marcar-todas-lidas'),
 };
 
 export const tenantsApi = {
@@ -165,6 +190,107 @@ export const tenantsApi = {
   findOne: (id: string) => api.get(`/tenants/${id}`),
   findBySubdomain: (subdomain: string) => api.get(`/tenants/subdomain/${subdomain}`),
   update: (id: string, data: any) => api.patch(`/tenants/${id}`, data),
+  updateBrand: (id: string, data: any) => api.patch(`/tenants/${id}/brand`, data),
   delete: (id: string) => api.delete(`/tenants/${id}`),
   getStats: (id: string) => api.get(`/tenants/${id}/stats`),
+  getSetupProgress: (id: string) => api.get(`/tenants/${id}/setup-progress`),
+};
+
+export const utilizadoresApi = {
+  findAll: (filters?: any) => api.get('/utilizadores', { params: filters }),
+  findOne: (id: string) => api.get(`/utilizadores/${id}`),
+  update: (id: string, data: { nome?: string; email?: string }) =>
+    api.patch(`/utilizadores/${id}`, data),
+  updateEstado: (id: string, eAtivo: boolean) =>
+    api.patch(`/utilizadores/${id}/estado`, { eAtivo }),
+  updatePerfil: (id: string, perfil: string) =>
+    api.patch(`/utilizadores/${id}/perfil`, { perfil }),
+  updatePermissoes: (id: string, permissoes: any) =>
+    api.patch(`/utilizadores/${id}/permissoes`, { permissoes }),
+};
+
+export const ajudantesApi = {
+  findAll: (filters?: any) => api.get('/ajudantes', { params: filters }),
+  findDisponiveis: (data?: string) => api.get('/ajudantes/disponiveis', { params: { data } }),
+  findOne: (id: string) => api.get(`/ajudantes/${id}`),
+  create: (data: any) => api.post('/ajudantes', data),
+  update: (id: string, data: any) => api.patch(`/ajudantes/${id}`, data),
+  delete: (id: string) => api.delete(`/ajudantes/${id}`),
+  getPerformance: (id: string, mes: number, ano: number) =>
+    api.get(`/ajudantes/${id}/performance`, { params: { mes, ano } }),
+};
+
+export const publicApi = {
+  getTenantBrand: (subdomain: string) => axios.get(`${API_BASE_URL}/public/tenant/${subdomain}`),
+};
+
+export const formularioApi = {
+  getCampos: () => api.get('/formulario/campos'),
+  getCamposAtivos: () => api.get('/formulario/campos/ativos'),
+  createCampo: (data: any) => api.post('/formulario/campos', data),
+  updateCampo: (id: string, data: any) => api.patch(`/formulario/campos/${id}`, data),
+  toggleCampo: (id: string) => api.patch(`/formulario/campos/${id}/toggle`),
+  deleteCampo: (id: string) => api.delete(`/formulario/campos/${id}`),
+  reorderCampos: (items: { id: string; ordem: number }[]) =>
+    api.patch('/formulario/campos/reorder', { items }),
+  seedBaseFields: () => api.post('/formulario/campos/seed'),
+};
+
+export const uploadApi = {
+  upload: (file: File, tenantId: string, entidade?: string, entidadeId?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload', formData, {
+      params: { tenantId, entidade, entidadeId },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  uploadLogo: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  gerarFavicon: () => api.post('/upload/favicon'),
+  uploadBanner: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload/banner', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  getBanners: () => api.get('/upload/banners'),
+  reorderBanners: (banners: { id: string; ordem: number }[]) =>
+    api.patch('/upload/banners/reorder', { banners }),
+  toggleBanner: (id: string) => api.patch(`/upload/banners/${id}/toggle`),
+  removeBanner: (id: string) => api.delete(`/upload/banners/${id}`),
+  listFiles: (tenantId: string, entidade?: string) =>
+    api.get('/upload', { params: { tenantId, entidade } }),
+  deleteFile: (id: string) => api.delete(`/upload/${id}`),
+};
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+export const superAdminApi = {
+  login: (email: string, password: string) =>
+    api.post('/auth/login', { email, password, tenantId: 'super-admin' }),
+  getTenants: () => api.get('/super-admin/tenants'),
+  getStats: () => api.get('/super-admin/stats'),
+  createTenant: (data: any) => api.post('/super-admin/tenants', data),
+  updateTenantEstado: (id: string, estado: string) =>
+    api.patch(`/super-admin/tenants/${id}/estado`, { estado }),
+  resetAdminPassword: (id: string, newPassword: string) =>
+    api.post(`/super-admin/tenants/${id}/reset-password`, { newPassword }),
+  deleteTenant: (id: string) => api.delete(`/super-admin/tenants/${id}`),
+  getTenantDetail: (id: string) => api.get(`/tenants/${id}`),
 };

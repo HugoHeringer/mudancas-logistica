@@ -3,11 +3,20 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './all-exceptions.filter';
+import * as express from 'express';
+import * as path from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { logger: ['log', 'error', 'warn', 'debug'] });
 
   const configService = app.get(ConfigService);
+
+  // Global exception filter for debug logging
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Serve uploaded files statically
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // CORS
   const corsOrigins = configService.get<string>('CORS_ORIGIN', '').split(',');
@@ -46,6 +55,7 @@ async function bootstrap() {
     .addTag('agenda', 'Gestão de Agenda')
     .addTag('financeiro', 'Gestão Financeira')
     .addTag('comunicacao', 'Comunicação e Emails')
+    .addTag('notificacoes', 'Notificações In-App')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

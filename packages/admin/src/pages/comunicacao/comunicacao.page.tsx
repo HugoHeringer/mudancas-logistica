@@ -11,6 +11,7 @@ import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Switch } from '../../components/ui/switch';
 import { Badge } from '../../components/ui/badge';
+import { TemplatePreviewModal } from '../../components/comunicacao/TemplatePreviewModal';
 
 interface Template {
   id: string;
@@ -38,6 +39,7 @@ export function ComunicacaoPage() {
   const [editCorpo, setEditCorpo] = useState('');
   const [editAtivo, setEditAtivo] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['comunicacao', 'templates'],
@@ -97,7 +99,7 @@ export function ComunicacaoPage() {
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse" />
+            <div key={i} className="h-20 bg-muted rounded-lg animate-pulse" />
           ))}
         </div>
       ) : !templates || templates.length === 0 ? (
@@ -118,13 +120,13 @@ export function ComunicacaoPage() {
             {templates.map((t) => (
               <Card
                 key={t.id}
-                className={`cursor-pointer transition-all ${selectedTemplate?.id === t.id ? 'ring-2 ring-blue-500' : 'hover:shadow-md'}`}
+                className={`cursor-pointer transition-all ${selectedTemplate?.id === t.id ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
                 onClick={() => openTemplate(t)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium">{t.nome.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</h3>
-                    <Badge className={t.eAtivo ? 'bg-green-600' : 'bg-gray-400'}>
+                    <Badge className={t.eAtivo ? 'bg-green-600 text-white' : 'bg-muted-foreground'}>
                       {t.eAtivo ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </div>
@@ -179,7 +181,7 @@ export function ComunicacaoPage() {
                 )}
 
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setShowPreview(true)}>
+                  <Button variant="outline" onClick={() => { setPreviewTemplate(selectedTemplate); setShowPreview(true); }}>
                     <Eye className="h-4 w-4 mr-1" /> Pré-visualizar
                   </Button>
                   <Button onClick={saveTemplate} disabled={updateMutation.isPending}>
@@ -192,7 +194,7 @@ export function ComunicacaoPage() {
           ) : (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
-                <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
                 <p>Selecione um template para editar</p>
               </CardContent>
             </Card>
@@ -200,18 +202,12 @@ export function ComunicacaoPage() {
         </div>
       )}
 
-      {/* Dialog Pré-visualização */}
-      {showPreview && selectedTemplate && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowPreview(false)}>
-          <div className="bg-white rounded-lg max-w-xl w-full p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-lg mb-2">Pré-visualização</h3>
-            <p className="text-sm font-medium mb-4">Assunto: {editAssunto}</p>
-            <div className="border rounded-lg p-4 bg-gray-50 text-sm whitespace-pre-wrap">
-              {editCorpo.replace(/\{\{(\w+)\}\}/g, (_, varName) => `[${varName}]`)}
-            </div>
-            <Button variant="outline" className="mt-4" onClick={() => setShowPreview(false)}>Fechar</Button>
-          </div>
-        </div>
+      {/* Template Preview Modal */}
+      {showPreview && previewTemplate && (
+        <TemplatePreviewModal
+          template={previewTemplate}
+          onClose={() => { setShowPreview(false); setPreviewTemplate(null); }}
+        />
       )}
     </div>
   );

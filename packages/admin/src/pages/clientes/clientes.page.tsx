@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Merge, ArrowRight } from 'lucide-react';
+import { Search, Users, Merge, ArrowRight, Plus } from 'lucide-react';
 import { clientesApi } from '../../lib/api';
 import { useToast } from '../../hooks/use-toast';
 import { EmptyState } from '../../components/empty-state';
@@ -43,6 +43,13 @@ export function ClientesPage() {
   const [showMerge, setShowMerge] = useState(false);
   const [mergeTargetEmail, setMergeTargetEmail] = useState('');
 
+  // Create dialog state
+  const [showCreate, setShowCreate] = useState(false);
+  const [formNome, setFormNome] = useState('');
+  const [formApelido, setFormApelido] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formTelefone, setFormTelefone] = useState('');
+
   const { data: clientes, isLoading } = useQuery({
     queryKey: ['clientes'],
     queryFn: () => clientesApi.findAll().then((r) => r.data as Cliente[]),
@@ -65,6 +72,17 @@ export function ClientesPage() {
       setMergeTargetEmail('');
     },
     onError: () => toast({ title: 'Erro ao mesclar', variant: 'destructive' }),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => clientesApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      toast({ title: 'Cliente criado com sucesso' });
+      setShowCreate(false);
+      setFormNome(''); setFormApelido(''); setFormEmail(''); setFormTelefone('');
+    },
+    onError: () => toast({ title: 'Erro ao criar cliente', variant: 'destructive' }),
   });
 
   const filteredData = (clientes || []).filter((c) => {
@@ -111,6 +129,10 @@ export function ClientesPage() {
           <h2 className="text-2xl font-bold">Clientes</h2>
           <p className="text-muted-foreground">Gestão de clientes e histórico</p>
         </div>
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus className="h-4 w-4 mr-1" />
+          Novo Cliente
+        </Button>
       </div>
 
       <div className="relative max-w-sm">
@@ -119,7 +141,7 @@ export function ClientesPage() {
       </div>
 
       {!isLoading && filteredData.length === 0 ? (
-        <EmptyState icon={Users} title="Nenhum cliente" description="Os clientes são criados automaticamente quando uma solicitação é aprovada." />
+        <EmptyState icon={Users} title="Nenhum cliente" description="Adicione clientes manualmente ou aguarde por submissões do site público." action={<Button onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-1" />Novo Cliente</Button>} />
       ) : (
         <DataTable
           columns={columns}
@@ -154,7 +176,7 @@ export function ClientesPage() {
                     {clienteDetalhe.mudancas.slice(0, 5).map((m: any) => (
                       <div
                         key={m.id}
-                        className="flex items-center gap-3 p-2 rounded border cursor-pointer hover:bg-gray-50"
+                        className="flex items-center gap-3 p-2 rounded border cursor-pointer hover:bg-muted/50"
                         onClick={() => { setShowDetail(false); navigate(`/mudancas/${m.id}`); }}
                       >
                         <div className="flex-1">
@@ -180,6 +202,47 @@ export function ClientesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog Criar Cliente */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Cliente</DialogTitle>
+            <DialogDescription>Preencha os dados do novo cliente.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nome</Label>
+                <Input value={formNome} onChange={(e) => setFormNome(e.target.value)} placeholder="Nome" />
+              </div>
+              <div className="space-y-2">
+                <Label>Apelido</Label>
+                <Input value={formApelido} onChange={(e) => setFormApelido(e.target.value)} placeholder="Apelido" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="email@exemplo.pt" />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input value={formTelefone} onChange={(e) => setFormTelefone(e.target.value)} placeholder="912345678" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+            <Button
+              disabled={!formNome || !formApelido || !formEmail || !formTelefone || createMutation.isPending}
+              onClick={() => createMutation.mutate({
+                nome: formNome, apelido: formApelido, email: formEmail, telefone: formTelefone,
+              })}
+            >
+              {createMutation.isPending ? 'A criar...' : 'Criar Cliente'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog Mesclagem */}
       <Dialog open={showMerge} onOpenChange={setShowMerge}>
         <DialogContent>
@@ -188,7 +251,7 @@ export function ClientesPage() {
             <DialogDescription>Útil quando o mesmo cliente tem dois registos por engano. Os dados do registo selecionado serão transferidos para o registo destino.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-yellow-50 p-3 rounded-lg text-sm text-yellow-800">
+            <div className="bg-yellow-500/10 p-3 rounded-lg text-sm text-yellow-700">
               <p><strong>Origem:</strong> {selectedCliente?.nome} ({selectedCliente?.email})</p>
               <p>Este registo será removido após a mesclagem.</p>
             </div>

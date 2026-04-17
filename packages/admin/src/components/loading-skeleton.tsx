@@ -12,7 +12,7 @@ export function LoadingSkeleton({ className, lines = 3 }: LoadingSkeletonProps) 
         <div
           key={i}
           className={cn(
-            'h-4 bg-gray-200 rounded animate-pulse',
+            'h-4 bg-muted rounded animate-pulse',
             i === lines - 1 && 'w-3/4'
           )}
         />
@@ -29,7 +29,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
           {Array.from({ length: cols }).map((_, j) => (
             <div
               key={j}
-              className="h-10 bg-gray-200 rounded animate-pulse flex-1"
+              className="h-10 bg-muted rounded animate-pulse flex-1"
             />
           ))}
         </div>

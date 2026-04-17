@@ -1,0 +1,580 @@
+{
+  "runId": "run-1776127245500",
+  "startedAt": "2026-04-14T00:40:45.500Z",
+  "status": "completed",
+  "suites": [
+    {
+      "suite": "auth",
+      "startedAt": "2026-04-14T00:40:46.679Z",
+      "finishedAt": "2026-04-14T00:40:53.458Z",
+      "durationMs": 6779,
+      "totalTests": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/auth/register — criar utilizador de teste",
+          "status": "pass",
+          "durationMs": 704
+        },
+        {
+          "name": "POST /api/auth/login — login com credenciais válidas",
+          "status": "pass",
+          "durationMs": 1780
+        },
+        {
+          "name": "POST /api/auth/login — login com senha errada (401)",
+          "status": "pass",
+          "durationMs": 1285
+        },
+        {
+          "name": "POST /api/auth/refresh — renovar token",
+          "status": "pass",
+          "durationMs": 281
+        },
+        {
+          "name": "GET /api/mudancas — acesso protegido com token válido",
+          "status": "pass",
+          "durationMs": 547
+        },
+        {
+          "name": "GET /api/mudancas — acesso sem token (401)",
+          "status": "pass",
+          "durationMs": 6
+        },
+        {
+          "name": "POST /api/auth/update-password — alterar senha",
+          "status": "pass",
+          "durationMs": 2176
+        }
+      ]
+    },
+    {
+      "suite": "public",
+      "startedAt": "2026-04-14T00:40:53.464Z",
+      "finishedAt": "2026-04-14T00:40:55.407Z",
+      "durationMs": 1943,
+      "totalTests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/public/mudancas — criar mudança (sem auth)",
+          "status": "pass",
+          "durationMs": 579
+        },
+        {
+          "name": "GET /api/public/veiculos?tenantId — listar veículos (sem auth)",
+          "status": "pass",
+          "durationMs": 544
+        },
+        {
+          "name": "GET /api/public/disponibilidade?tenantId&data — disponibilidade (sem auth)",
+          "status": "pass",
+          "durationMs": 819
+        }
+      ]
+    },
+    {
+      "suite": "super-admin",
+      "startedAt": "2026-04-14T00:40:55.408Z",
+      "finishedAt": "2026-04-14T00:41:00.865Z",
+      "durationMs": 5457,
+      "totalTests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "GET /api/super-admin/tenants — listar todos os tenants",
+          "status": "pass",
+          "durationMs": 328
+        },
+        {
+          "name": "GET /api/super-admin/stats — estatísticas globais",
+          "status": "pass",
+          "durationMs": 867
+        },
+        {
+          "name": "POST /api/super-admin/tenants — criar tenant com admin",
+          "status": "pass",
+          "durationMs": 2979
+        },
+        {
+          "name": "PATCH /api/super-admin/tenants/:id/estado — atualizar estado tenant",
+          "status": "pass",
+          "durationMs": 263
+        },
+        {
+          "name": "POST /api/super-admin/tenants/:id/reset-password — reset senha admin",
+          "status": "pass",
+          "durationMs": 708
+        },
+        {
+          "name": "DELETE /api/super-admin/tenants/:id — remover tenant",
+          "status": "pass",
+          "durationMs": 312
+        }
+      ]
+    },
+    {
+      "suite": "mudanca",
+      "startedAt": "2026-04-14T00:41:00.868Z",
+      "finishedAt": "2026-04-14T00:41:20.487Z",
+      "durationMs": 19619,
+      "totalTests": 14,
+      "passed": 12,
+      "failed": 2,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/mudancas — criar mudança",
+          "status": "pass",
+          "durationMs": 401
+        },
+        {
+          "name": "GET /api/mudancas — listar mudanças",
+          "status": "pass",
+          "durationMs": 501
+        },
+        {
+          "name": "GET /api/mudancas/:id — obter mudança por ID",
+          "status": "pass",
+          "durationMs": 329
+        },
+        {
+          "name": "GET /api/mudancas/dashboard — dados do dashboard",
+          "status": "pass",
+          "durationMs": 755
+        },
+        {
+          "name": "POST /api/mudancas/:id/aprovar — aprovar mudança",
+          "status": "pass",
+          "durationMs": 1299
+        },
+        {
+          "name": "POST /api/mudancas/:id/iniciar — iniciar deslocamento",
+          "status": "fail",
+          "durationMs": 421,
+          "error": "Esperado 200/201, recebido 404",
+          "details": {
+            "statusCode": 404,
+            "message": "Mudança não atribuída a este motorista"
+          }
+        },
+        {
+          "name": "POST /api/mudancas/:id/em-servico — em serviço",
+          "status": "fail",
+          "durationMs": 1047,
+          "error": "Esperado 200/201, recebido 404",
+          "details": {
+            "statusCode": 404,
+            "message": "Mudança não atribuída a este motorista"
+          }
+        },
+        {
+          "name": "POST /api/mudancas/:id/concluir — concluir mudança",
+          "status": "pass",
+          "durationMs": 645
+        },
+        {
+          "name": "POST /api/mudancas/:id/recusar — recusar mudança",
+          "status": "pass",
+          "durationMs": 4774
+        },
+        {
+          "name": "POST /api/mudancas/:id/cancelar — cancelar mudança",
+          "status": "pass",
+          "durationMs": 4497
+        },
+        {
+          "name": "PATCH /api/mudancas/:id — atualizar mudança",
+          "status": "pass",
+          "durationMs": 986
+        },
+        {
+          "name": "GET /api/mudancas/minhas — mudanças do motorista",
+          "status": "pass",
+          "durationMs": 267
+        },
+        {
+          "name": "GET /api/mudancas/:id — mudança inexistente (404)",
+          "status": "pass",
+          "durationMs": 278
+        },
+        {
+          "name": "DELETE /api/mudancas/:id — remover mudança",
+          "status": "pass",
+          "durationMs": 651
+        }
+      ]
+    },
+    {
+      "suite": "cliente",
+      "startedAt": "2026-04-14T00:41:20.490Z",
+      "finishedAt": "2026-04-14T00:41:23.459Z",
+      "durationMs": 2969,
+      "totalTests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/clientes — criar cliente",
+          "status": "pass",
+          "durationMs": 576
+        },
+        {
+          "name": "GET /api/clientes — listar clientes",
+          "status": "pass",
+          "durationMs": 269
+        },
+        {
+          "name": "GET /api/clientes/:id — obter cliente por ID",
+          "status": "pass",
+          "durationMs": 393
+        },
+        {
+          "name": "GET /api/clientes/email/:email — buscar por email",
+          "status": "pass",
+          "durationMs": 382
+        },
+        {
+          "name": "PATCH /api/clientes/:id — atualizar cliente",
+          "status": "pass",
+          "durationMs": 702
+        },
+        {
+          "name": "DELETE /api/clientes/:id — remover cliente",
+          "status": "pass",
+          "durationMs": 647
+        }
+      ]
+    },
+    {
+      "suite": "motorista",
+      "startedAt": "2026-04-14T00:41:23.461Z",
+      "finishedAt": "2026-04-14T00:41:27.033Z",
+      "durationMs": 3572,
+      "totalTests": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/motoristas — criar motorista",
+          "status": "pass",
+          "durationMs": 393
+        },
+        {
+          "name": "GET /api/motoristas — listar motoristas",
+          "status": "pass",
+          "durationMs": 388
+        },
+        {
+          "name": "GET /api/motoristas/disponiveis — motoristas disponíveis",
+          "status": "pass",
+          "durationMs": 388
+        },
+        {
+          "name": "GET /api/motoristas/:id — obter motorista por ID",
+          "status": "pass",
+          "durationMs": 380
+        },
+        {
+          "name": "PATCH /api/motoristas/:id — atualizar motorista",
+          "status": "pass",
+          "durationMs": 807
+        },
+        {
+          "name": "PATCH /api/motoristas/:id/estado — atualizar estado",
+          "status": "pass",
+          "durationMs": 272
+        },
+        {
+          "name": "GET /api/motoristas/:id/performance — performance",
+          "status": "pass",
+          "durationMs": 294
+        },
+        {
+          "name": "DELETE /api/motoristas/:id — remover motorista",
+          "status": "pass",
+          "durationMs": 649
+        }
+      ]
+    },
+    {
+      "suite": "veiculo",
+      "startedAt": "2026-04-14T00:41:27.034Z",
+      "finishedAt": "2026-04-14T00:41:30.070Z",
+      "durationMs": 3036,
+      "totalTests": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/veiculos — criar veículo",
+          "status": "pass",
+          "durationMs": 277
+        },
+        {
+          "name": "GET /api/veiculos — listar veículos",
+          "status": "pass",
+          "durationMs": 372
+        },
+        {
+          "name": "GET /api/veiculos/disponiveis — veículos disponíveis",
+          "status": "pass",
+          "durationMs": 285
+        },
+        {
+          "name": "GET /api/veiculos/:id — obter veículo por ID",
+          "status": "pass",
+          "durationMs": 389
+        },
+        {
+          "name": "PATCH /api/veiculos/:id — atualizar veículo",
+          "status": "pass",
+          "durationMs": 726
+        },
+        {
+          "name": "PATCH /api/veiculos/:id/estado — atualizar estado",
+          "status": "pass",
+          "durationMs": 310
+        },
+        {
+          "name": "DELETE /api/veiculos/:id — remover veículo",
+          "status": "pass",
+          "durationMs": 677
+        }
+      ]
+    },
+    {
+      "suite": "agenda",
+      "startedAt": "2026-04-14T00:41:30.076Z",
+      "finishedAt": "2026-04-14T00:41:32.613Z",
+      "durationMs": 2537,
+      "totalTests": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "GET /api/agenda/slots/:data — slots por data",
+          "status": "pass",
+          "durationMs": 272
+        },
+        {
+          "name": "GET /api/agenda/slots?dataInicio&dataFim — slots por range",
+          "status": "pass",
+          "durationMs": 274
+        },
+        {
+          "name": "GET /api/agenda/disponibilidade/:data — disponibilidade",
+          "status": "pass",
+          "durationMs": 270
+        },
+        {
+          "name": "GET /api/agenda/semanal/:dataInicio — agenda semanal",
+          "status": "pass",
+          "durationMs": 265
+        },
+        {
+          "name": "GET /api/agenda/mensal/:ano/:mes — agenda mensal",
+          "status": "pass",
+          "durationMs": 267
+        },
+        {
+          "name": "GET /api/agenda/config — obter config da agenda",
+          "status": "pass",
+          "durationMs": 285
+        },
+        {
+          "name": "PATCH /api/agenda/config — atualizar config da agenda",
+          "status": "pass",
+          "durationMs": 271
+        },
+        {
+          "name": "POST /api/agenda/bloqueios — criar bloqueio",
+          "status": "pass",
+          "durationMs": 295
+        },
+        {
+          "name": "DELETE /api/agenda/bloqueios/:id — remover bloqueio",
+          "status": "pass",
+          "durationMs": 337
+        }
+      ]
+    },
+    {
+      "suite": "financeiro",
+      "startedAt": "2026-04-14T00:41:32.615Z",
+      "finishedAt": "2026-04-14T00:41:38.928Z",
+      "durationMs": 6313,
+      "totalTests": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/financeiro/movimentos — criar movimento",
+          "status": "pass",
+          "durationMs": 1082
+        },
+        {
+          "name": "GET /api/financeiro/movimentos — listar movimentos",
+          "status": "pass",
+          "durationMs": 1646
+        },
+        {
+          "name": "GET /api/financeiro/resumo — resumo financeiro",
+          "status": "pass",
+          "durationMs": 1328
+        },
+        {
+          "name": "GET /api/financeiro/breakdown/motoristas — breakdown por motorista",
+          "status": "pass",
+          "durationMs": 1372
+        },
+        {
+          "name": "GET /api/financeiro/breakdown/tipo-servico — breakdown por tipo",
+          "status": "pass",
+          "durationMs": 284
+        },
+        {
+          "name": "GET /api/financeiro/gastos-detalhados — gastos detalhados",
+          "status": "pass",
+          "durationMs": 327
+        },
+        {
+          "name": "DELETE /api/financeiro/movimentos/:id — remover movimento",
+          "status": "pass",
+          "durationMs": 273
+        }
+      ]
+    },
+    {
+      "suite": "comunicacao",
+      "startedAt": "2026-04-14T00:41:38.929Z",
+      "finishedAt": "2026-04-14T00:41:42.471Z",
+      "durationMs": 3542,
+      "totalTests": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/comunicacao/templates/initialize — inicializar templates padrão",
+          "status": "pass",
+          "durationMs": 1362
+        },
+        {
+          "name": "GET /api/comunicacao/templates — listar templates",
+          "status": "pass",
+          "durationMs": 264
+        },
+        {
+          "name": "POST /api/comunicacao/templates — criar template",
+          "status": "pass",
+          "durationMs": 276
+        },
+        {
+          "name": "GET /api/comunicacao/templates/:nome — obter template por nome",
+          "status": "pass",
+          "durationMs": 266
+        },
+        {
+          "name": "PATCH /api/comunicacao/templates/:nome — atualizar template",
+          "status": "pass",
+          "durationMs": 554
+        },
+        {
+          "name": "POST /api/comunicacao/templates/:nome/render — renderizar template",
+          "status": "pass",
+          "durationMs": 278
+        },
+        {
+          "name": "DELETE /api/comunicacao/templates/:id — remover template",
+          "status": "pass",
+          "durationMs": 538
+        }
+      ]
+    },
+    {
+      "suite": "tenant",
+      "startedAt": "2026-04-14T00:41:42.472Z",
+      "finishedAt": "2026-04-14T00:41:45.908Z",
+      "durationMs": 3436,
+      "totalTests": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "name": "POST /api/tenants — criar tenant",
+          "status": "pass",
+          "durationMs": 531
+        },
+        {
+          "name": "GET /api/tenants — listar tenants",
+          "status": "pass",
+          "durationMs": 276
+        },
+        {
+          "name": "GET /api/tenants/:id — obter tenant por ID",
+          "status": "pass",
+          "durationMs": 397
+        },
+        {
+          "name": "GET /api/tenants/subdomain/:subdomain — buscar por subdomain",
+          "status": "pass",
+          "durationMs": 281
+        },
+        {
+          "name": "GET /api/tenants/:id/stats — estatísticas do tenant",
+          "status": "pass",
+          "durationMs": 322
+        },
+        {
+          "name": "PATCH /api/tenants/:id — atualizar tenant",
+          "status": "pass",
+          "durationMs": 550
+        },
+        {
+          "name": "PATCH /api/tenants/:id/brand — atualizar marca",
+          "status": "pass",
+          "durationMs": 525
+        },
+        {
+          "name": "DELETE /api/tenants/:id — remover tenant de teste",
+          "status": "pass",
+          "durationMs": 554
+        }
+      ]
+    }
+  ],
+  "finishedAt": "2026-04-14T00:41:45.915Z",
+  "summary": {
+    "totalSuites": 11,
+    "totalTests": 82,
+    "passed": 80,
+    "failed": 2,
+    "skipped": 0,
+    "errors": 0,
+    "durationMs": 59203
+  }
+}

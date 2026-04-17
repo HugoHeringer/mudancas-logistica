@@ -147,9 +147,23 @@ Obrigado,
         variaveis: ['nomeCliente', 'motivo', 'nomeEmpresa'],
         eAtivo: true,
       },
+      {
+        nome: 'mudanca_alterada',
+        assunto: 'Detalhes da mudança atualizados - {{nomeCliente}}',
+        corpo: `Olá {{nomeCliente}},
+
+Os detalhes da sua mudança foram atualizados.
+Data: {{dataPretendida}}
+Hora: {{horaPretendida}}
+
+Obrigado,
+{{nomeEmpresa}}`,
+        variaveis: ['nomeCliente', 'dataPretendida', 'horaPretendida', 'nomeEmpresa'],
+        eAtivo: true,
+      },
     ];
 
-    const created = [];
+    const created: any[] = [];
     for (const template of defaultTemplates) {
       const existing = await this.prisma.emailTemplate.findFirst({
         where: { tenantId, nome: template.nome },
@@ -165,5 +179,17 @@ Obrigado,
     }
 
     return created;
+  }
+
+  async getEmailLogs(tenantId: string, filters?: { mudancaId?: string; destinatario?: string }) {
+    const where: any = { tenantId };
+    if (filters?.mudancaId) where.mudancaId = filters.mudancaId;
+    if (filters?.destinatario) where.destinatario = filters.destinatario;
+
+    return this.prisma.emailLog.findMany({
+      where,
+      orderBy: { criadoEm: 'desc' },
+      take: 100,
+    });
   }
 }

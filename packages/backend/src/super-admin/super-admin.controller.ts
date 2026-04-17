@@ -3,20 +3,21 @@ import {
   Get,
   Post,
   Body,
+  Patch,
   Param,
   Delete,
   HttpCode,
   HttpStatus,
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { SuperAdminService } from './super-admin.service';
 import { CreateTenantDto } from '../tenant/dto/create-tenant.dto';
+import { IsSuperAdmin } from '../auth/decorators/super-admin.decorator';
 
 @ApiTags('super-admin')
 @Controller('super-admin')
 @ApiBearerAuth()
+@IsSuperAdmin()
 export class SuperAdminController {
   constructor(private readonly superAdminService: SuperAdminService) {}
 

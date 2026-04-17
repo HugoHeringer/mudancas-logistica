@@ -95,7 +95,7 @@ export class FinanceiroService {
           gte: dataInicio,
           lte: dataFim,
         },
-        motoristaId: { not: null },
+        motoristaId: { not: null } as any,
       },
       include: {
         motorista: {
@@ -107,27 +107,32 @@ export class FinanceiroService {
       },
     });
 
-    const breakdown = mudancas.reduce((acc, m) => {
-      if (!acc[m.motoristaId]) {
-        acc[m.motoristaId] = {
+    const breakdown = mudancas.reduce((acc: any, m) => {
+      const mid = m.motoristaId || '_none';
+      if (!acc[mid]) {
+        acc[mid] = {
           motoristaId: m.motoristaId,
           motoristaNome: m.motorista?.nome || 'N/A',
           receitaGerada: 0,
           custosCombustivel: 0,
           custosAlimentacao: 0,
+          custoMotorista: 0,
+          custoAjudantes: 0,
           mudancasCount: 0,
         };
       }
-      acc[m.motoristaId].receitaGerada += m.receitaRealizada || 0;
-      acc[m.motoristaId].custosCombustivel += (m.conclusao as any)?.combustivel?.valor || 0;
-      acc[m.motoristaId].custosAlimentacao += (m.conclusao as any)?.alimentacao?.valor || 0;
-      acc[m.motoristaId].mudancasCount += 1;
+      acc[mid].receitaGerada += m.receitaRealizada || 0;
+      acc[mid].custosCombustivel += (m.conclusao as any)?.combustivel?.valor || 0;
+      acc[mid].custosAlimentacao += (m.conclusao as any)?.alimentacao?.valor || 0;
+      acc[mid].custoMotorista += m.totalPagoMotorista || 0;
+      acc[mid].custoAjudantes += m.totalPagoAjudantes || 0;
+      acc[mid].mudancasCount += 1;
       return acc;
     }, {} as any);
 
     return Object.values(breakdown).map((b: any) => ({
       ...b,
-      margem: b.receitaGerada - b.custosCombustivel - b.custosAlimentacao,
+      margem: b.receitaGerada - b.custosCombustivel - b.custosAlimentacao - b.custoMotorista - b.custoAjudantes,
     }));
   }
 
@@ -163,7 +168,7 @@ export class FinanceiroService {
   }
 
   async getGastosDetalhados(tenantId: string, dataInicio: string, dataFim: string) {
-    const [combustivelRegistos, alimentacaoRegistos] = await Promise.all([
+    const [combustivelRegistos, alimentacaoRegistos, pagamentosMotorista] = await Promise.all([
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
@@ -174,7 +179,7 @@ export class FinanceiroService {
           },
           conclusao: {
             path: ['combustivel'],
-            not: null,
+            not: null as any,
           },
         },
         select: {
@@ -192,12 +197,29 @@ export class FinanceiroService {
           },
           conclusao: {
             path: ['alimentacao'],
-            not: null,
+            not: null as any,
           },
         },
         select: {
           id: true,
           conclusao: true,
+        },
+      }),
+      this.prisma.mudanca.findMany({
+        where: {
+          tenantId,
+          estado: 'concluida',
+          dataPretendida: {
+            gte: dataInicio,
+            lte: dataFim,
+          },
+          totalPagoMotorista: { not: null } as any,
+        },
+        select: {
+          id: true,
+          totalPagoMotorista: true,
+          totalPagoAjudantes: true,
+          motorista: { select: { id: true, nome: true } },
         },
       }),
     ]);
@@ -217,6 +239,15 @@ export class FinanceiroService {
       }))
       .filter((a) => a.valor > 0);
 
+    const motoristas = pagamentosMotorista
+      .map((m) => ({
+        mudancaId: m.id,
+        motoristaNome: m.motorista?.nome || 'N/A',
+        totalPagoMotorista: m.totalPagoMotorista || 0,
+        totalPagoAjudantes: m.totalPagoAjudantes || 0,
+      }))
+      .filter((p) => p.totalPagoMotorista > 0 || p.totalPagoAjudantes > 0);
+
     return {
       combustivel: {
         total: combustivel.reduce((acc, c) => acc + c.valor, 0),
@@ -225,6 +256,11 @@ export class FinanceiroService {
       alimentacao: {
         total: alimentacao.reduce((acc, a) => acc + a.valor, 0),
         porMudanca: alimentacao,
+      },
+      motoristas: {
+        totalMotoristas: motoristas.reduce((acc, p) => acc + p.totalPagoMotorista, 0),
+        totalAjudantes: motoristas.reduce((acc, p) => acc + p.totalPagoAjudantes, 0),
+        porMudanca: motoristas,
       },
     };
   }

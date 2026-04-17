@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   MUDANCAS-LOGISTICA SITE DESIGN SYSTEM
+   Inspirado no Sirocco (aura.build) - clean, warm, modern
+   ============================================================================ */
+
+@layer base {
+  :root {
+    /* --- Paleta Sirocco Adaptada --- */
+    --sand: #F5EDE0;
+    --sand-dark: #E8DCC8;
+    --sand-medium: #D9CCBA;
+    --terracotta: #C4572A;
+    --gold: #D4A853;
+    --gold-light: #E8D5B0;
+    --brown: #2C1810;
+    --brown-medium: #5C4033;
+    --night: #0A0F1E;
+    --night-light: #141B2D;
+    --night-medium: #1E2640;
+    --cream: #F0E6D6;
+    --cream-muted: rgba(240, 230, 214, 0.6);
+
+    /* --- Tenant Dynamic Variables --- */
+    --tenant-primary: #1B4D3E;
+    --tenant-primary-light: #2A7A64;
+    --tenant-secondary: #C4572A;
+    --tenant-accent: #D4A853;
+    --tenant-bg: #F5EDE0;
+    --tenant-bg-dark: #0A0F1E;
+    --tenant-text: #2C1810;
+    --tenant-text-light: #F0E6D6;
+    --tenant-font-display: 'Cormorant Garamond', serif;
+    --tenant-font-body: 'Inter', sans-serif;
+
+    /* --- shadcn-compatible --- */
+    --background: 36 29% 94%;
+    --foreground: 18 46% 13%;
+    --card: 36 29% 94%;
+    --card-foreground: 18 46% 13%;
+    --popover: 36 29% 94%;
+    --popover-foreground: 18 46% 13%;
+    --primary: 159 49% 21%;
+    --primary-foreground: 36 29% 94%;
+    --secondary: 36 29% 91%;
+    --secondary-foreground: 18 46% 13%;
+    --muted: 36 29% 91%;
+    --muted-foreground: 18 20% 35%;
+    --accent: 17 57% 47%;
+    --accent-foreground: 36 29% 94%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 36 29% 94%;
+    --border: 40 48% 58% / 0.15;
+    --input: 40 48% 58% / 0.15;
+    --ring: 159 49% 21%;
+    --radius: 0.375rem;
+  }
+
+  .dark {
+    --background: 224 47% 8%;
+    --foreground: 36 29% 94%;
+    --card: 224 47% 8%;
+    --card-foreground: 36 29% 94%;
+    --popover: 224 47% 8%;
+    --popover-foreground: 36 29% 94%;
+    --primary: 159 49% 30%;
+    --primary-foreground: 36 29% 94%;
+    --secondary: 224 32% 14%;
+    --secondary-foreground: 36 29% 94%;
+    --muted: 224 32% 14%;
+    --muted-foreground: 36 20% 65%;
+    --accent: 40 48% 58%;
+    --accent-foreground: 36 29% 94%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 36 29% 94%;
+    --border: 40 48% 58% / 0.12;
+    --input: 224 32% 14%;
+    --ring: 40 48% 58%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--tenant-font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--tenant-font-display);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-28px);
+  transition: opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(28px);
+  transition: opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.stagger-up .reveal-child {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.stagger-up.visible .reveal-child { opacity: 1; transform: translateY(0); }
+.stagger-up.visible .reveal-child:nth-child(1) { transition-delay: 0s; }
+.stagger-up.visible .reveal-child:nth-child(2) { transition-delay: 0.12s; }
+.stagger-up.visible .reveal-child:nth-child(3) { transition-delay: 0.24s; }
+.stagger-up.visible .reveal-child:nth-child(4) { transition-delay: 0.36s; }
+.stagger-up.visible .reveal-child:nth-child(5) { transition-delay: 0.48s; }
+.stagger-up.visible .reveal-child:nth-child(6) { transition-delay: 0.60s; }
+
+@keyframes scroll-pulse {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.3; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes border-spin {
+  to { --border-angle: 360deg; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.9; }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+.section-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  color: var(--terracotta);
+}
+
+.night-section .section-label {
+  color: var(--gold);
+}
+
+.section-title {
+  font-family: var(--tenant-font-display);
+  font-weight: 300;
+  font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 48px;
+}
+
+.night-section .section-title {
+  color: var(--cream);
+}
+
+.night-section {
+  background: var(--night);
+  color: var(--cream);
+}
+
+.night-section p {
+  color: var(--cream-muted);
+}
+
+/* Parallax hero */
+.parallax-bg {
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+@media (max-width: 768px) {
+  .parallax-bg {
+    background-attachment: scroll;
+  }
+}

@@ -8,20 +8,20 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
   Request,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { MotoristaService } from './motorista.service';
 import { CreateMotoristaDto } from './dto/create-motorista.dto';
 import { UpdateMotoristaDto } from './dto/update-motorista.dto';
-import { TenantRequest } from '../prisma/prisma.middleware';
+import { TenantRequest, getTenantId } from '../prisma';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('motoristas')
 @Controller('motoristas')
 @ApiBearerAuth()
+@Roles('admin', 'gerente', 'operacional')
 export class MotoristaController {
   constructor(private readonly motoristaService: MotoristaService) {}
 
@@ -29,31 +29,31 @@ export class MotoristaController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Criar novo motorista' })
   create(@Request() req: TenantRequest, @Body() createMotoristaDto: CreateMotoristaDto) {
-    return this.motoristaService.create(req.tenantId, createMotoristaDto);
+    return this.motoristaService.create(getTenantId(req), createMotoristaDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Listar motoristas com filtros' })
   findAll(@Request() req: TenantRequest, @Query() filters: any) {
-    return this.motoristaService.findAll(req.tenantId, filters);
+    return this.motoristaService.findAll(getTenantId(req), filters, req.user);
   }
 
   @Get('disponiveis')
   @ApiOperation({ summary: 'Listar motoristas disponíveis' })
   getDisponiveis(@Request() req: TenantRequest, @Query('data') data?: string) {
-    return this.motoristaService.getDisponiveis(req.tenantId, data);
+    return this.motoristaService.getDisponiveis(getTenantId(req), data);
   }
 
   @Get('me')
   @ApiOperation({ summary: 'Obter dados do motorista autenticado' })
   getMe(@Request() req: TenantRequest) {
-    return this.motoristaService.findByUserId(req.tenantId, req.user.id);
+    return this.motoristaService.findByUserId(getTenantId(req), req.user!.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obter motorista por ID' })
   findOne(@Request() req: TenantRequest, @Param('id') id: string) {
-    return this.motoristaService.findOne(req.tenantId, id);
+    return this.motoristaService.findOne(getTenantId(req), id);
   }
 
   @Get(':id/performance')
@@ -64,7 +64,7 @@ export class MotoristaController {
     @Query('mes') mes: number,
     @Query('ano') ano: number,
   ) {
-    return this.motoristaService.getPerformance(req.tenantId, id, mes, ano);
+    return this.motoristaService.getPerformance(getTenantId(req), id, mes, ano);
   }
 
   @Patch(':id')
@@ -74,7 +74,7 @@ export class MotoristaController {
     @Param('id') id: string,
     @Body() updateMotoristaDto: UpdateMotoristaDto,
   ) {
-    return this.motoristaService.update(req.tenantId, id, updateMotoristaDto);
+    return this.motoristaService.update(getTenantId(req), id, updateMotoristaDto);
   }
 
   @Patch(':id/estado')
@@ -91,6 +91,6 @@ export class MotoristaController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remover motorista' })
   remove(@Request() req: TenantRequest, @Param('id') id: string) {
-    return this.motoristaService.remove(req.tenantId, id);
+    return this.motoristaService.remove(getTenantId(req), id);
   }
 }

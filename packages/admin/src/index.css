@@ -2,58 +2,254 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   MUDANCAS-LOGISTICA DESIGN SYSTEM
+   Inspirado no Sirocco (aura.build) - clean, warm, modern
+   ============================================================================ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    /* --- Paleta Sirocco Adaptada a Logística --- */
+    --sand: #F5EDE0;
+    --sand-dark: #E8DCC8;
+    --sand-medium: #D9CCBA;
+    --terracotta: #C4572A;
+    --gold: #D4A853;
+    --gold-light: #E8D5B0;
+    --brown: #2C1810;
+    --brown-medium: #5C4033;
+    --night: #0A0F1E;
+    --night-light: #141B2D;
+    --night-medium: #1E2640;
+    --cream: #F0E6D6;
+    --cream-muted: rgba(240, 230, 214, 0.6);
+
+    /* --- Tenant Dynamic Variables (sobrepostas pelo TenantProvider) --- */
+    --tenant-primary: #1B4D3E;
+    --tenant-primary-light: #2A7A64;
+    --tenant-secondary: #C4572A;
+    --tenant-accent: #D4A853;
+    --tenant-bg: #F5EDE0;
+    --tenant-bg-dark: #0A0F1E;
+    --tenant-text: #2C1810;
+    --tenant-text-light: #F0E6D6;
+    --tenant-font-display: 'Cormorant Garamond', serif;
+    --tenant-font-body: 'Inter', sans-serif;
+
+    /* --- shadcn-compatible (derived from tenant) --- */
+    --background: 36 29% 94%;         /* sand */
+    --foreground: 18 46% 13%;          /* brown */
+    --card: 36 29% 94%;
+    --card-foreground: 18 46% 13%;
+    --popover: 36 29% 94%;
+    --popover-foreground: 18 46% 13%;
+    --primary: 159 49% 21%;            /* verde-escuro */
+    --primary-foreground: 36 29% 94%;
+    --secondary: 36 29% 91%;           /* sand-dark */
+    --secondary-foreground: 18 46% 13%;
+    --muted: 36 29% 91%;
+    --muted-foreground: 18 20% 35%;
+    --accent: 17 57% 47%;              /* terracotta */
+    --accent-foreground: 36 29% 94%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 36 29% 94%;
+    --border: 40 48% 58% / 0.15;      /* gold/15 */
+    --input: 40 48% 58% / 0.15;
+    --ring: 159 49% 21%;
+    --radius: 0.375rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 224 47% 8%;         /* night */
+    --foreground: 36 29% 94%;          /* cream */
+    --card: 224 47% 8%;
+    --card-foreground: 36 29% 94%;
+    --popover: 224 47% 8%;
+    --popover-foreground: 36 29% 94%;
+    --primary: 159 49% 30%;
+    --primary-foreground: 36 29% 94%;
+    --secondary: 224 32% 14%;
+    --secondary-foreground: 36 29% 94%;
+    --muted: 224 32% 14%;
+    --muted-foreground: 36 20% 65%;
+    --accent: 40 48% 58%;
+    --accent-foreground: 36 29% 94%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 36 29% 94%;
+    --border: 40 48% 58% / 0.12;
+    --input: 224 32% 14%;
+    --ring: 40 48% 58%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
+  /* Custom palette — fixed values (sidebar always dark, content uses semantic vars) */
+  :root {
+    --tw-sand: #F5EDE0;
+    --tw-sand-dark: #E8DCC8;
+    --tw-sand-medium: #D9CCBA;
+    --tw-brown: #2C1810;
+    --tw-brown-medium: #5C4033;
+    --tw-night: #0A0F1E;
+    --tw-night-light: #141B2D;
+    --tw-night-medium: #1E2640;
+    --tw-cream: #F0E6D6;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--tenant-font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Display font for headings */
+  h1, h2, h3 {
+    font-family: var(--tenant-font-display);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ============================================================================
+   ANIMATIONS (Inspirado Sirocco)
+   ============================================================================ */
+
+/* Reveal on scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-28px);
+  transition: opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(28px);
+  transition: opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Stagger-up for card lists */
+.stagger-up .reveal-child {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.stagger-up.visible .reveal-child { opacity: 1; transform: translateY(0); }
+.stagger-up.visible .reveal-child:nth-child(1) { transition-delay: 0s; }
+.stagger-up.visible .reveal-child:nth-child(2) { transition-delay: 0.12s; }
+.stagger-up.visible .reveal-child:nth-child(3) { transition-delay: 0.24s; }
+.stagger-up.visible .reveal-child:nth-child(4) { transition-delay: 0.36s; }
+.stagger-up.visible .reveal-child:nth-child(5) { transition-delay: 0.48s; }
+.stagger-up.visible .reveal-child:nth-child(6) { transition-delay: 0.60s; }
+
+/* Scroll indicator pulse */
+@keyframes scroll-pulse {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.3; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* Conic border spin */
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes border-spin {
+  to { --border-angle: 360deg; }
+}
+
+/* Twinkle (for night sections) */
+@keyframes twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.9; }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+/* Section label (uppercase, small, tracked) */
+.section-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  color: var(--terracotta);
+}
+
+.night-section .section-label {
+  color: var(--gold);
+}
+
+/* Section title (display font, large) */
+.section-title {
+  font-family: var(--tenant-font-display);
+  font-weight: 300;
+  font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 48px;
+}
+
+.night-section .section-title {
+  color: var(--cream);
+}
+
+/* Night section base */
+.night-section {
+  background: var(--night);
+  color: var(--cream);
+}
+
+.night-section p {
+  color: var(--cream-muted);
+}
+
+/* Scrollbar styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 83, 0.2) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 83, 0.2);
+  border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 168, 83, 0.4);
 }

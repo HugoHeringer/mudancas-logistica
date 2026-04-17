@@ -53,7 +53,7 @@ export function DataTable<TData, TValue>({
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex gap-4">
             {Array.from({ length: 4 }).map((_, j) => (
-              <div key={j} className="h-10 bg-gray-200 rounded animate-pulse flex-1" />
+              <div key={j} className="h-10 bg-muted rounded animate-pulse flex-1" />
             ))}
           </div>
         ))}

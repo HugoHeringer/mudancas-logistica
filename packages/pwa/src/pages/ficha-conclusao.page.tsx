@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, Fuel, UtensilsCrossed, Package } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, Fuel, UtensilsCrossed, Package, Users } from 'lucide-react';
 import { useAuthStore } from '../stores/auth.store';
 import { mudancasApi } from '../lib/api';
 import { Button } from '../components/ui/button';
@@ -44,6 +44,8 @@ export function FichaConclusaoPage() {
   const { user } = useAuthStore();
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [capturedData, setCapturedData] = useState<FichaForm | null>(null);
+  const [ajudantesChecked, setAjudantesChecked] = useState<Record<string, boolean>>({});
 
   const { data: mudanca, isLoading } = useQuery({
     queryKey: ['mudanca', id],
@@ -80,10 +82,14 @@ export function FichaConclusaoPage() {
   const alimentacaoTeve = watch('alimentacaoTeve');
 
   const buildPayload = (data: FichaForm) => {
+    const ajudantesConfirmados = Object.entries(ajudantesChecked)
+      .filter(([_, checked]) => checked)
+      .map(([id]) => id);
+
     const payload: any = {
       horasRegistadas: data.horasRegistadas,
       horasCobradas: data.horasCobradas,
-      ajudantesConfirmados: [],
+      ajudantesConfirmados,
       concluidoPor: user?.id || '',
     };
 
@@ -118,40 +124,30 @@ export function FichaConclusaoPage() {
 
   const onSubmit = (data: FichaForm) => {
     setSubmitError('');
+    setCapturedData(data);
     setShowConfirm(true);
   };
 
   const handleConfirmSubmit = () => {
-    const data = buildPayload({
-      horasRegistadas: watch('horasRegistadas'),
-      horasCobradas: watch('horasCobradas'),
-      combustivelValor: watch('combustivelValor'),
-      combustivelLitros: watch('combustivelLitros'),
-      alimentacaoTeve: watch('alimentacaoTeve'),
-      alimentacaoValor: watch('alimentacaoValor'),
-      protecaoFilme: watch('protecaoFilme'),
-      protecaoCartao: watch('protecaoCartao'),
-      caixas: watch('caixas'),
-      fitaCola: watch('fitaCola'),
-      observacoes: watch('observacoes'),
-    });
-    concluirMutation.mutate(data);
+    if (!capturedData) return;
+    const payload = buildPayload(capturedData);
+    concluirMutation.mutate(payload);
     setShowConfirm(false);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-blue-600 text-white p-4">
+      <div className="min-h-screen bg-sand">
+        <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Ficha de Conclusão</h1>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Ficha de Conclusão</h1>
           </div>
         </header>
         <div className="p-4 space-y-4">
-          <div className="bg-white rounded-lg p-4 animate-pulse h-60" />
+          <div className="bg-cream/60 rounded-lg p-4 animate-pulse h-60" />
         </div>
       </div>
     );
@@ -159,19 +155,19 @@ export function FichaConclusaoPage() {
 
   if (!mudanca || mudanca.estado !== 'em_servico') {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-blue-600 text-white p-4">
+      <div className="min-h-screen bg-sand">
+        <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Ficha de Conclusão</h1>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Ficha de Conclusão</h1>
           </div>
         </header>
-        <div className="p-4 text-center text-gray-500 mt-8">
-          <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="font-medium">Mudança não disponível para conclusão</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>Voltar</Button>
+        <div className="p-4 text-center text-brown-medium/60 mt-8">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-40" />
+          <p className="font-medium text-brown">Mudança não disponível para conclusão</p>
+          <Button variant="outline" className="mt-4 border-gold/30 text-brown hover:bg-gold/10" onClick={() => navigate(-1)}>Voltar</Button>
         </div>
       </div>
     );
@@ -180,24 +176,24 @@ export function FichaConclusaoPage() {
   const tempoEstimado = mudanca.tempoEstimadoHoras || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <header className="bg-blue-600 text-white p-4 sticky top-0 z-10">
+    <div className="min-h-screen bg-sand pb-24">
+      <header className="bg-night text-cream p-4 sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">Ficha de Conclusão</h1>
-            <p className="text-blue-100 text-sm">{mudanca.clienteNome}</p>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Ficha de Conclusão</h1>
+            <p className="text-cream-muted text-sm">{mudanca.clienteNome}</p>
           </div>
         </div>
       </header>
 
       <main className="p-4 space-y-3">
         {submitError && (
-          <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-            <p className="text-sm text-red-700">{submitError}</p>
+          <div className="flex items-start gap-2 p-3 bg-terracotta/10 border border-terracotta/20 rounded-lg">
+            <AlertCircle className="h-5 w-5 text-terracotta mt-0.5 shrink-0" />
+            <p className="text-sm text-terracotta">{submitError}</p>
           </div>
         )}
 
@@ -205,7 +201,7 @@ export function FichaConclusaoPage() {
           {/* Horas */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500">Tempo</CardTitle>
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Tempo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
@@ -217,10 +213,10 @@ export function FichaConclusaoPage() {
                   {...register('horasRegistadas')}
                 />
                 {tempoEstimado > 0 && (
-                  <p className="text-xs text-gray-400">Tempo estimado: {tempoEstimado}h</p>
+                  <p className="text-xs text-brown-medium/40">Tempo estimado: {tempoEstimado}h</p>
                 )}
                 {errors.horasRegistadas && (
-                  <p className="text-xs text-red-600">{errors.horasRegistadas.message}</p>
+                  <p className="text-xs text-terracotta">{errors.horasRegistadas.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -232,16 +228,51 @@ export function FichaConclusaoPage() {
                   {...register('horasCobradas')}
                 />
                 {errors.horasCobradas && (
-                  <p className="text-xs text-red-600">{errors.horasCobradas.message}</p>
+                  <p className="text-xs text-terracotta">{errors.horasCobradas.message}</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
+          {/* Ajudantes */}
+          {mudanca.ajudantes && mudanca.ajudantes.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+                  <Users className="h-3 w-3" /> Ajudantes Confirmados
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {mudanca.ajudantes.map((ajudante: any) => (
+                  <label
+                    key={ajudante.id}
+                    className="flex items-center gap-3 cursor-pointer py-1"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={ajudantesChecked[ajudante.id] || false}
+                      onChange={(e) =>
+                        setAjudantesChecked((prev) => ({
+                          ...prev,
+                          [ajudante.id]: e.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-sand-medium text-gold focus:ring-gold"
+                    />
+                    <span className="text-sm text-brown">{ajudante.nome}</span>
+                    {ajudante.telefone && (
+                      <span className="text-xs text-brown-medium/40 ml-auto">{ajudante.telefone}</span>
+                    )}
+                  </label>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Combustível */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
                 <Fuel className="h-3 w-3" /> Combustível
               </CardTitle>
             </CardHeader>
@@ -274,7 +305,7 @@ export function FichaConclusaoPage() {
           {/* Alimentação */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
                 <UtensilsCrossed className="h-3 w-3" /> Alimentação
               </CardTitle>
             </CardHeader>
@@ -292,11 +323,11 @@ export function FichaConclusaoPage() {
                     } as any);
                   }}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    alimentacaoTeve ? 'bg-blue-600' : 'bg-gray-200'
+                    alimentacaoTeve ? 'bg-gold' : 'bg-sand-medium'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-cream transition-transform ${
                       alimentacaoTeve ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
@@ -321,7 +352,7 @@ export function FichaConclusaoPage() {
           {/* Materiais */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
                 <Package className="h-3 w-3" /> Materiais Utilizados
               </CardTitle>
             </CardHeader>
@@ -350,7 +381,7 @@ export function FichaConclusaoPage() {
           {/* Observações */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500">Observações</CardTitle>
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Observações</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
@@ -363,7 +394,7 @@ export function FichaConclusaoPage() {
 
           <Button
             type="submit"
-            className="w-full h-12 text-base"
+            className="w-full h-12 text-base bg-terracotta hover:bg-terracotta/90 text-cream"
             disabled={concluirMutation.isPending}
           >
             {concluirMutation.isPending ? (
@@ -386,7 +417,7 @@ export function FichaConclusaoPage() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowConfirm(false)}>Cancelar</Button>
-            <Button onClick={handleConfirmSubmit} disabled={concluirMutation.isPending}>
+            <Button onClick={handleConfirmSubmit} disabled={concluirMutation.isPending} className="bg-terracotta hover:bg-terracotta/90 text-cream">
               {concluirMutation.isPending ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> A confirmar...</>
               ) : (

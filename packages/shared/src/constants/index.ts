@@ -82,9 +82,9 @@ export const ESTADOS_MOTORISTA = {
 } as const;
 
 export const ESTADOS_MOTORISTA_LABELS: Record<string, string> = {
-  disponivel: 'Disponível',
-  em_servico: 'Em Serviço',
-  indispnivel: 'Indisponível'
+  disponivel: 'Disponivel',
+  em_servico: 'Em Servico',
+  indisponivel: 'Indisponivel'
 };
 
 // Estados de tenant

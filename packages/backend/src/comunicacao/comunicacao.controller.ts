@@ -3,36 +3,38 @@ import {
   Get,
   Post,
   Body,
+  Patch,
   Param,
   Delete,
   HttpCode,
   HttpStatus,
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
   Request,
+  Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ComunicacaoService } from './comunicacao.service';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
-import { TenantRequest } from '../prisma/prisma.middleware';
+import { TenantRequest, getTenantId } from '../prisma';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('comunicacao')
 @Controller('comunicacao')
 @ApiBearerAuth()
+@Roles('admin', 'gerente')
 export class ComunicacaoController {
   constructor(private readonly comunicacaoService: ComunicacaoService) {}
 
   @Get('templates')
   @ApiOperation({ summary: 'Listar templates de email' })
   getTemplates(@Request() req: TenantRequest) {
-    return this.comunicacaoService.getTemplates(req.tenantId);
+    return this.comunicacaoService.getTemplates(getTenantId(req));
   }
 
   @Get('templates/:nome')
   @ApiOperation({ summary: 'Obter template por nome' })
   getTemplate(@Request() req: TenantRequest, @Param('nome') nome: string) {
-    return this.comunicacaoService.getTemplate(req.tenantId, nome);
+    return this.comunicacaoService.getTemplate(getTenantId(req), nome);
   }
 
   @Post('templates')
@@ -42,7 +44,7 @@ export class ComunicacaoController {
     @Request() req: TenantRequest,
     @Body() createTemplateDto: CreateTemplateDto,
   ) {
-    return this.comunicacaoService.createTemplate(req.tenantId, createTemplateDto);
+    return this.comunicacaoService.createTemplate(getTenantId(req), createTemplateDto);
   }
 
   @Patch('templates/:nome')
@@ -52,14 +54,14 @@ export class ComunicacaoController {
     @Param('nome') nome: string,
     @Body() updateTemplateDto: UpdateTemplateDto,
   ) {
-    return this.comunicacaoService.updateTemplate(req.tenantId, nome, updateTemplateDto);
+    return this.comunicacaoService.updateTemplate(getTenantId(req), nome, updateTemplateDto);
   }
 
   @Delete('templates/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remover template de email' })
   deleteTemplate(@Request() req: TenantRequest, @Param('id') id: string) {
-    return this.comunicacaoService.deleteTemplate(req.tenantId, id);
+    return this.comunicacaoService.deleteTemplate(getTenantId(req), id);
   }
 
   @Post('templates/:nome/render')
@@ -69,12 +71,22 @@ export class ComunicacaoController {
     @Param('nome') nome: string,
     @Body() body: { variaveis: Record<string, any> },
   ) {
-    return this.comunicacaoService.renderTemplate(req.tenantId, nome, body.variaveis);
+    return this.comunicacaoService.renderTemplate(getTenantId(req), nome, body.variaveis);
   }
 
   @Post('templates/initialize')
   @ApiOperation({ summary: 'Inicializar templates padrão' })
   initializeTemplates(@Request() req: TenantRequest) {
-    return this.comunicacaoService.initializeDefaultTemplates(req.tenantId);
+    return this.comunicacaoService.initializeDefaultTemplates(getTenantId(req));
+  }
+
+  @Get('emails')
+  @ApiOperation({ summary: 'Listar histórico de emails enviados' })
+  getEmailLogs(
+    @Request() req: TenantRequest,
+    @Query('mudancaId') mudancaId?: string,
+    @Query('destinatario') destinatario?: string,
+  ) {
+    return this.comunicacaoService.getEmailLogs(getTenantId(req), { mudancaId, destinatario });
   }
 }

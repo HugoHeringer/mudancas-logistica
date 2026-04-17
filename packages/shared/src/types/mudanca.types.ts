@@ -1,11 +1,7 @@
-import {
+import type {
   MudancaForm,
   EstadoMudanca,
   TipoServico,
-  MudancaSchema,
-  MudancaFormSchema,
-  MudancaAprovacaoSchema,
-  MudancaConclusaoSchema
 } from '../schemas/mudanca.schema';
 
 export type { MudancaForm, EstadoMudanca, TipoServico };

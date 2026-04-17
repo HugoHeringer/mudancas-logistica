@@ -19,7 +19,7 @@ export class MotoristaService {
     });
   }
 
-  async findAll(tenantId: string, filters?: any) {
+  async findAll(tenantId: string, filters?: any, user?: any) {
     const where: any = { tenantId };
 
     if (filters?.estado) {
@@ -35,6 +35,14 @@ export class MotoristaService {
         { nome: { contains: filters.search, mode: 'insensitive' } },
         { email: { contains: filters.search, mode: 'insensitive' } },
       ];
+    }
+
+    // Gerente visibility restriction: only see allowed motoristas
+    if (user?.perfil === 'gerente') {
+      const permissoes = user.permissoes as any;
+      if (!permissoes?.verTodosMotoristas && permissoes?.motoristasPermitidos?.length > 0) {
+        where.id = { in: permissoes.motoristasPermitidos };
+      }
     }
 
     return this.prisma.motorista.findMany({

@@ -33,6 +33,7 @@ interface Motorista {
   email: string;
   telefone: string;
   estado: string;
+  valorHora: number;
   veiculo?: { id: string; nome: string };
   mudancasRealizadas: number;
 }
@@ -53,6 +54,7 @@ export function MotoristasPage() {
   const [formCarta, setFormCarta] = useState('');
   const [formValidade, setFormValidade] = useState('');
   const [formVeiculoId, setFormVeiculoId] = useState('');
+  const [formValorHora, setFormValorHora] = useState('0');
 
   const { data: motoristas, isLoading } = useQuery({
     queryKey: ['motoristas'],
@@ -114,6 +116,7 @@ export function MotoristasPage() {
     setFormCarta('');
     setFormValidade('');
     setFormVeiculoId('');
+    setFormValorHora('0');
   };
 
   const openEdit = (m: Motorista) => {
@@ -122,6 +125,7 @@ export function MotoristasPage() {
     setFormEmail(m.email);
     setFormTelefone(m.telefone);
     setFormVeiculoId(m.veiculo?.id || '');
+    setFormValorHora(String(m.valorHora || 0));
     setShowEdit(true);
   };
 
@@ -138,6 +142,11 @@ export function MotoristasPage() {
       accessorKey: 'veiculo',
       header: 'Veículo',
       cell: ({ row }) => row.original.veiculo?.nome || <span className="text-muted-foreground">—</span>,
+    },
+    {
+      accessorKey: 'valorHora',
+      header: 'Valor/Hora',
+      cell: ({ row }) => `€${(row.original.valorHora || 0).toFixed(2)}`,
     },
     {
       accessorKey: 'estado',
@@ -188,6 +197,11 @@ export function MotoristasPage() {
             <div className="space-y-2"><Label>Nome</Label><Input value={formNome} onChange={(e) => setFormNome(e.target.value)} placeholder="Nome completo" /></div>
             <div className="space-y-2"><Label>Email</Label><Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="email@exemplo.pt" /></div>
             <div className="space-y-2"><Label>Telefone</Label><Input value={formTelefone} onChange={(e) => setFormTelefone(e.target.value)} placeholder="912345678" /></div>
+            <div className="space-y-2">
+              <Label>Valor/Hora (€)</Label>
+              <Input type="number" step="0.50" min="0" value={formValorHora} onChange={(e) => setFormValorHora(e.target.value)} placeholder="0.00" />
+              <p className="text-xs text-muted-foreground">Valor pago ao motorista por hora trabalhada.</p>
+            </div>
             <div className="space-y-2"><Label>Nº Carta de Condução</Label><Input value={formCarta} onChange={(e) => setFormCarta(e.target.value)} placeholder="P-12345678" /></div>
             <div className="space-y-2"><Label>Validade da Carta</Label><Input type="date" value={formValidade} onChange={(e) => setFormValidade(e.target.value)} /></div>
             <div className="space-y-2">
@@ -205,7 +219,7 @@ export function MotoristasPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialogs}>Cancelar</Button>
-            <Button disabled={!formNome || createMutation.isPending} onClick={() => createMutation.mutate({ nome: formNome, email: formEmail, telefone: formTelefone, cartaConducao: formCarta, validadeCarta: formValidade, veiculoId: formVeiculoId === '_none' ? undefined : formVeiculoId || undefined })}>
+            <Button disabled={!formNome || createMutation.isPending} onClick={() => createMutation.mutate({ nome: formNome, email: formEmail, telefone: formTelefone, cartaConducao: formCarta, validadeCarta: formValidade, valorHora: parseFloat(formValorHora) || 0, veiculoId: formVeiculoId === '_none' ? undefined : formVeiculoId || undefined })}>
               {createMutation.isPending ? 'A criar...' : 'Criar Motorista'}
             </Button>
           </DialogFooter>
@@ -223,6 +237,11 @@ export function MotoristasPage() {
               <div className="space-y-2"><Label>Nome</Label><Input value={formNome} onChange={(e) => setFormNome(e.target.value)} /></div>
               <div className="space-y-2"><Label>Email</Label><Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} /></div>
               <div className="space-y-2"><Label>Telefone</Label><Input value={formTelefone} onChange={(e) => setFormTelefone(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>Valor/Hora (€)</Label>
+                <Input type="number" step="0.50" min="0" value={formValorHora} onChange={(e) => setFormValorHora(e.target.value)} />
+                <p className="text-xs text-muted-foreground">Valor pago ao motorista por hora trabalhada.</p>
+              </div>
               <div className="space-y-2">
                 <Label>Veículo Atribuído</Label>
                 <Select value={formVeiculoId} onValueChange={setFormVeiculoId}>
@@ -247,7 +266,7 @@ export function MotoristasPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={closeDialogs}>Cancelar</Button>
-            <Button disabled={!formNome || updateMutation.isPending} onClick={() => selectedMotorista && updateMutation.mutate({ id: selectedMotorista.id, data: { nome: formNome, email: formEmail, telefone: formTelefone, veiculoId: formVeiculoId === '_none' ? null : formVeiculoId || undefined } })}>
+            <Button disabled={!formNome || updateMutation.isPending} onClick={() => selectedMotorista && updateMutation.mutate({ id: selectedMotorista.id, data: { nome: formNome, email: formEmail, telefone: formTelefone, valorHora: parseFloat(formValorHora) || 0, veiculoId: formVeiculoId === '_none' ? null : formVeiculoId || undefined } })}>
               {updateMutation.isPending ? 'A guardar...' : 'Guardar'}
             </Button>
           </DialogFooter>

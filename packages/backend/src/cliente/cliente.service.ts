@@ -24,6 +24,7 @@ export class ClienteService {
       data: {
         tenantId,
         ...createClienteDto,
+        moradas: createClienteDto.moradas as any,
       },
     });
   }
@@ -82,11 +83,11 @@ export class ClienteService {
     const cliente = await this.findOne(tenantId, id);
 
     // Verificar email duplicado se estiver a ser alterado
-    if (updateClienteDto.email) {
+    if ((updateClienteDto as any).email) {
       const existing = await this.prisma.cliente.findFirst({
         where: {
           tenantId,
-          email: updateClienteDto.email,
+          email: (updateClienteDto as any).email,
           id: { not: id },
         },
       });
@@ -98,7 +99,7 @@ export class ClienteService {
 
     return this.prisma.cliente.update({
       where: { id },
-      data: updateClienteDto,
+      data: updateClienteDto as any,
     });
   }
 
@@ -109,7 +110,7 @@ export class ClienteService {
 
     // Transferir mudanças do source para target
     await this.prisma.mudanca.updateMany({
-      where: { clienteEmail: { not: null } },
+      where: { clienteId: sourceId, tenantId },
       data: { clienteId: targetId },
     });
 
@@ -151,7 +152,7 @@ export class ClienteService {
       where: { id: cliente.id },
       data: {
         numeroMudancas: { increment: 1 },
-        eRecorrente: cliente.numeroMudancas > 0,
+        eRecorrente: cliente.numeroMudancas >= 1,
         ultimaMudanca: new Date(),
       },
     });

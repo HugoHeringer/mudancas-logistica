@@ -1,6 +1,8 @@
 import { useLocation } from 'react-router-dom';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/auth.store';
+import { TenantProvider } from './theme/TenantProvider';
+import { ErrorBoundary } from './components/error-boundary';
 import { LoginPage } from './pages/auth/login.page';
 import { AgendaDiaPage } from './pages/agenda-dia.page';
 import { DetalheMudancaPage } from './pages/detalhe-mudanca.page';
@@ -8,6 +10,7 @@ import { FichaConclusaoPage } from './pages/ficha-conclusao.page';
 import { HistoricoPage } from './pages/historico.page';
 import { PerfilPage } from './pages/perfil.page';
 import { BottomNav } from './components/bottom-nav';
+import { OfflineIndicator } from './components/offline-indicator';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -21,18 +24,20 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppLayout() {
   const location = useLocation();
-  // Hide bottom nav on detail/ficha pages (full-screen)
   const showBottomNav = !location.pathname.includes('/mudanca/');
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<ProtectedRoute><AgendaDiaPage /></ProtectedRoute>} />
-        <Route path="/historico" element={<ProtectedRoute><HistoricoPage /></ProtectedRoute>} />
-        <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
-        <Route path="/mudanca/:id" element={<ProtectedRoute><DetalheMudancaPage /></ProtectedRoute>} />
-        <Route path="/mudanca/:id/ficha" element={<ProtectedRoute><FichaConclusaoPage /></ProtectedRoute>} />
-      </Routes>
+      <OfflineIndicator />
+      <div className="pb-16">
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><AgendaDiaPage /></ProtectedRoute>} />
+          <Route path="/historico" element={<ProtectedRoute><HistoricoPage /></ProtectedRoute>} />
+          <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
+          <Route path="/mudanca/:id" element={<ProtectedRoute><DetalheMudancaPage /></ProtectedRoute>} />
+          <Route path="/mudanca/:id/ficha" element={<ProtectedRoute><FichaConclusaoPage /></ProtectedRoute>} />
+        </Routes>
+      </div>
       {showBottomNav && <BottomNav />}
     </>
   );
@@ -40,10 +45,14 @@ function AppLayout() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/*" element={<AppLayout />} />
-    </Routes>
+    <ErrorBoundary>
+      <TenantProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/*" element={<AppLayout />} />
+        </Routes>
+      </TenantProvider>
+    </ErrorBoundary>
   );
 }
 

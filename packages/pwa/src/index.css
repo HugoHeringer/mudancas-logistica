@@ -4,25 +4,51 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    /* Sirocco-inspired palette */
+    --sand: #F5EDE0;
+    --sand-dark: #E8DCC8;
+    --sand-medium: #D4C9B5;
+    --terracotta: #C4572A;
+    --gold: #D4A853;
+    --gold-light: #E8D5B0;
+    --brown: #2C1810;
+    --brown-medium: #5C4033;
+    --night: #0A0F1E;
+    --night-light: #141B2D;
+    --cream: #F0E6D6;
+    --cream-muted: rgba(240, 230, 214, 0.6);
+
+    /* Tenant dynamic vars (overridden by TenantProvider) */
+    --tenant-primary: #1B4D3E;
+    --tenant-secondary: #C4572A;
+    --tenant-accent: #D4A853;
+    --tenant-bg: #F5EDE0;
+    --tenant-bg-dark: #0A0F1E;
+    --tenant-text: #2C1810;
+    --tenant-text-light: #F0E6D6;
+    --tenant-font-display: 'Cormorant Garamond', serif;
+    --tenant-font-body: 'Inter', sans-serif;
+
+    /* shadcn-compatible HSL vars */
+    --background: 30 29% 93%;
+    --foreground: 18 36% 12%;
+    --card: 30 29% 93%;
+    --card-foreground: 18 36% 12%;
+    --popover: 30 29% 93%;
+    --popover-foreground: 18 36% 12%;
+    --primary: 160 48% 21%;
+    --primary-foreground: 30 27% 94%;
+    --secondary: 30 29% 88%;
+    --secondary-foreground: 18 36% 12%;
+    --muted: 30 29% 88%;
+    --muted-foreground: 18 16% 28%;
+    --accent: 17 59% 47%;
+    --accent-foreground: 30 27% 94%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 30 27% 94%;
+    --border: 43 46% 58% / 0.15;
+    --input: 43 46% 58% / 0.15;
+    --ring: 160 48% 21%;
     --radius: 0.5rem;
   }
 }
@@ -32,7 +58,47 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-sand text-brown;
+    font-family: var(--tenant-font-body);
     touch-action: manipulation;
+    -webkit-font-smoothing: antialiased;
   }
+  h1, h2, h3 {
+    font-family: var(--tenant-font-display);
+  }
+}
+
+/* Reveal animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1), transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stagger-up .stagger-child {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.33, 1, 0.68, 1), transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.stagger-up.visible .stagger-child {
+  opacity: 1;
+  transform: translateY(0);
+}
+.stagger-up.visible .stagger-child:nth-child(1) { transition-delay: 0ms; }
+.stagger-up.visible .stagger-child:nth-child(2) { transition-delay: 80ms; }
+.stagger-up.visible .stagger-child:nth-child(3) { transition-delay: 160ms; }
+.stagger-up.visible .stagger-child:nth-child(4) { transition-delay: 240ms; }
+
+/* Section label utility */
+.section-label {
+  @apply text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60;
+}
+
+/* Safe area for bottom nav */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

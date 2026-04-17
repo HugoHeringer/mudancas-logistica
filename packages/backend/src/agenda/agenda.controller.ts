@@ -16,17 +16,20 @@ import { AgendaService } from './agenda.service';
 import { CreateBloqueioDto } from './dto/create-bloqueio.dto';
 import { UpdateConfigAgendaDto } from './dto/update-config-agenda.dto';
 import { TenantRequest } from '../prisma/prisma.middleware';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 function getTenantId(req: TenantRequest): string {
-  if (!req.tenantId) {
+  const tenantId = req.tenantId || req.user?.tenantId;
+  if (!tenantId) {
     throw new Error('Tenant ID não encontrado');
   }
-  return req.tenantId;
+  return tenantId;
 }
 
 @ApiTags('agenda')
 @Controller('agenda')
 @ApiBearerAuth()
+@Roles('admin', 'gerente', 'operacional', 'motorista')
 export class AgendaController {
   constructor(private readonly agendaService: AgendaService) {}
 
@@ -86,6 +89,16 @@ export class AgendaController {
     @Body() slots: any[],
   ) {
     return this.agendaService.criarSlots(getTenantId(req), data, slots);
+  }
+
+  @Get('bloqueios')
+  @ApiOperation({ summary: 'Listar bloqueios de agenda' })
+  getBloqueios(
+    @Request() req: TenantRequest,
+    @Query('dataInicio') dataInicio?: string,
+    @Query('dataFim') dataFim?: string,
+  ) {
+    return this.agendaService.getBloqueios(getTenantId(req), dataInicio, dataFim);
   }
 
   @Post('bloqueios')
