@@ -25,7 +25,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
           const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
@@ -34,18 +34,20 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch {
-          // Refresh failed — logout
+          // Refresh failed — clear tokens and redirect to login
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          sessionStorage.removeItem('refreshToken');
+          window.location.href = '/login?expired=true';
           return Promise.reject(error);
         }
       }
 
-      // No refresh token — logout
+      // No refresh token — clear tokens and redirect to login
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      window.location.href = '/login';
+      sessionStorage.removeItem('refreshToken');
+      window.location.href = '/login?expired=true';
     }
 
     return Promise.reject(error);
@@ -72,7 +74,11 @@ export const mudancasApi = {
     return api.get(`/mudancas/minhas?${params.toString()}`);
   },
   findOne: (id: string) => api.get(`/mudancas/${id}`),
-  iniciarDeslocamento: (id: string) => api.post(`/mudancas/${id}/iniciar`),
+  iniciarDeslocamento: (id: string, previsaoChegadaMinutos?: number) => api.post(`/mudancas/${id}/iniciar`, { previsaoChegadaMinutos }),
   emServico: (id: string) => api.post(`/mudancas/${id}/em-servico`),
   concluir: (id: string, data: any) => api.post(`/mudancas/${id}/concluir`, data),
+};
+
+export const publicApi = {
+  getTenantBrand: (subdomain: string) => axios.get(`${API_BASE_URL}/public/tenant/${subdomain}`),
 };

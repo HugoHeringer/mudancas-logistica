@@ -33,7 +33,7 @@ export type LoginRequest = {
 
 export type LoginResponse = {
   user: UserResumo;
-  token: string;
+  accessToken: string;
   refreshToken: string;
 };
 

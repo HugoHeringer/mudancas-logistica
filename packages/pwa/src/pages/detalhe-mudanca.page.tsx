@@ -6,6 +6,7 @@ import { mudancasApi } from '../lib/api';
 import { StatusBadge } from '../components/status-badge';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { useTimer } from '../hooks/use-timer';
 
 const ESTADO_STEPS = ['aprovada', 'a_caminho', 'em_servico', 'concluida'];
 
@@ -14,6 +15,8 @@ export function DetalheMudancaPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState(false);
+  const [showPrevisao, setShowPrevisao] = useState(false);
+  const [previsaoMin, setPrevisaoMin] = useState(15);
 
   const { data: mudanca, isLoading } = useQuery({
     queryKey: ['mudanca', id],
@@ -22,10 +25,11 @@ export function DetalheMudancaPage() {
   });
 
   const iniciarMutation = useMutation({
-    mutationFn: () => mudancasApi.iniciarDeslocamento(id!),
+    mutationFn: (previsaoChegadaMinutos?: number) => mudancasApi.iniciarDeslocamento(id!, previsaoChegadaMinutos),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mudanca', id] });
       queryClient.invalidateQueries({ queryKey: ['mudancas'] });
+      setShowPrevisao(false);
     },
   });
 
@@ -37,18 +41,35 @@ export function DetalheMudancaPage() {
     },
   });
 
-  const handleAction = async (action: 'iniciar' | 'emServico') => {
+  const handleAction = async (action: 'emServico') => {
     setActionLoading(true);
     try {
-      if (action === 'iniciar') await iniciarMutation.mutateAsync();
-      else await emServicoMutation.mutateAsync();
+      if (action === 'emServico') await emServicoMutation.mutateAsync();
     } finally {
       setActionLoading(false);
     }
   };
 
+  const handleIniciar = () => {
+    iniciarMutation.mutate(previsaoMin);
+  };
+
+  // Previsao options: 5-30 (5min), 30-120 (15min), 120-480 (30min)
+  const previsaoOptions = [
+    ...Array.from({ length: 6 }, (_, i) => (i + 1) * 5),   // 5,10,15,20,25,30
+    ...Array.from({ length: 6 }, (_, i) => 30 + (i + 1) * 15), // 45,60,75,90,105,120
+    ...Array.from({ length: 7 }, (_, i) => 120 + (i + 1) * 60), // 180,240,300,360,420,480,540
+  ];
+
+  const formatPrevisao = (min: number) => {
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  };
+
   const renderMorada = (morada: any, label: string) => {
-    if (!morada) return <p className="text-sm text-gray-400">{label} não disponível</p>;
+    if (!morada) return <p className="text-sm text-brown-medium/50">{label} não disponível</p>;
     const parts = [
       morada.rua,
       morada.numero,
@@ -60,16 +81,16 @@ export function DetalheMudancaPage() {
     const mapsQuery = encodeURIComponent(parts || '');
     return (
       <div className="space-y-1">
-        <p className="text-sm">{parts || '—'}</p>
+        <p className="text-sm text-brown">{parts || '—'}</p>
         {morada.elevador !== undefined && (
-          <p className="text-xs text-gray-500">Elevador: {morada.elevador ? 'Sim' : 'Não'}</p>
+          <p className="text-xs text-brown-medium/60">Elevador: {morada.elevador ? 'Sim' : 'Não'}</p>
         )}
         {mapsQuery && (
           <a
             href={`https://maps.google.com/maps?q=${mapsQuery}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-gold hover:text-terracotta transition-colors"
           >
             <Navigation className="h-3 w-3" /> Abrir no Maps
           </a>
@@ -78,23 +99,24 @@ export function DetalheMudancaPage() {
     );
   };
 
-  // Timeline progress
   const currentStep = mudanca ? ESTADO_STEPS.indexOf(mudanca.estado) : -1;
+
+  const timer = useTimer(mudanca?.iniciadoEm || undefined);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-blue-600 text-white p-4">
+      <div className="min-h-screen bg-sand">
+        <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Carregando...</h1>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Carregando...</h1>
           </div>
         </header>
         <div className="p-4 space-y-4">
-          <div className="bg-white rounded-lg p-4 animate-pulse h-40" />
-          <div className="bg-white rounded-lg p-4 animate-pulse h-24" />
+          <div className="bg-cream/60 rounded-lg p-4 animate-pulse h-40" />
+          <div className="bg-cream/60 rounded-lg p-4 animate-pulse h-24" />
         </div>
       </div>
     );
@@ -102,58 +124,82 @@ export function DetalheMudancaPage() {
 
   if (!mudanca) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-blue-600 text-white p-4">
+      <div className="min-h-screen bg-sand">
+        <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Não encontrado</h1>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Não encontrado</h1>
           </div>
         </header>
-        <div className="p-4 text-center text-gray-500">Mudança não encontrada.</div>
+        <div className="p-4 text-center text-brown-medium/60">Mudança não encontrada.</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-sand pb-24">
       {/* Header */}
-      <header className="bg-blue-600 text-white p-4">
+      <header className="bg-night text-cream p-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">{mudanca.clienteNome}</h1>
-            <p className="text-blue-100 text-sm">{mudanca.dataPretendida} {mudanca.horaPretendida && `às ${mudanca.horaPretendida}`}</p>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>{mudanca.clienteNome}</h1>
+            <p className="text-cream-muted text-sm">{mudanca.dataPretendida} {mudanca.horaPretendida && `às ${mudanca.horaPretendida}`}</p>
           </div>
           <StatusBadge status={mudanca.estado} />
         </div>
       </header>
 
+      {/* Active timer */}
+      {(mudanca.estado === 'a_caminho' || mudanca.estado === 'em_servico') && mudanca.iniciadoEm && (
+        <div className={`px-4 py-3 border-b flex items-center justify-between ${
+          mudanca.estado === 'em_servico' ? 'bg-terracotta/10 border-terracotta/20' : 'bg-gold/10 border-gold/20'
+        }`}>
+          <div>
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">
+              {mudanca.estado === 'em_servico' ? 'Em serviço desde' : 'A caminho desde'}
+            </p>
+            <p className="text-sm text-brown">
+              {new Date(mudanca.iniciadoEm).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Tempo em curso</p>
+            <p className={`text-2xl font-bold tabular-nums ${
+              mudanca.estado === 'em_servico' ? 'text-terracotta' : 'text-gold'
+            }`} style={{ fontFamily: 'var(--tenant-font-body)' }}>
+              {timer.formatted}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Timeline */}
       {currentStep >= 0 && (
-        <div className="bg-white border-b px-4 py-3">
+        <div className="bg-cream/80 border-b border-sand-medium px-4 py-3">
           <div className="flex items-center justify-between">
             {ESTADO_STEPS.map((step, i) => (
               <div key={step} className="flex items-center">
-                <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                  i <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'
+                <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
+                  i <= currentStep ? 'bg-gold text-night' : 'bg-sand-medium text-brown-medium/40'
                 }`}>
                   {i < currentStep ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
                 </div>
                 {i < ESTADO_STEPS.length - 1 && (
-                  <div className={`w-8 h-0.5 mx-0.5 ${i < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                  <div className={`w-8 h-0.5 mx-0.5 ${i < currentStep ? 'bg-gold' : 'bg-sand-medium'}`} />
                 )}
               </div>
             ))}
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-[9px] text-gray-500">Aprovada</span>
-            <span className="text-[9px] text-gray-500">Caminho</span>
-            <span className="text-[9px] text-gray-500">Serviço</span>
-            <span className="text-[9px] text-gray-500">Concluída</span>
+            <span className="text-[9px] text-brown-medium/50">Aprovada</span>
+            <span className="text-[9px] text-brown-medium/50">Caminho</span>
+            <span className="text-[9px] text-brown-medium/50">Serviço</span>
+            <span className="text-[9px] text-brown-medium/50">Concluída</span>
           </div>
         </div>
       )}
@@ -162,13 +208,13 @@ export function DetalheMudancaPage() {
         {/* Cliente */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Cliente</CardTitle>
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Cliente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <h2 className="font-semibold text-lg">{mudanca.clienteNome}</h2>
+            <h2 className="font-semibold text-lg text-brown" style={{ fontFamily: 'var(--tenant-font-display)' }}>{mudanca.clienteNome}</h2>
             <a
               href={`tel:${mudanca.clienteTelefone}`}
-              className="flex items-center gap-2 text-blue-600"
+              className="flex items-center gap-2 text-gold hover:text-terracotta transition-colors"
             >
               <Phone className="h-4 w-4" />
               <span className="text-sm">{mudanca.clienteTelefone}</span>
@@ -179,7 +225,7 @@ export function DetalheMudancaPage() {
         {/* Moradas */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500 flex items-center gap-1">
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
               <MapPin className="h-3 w-3" /> Recolha
             </CardTitle>
           </CardHeader>
@@ -188,7 +234,7 @@ export function DetalheMudancaPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500 flex items-center gap-1">
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
               <MapPin className="h-3 w-3" /> Entrega
             </CardTitle>
           </CardHeader>
@@ -198,13 +244,13 @@ export function DetalheMudancaPage() {
         {/* Equipa + Veículo */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Serviço</CardTitle>
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Serviço</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            <p><span className="text-gray-500">Equipa:</span> {mudanca.equipa === 'motorista' ? 'Motorista' : mudanca.equipa === 'motorista_1_ajudante' ? 'Motorista + 1 Ajudante' : 'Motorista + 2 Ajudantes'}</p>
-            {mudanca.veiculo && <p><span className="text-gray-500">Veículo:</span> {mudanca.veiculo.nome} ({mudanca.veiculo.metrosCubicos}m³)</p>}
-            {mudanca.tempoEstimadoHoras && <p><span className="text-gray-500">Tempo est.:</span> {mudanca.tempoEstimadoHoras}h</p>}
-            {mudanca.observacoesAdmin && <p><span className="text-gray-500">Notas admin:</span> {mudanca.observacoesAdmin}</p>}
+          <CardContent className="space-y-1 text-sm text-brown">
+            <p><span className="text-brown-medium/60">Equipa:</span> {mudanca.equipa === 'motorista' ? 'Motorista' : mudanca.equipa === 'motorista_1_ajudante' ? 'Motorista + 1 Ajudante' : 'Motorista + 2 Ajudantes'}</p>
+            {mudanca.veiculo && <p><span className="text-brown-medium/60">Veículo:</span> {mudanca.veiculo.nome} ({mudanca.veiculo.metrosCubicos}m³)</p>}
+            {mudanca.tempoEstimadoHoras && <p><span className="text-brown-medium/60">Tempo est.:</span> {mudanca.tempoEstimadoHoras}h</p>}
+            {mudanca.observacoesAdmin && <p><span className="text-brown-medium/60">Notas admin:</span> {mudanca.observacoesAdmin}</p>}
           </CardContent>
         </Card>
 
@@ -212,12 +258,12 @@ export function DetalheMudancaPage() {
         {mudanca.materiais && Object.values(mudanca.materiais).some((v: any) => v > 0) && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
                 <Package className="h-3 w-3" /> Materiais
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-sm text-brown">
                 {mudanca.materiais.protecaoFilme > 0 && <p>Proteção Filme: {mudanca.materiais.protecaoFilme}</p>}
                 {mudanca.materiais.protecaoCartao > 0 && <p>Proteção Cartão: {mudanca.materiais.protecaoCartao}</p>}
                 {mudanca.materiais.caixas > 0 && <p>Caixas: {mudanca.materiais.caixas}</p>}
@@ -231,10 +277,10 @@ export function DetalheMudancaPage() {
         {mudanca.observacoes && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500">Observações</CardTitle>
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Observações</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">{mudanca.observacoes}</p>
+              <p className="text-sm text-brown">{mudanca.observacoes}</p>
             </CardContent>
           </Card>
         )}
@@ -243,36 +289,80 @@ export function DetalheMudancaPage() {
         {mudanca.estado === 'concluida' && mudanca.conclusao && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-green-600" /> Ficha de Conclusão
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-terracotta" /> Ficha de Conclusão
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm space-y-1">
-              <p><span className="text-gray-500">Horas registadas:</span> {mudanca.conclusao.horasRegistadas}h</p>
-              <p><span className="text-gray-500">Horas cobradas:</span> {mudanca.conclusao.horasCobradas}h</p>
-              {mudanca.conclusao.combustivel && <p><span className="text-gray-500">Combustível:</span> €{mudanca.conclusao.combustivel.valor} ({mudanca.conclusao.combustivel.litros}L)</p>}
-              {mudanca.conclusao.alimentacao?.teve && <p><span className="text-gray-500">Alimentação:</span> €{mudanca.conclusao.alimentacao.valor}</p>}
-              {mudanca.conclusao.observacoes && <p><span className="text-gray-500">Obs:</span> {mudanca.conclusao.observacoes}</p>}
+            <CardContent className="text-sm space-y-1 text-brown">
+              <p><span className="text-brown-medium/60">Horas registadas:</span> {mudanca.conclusao.horasRegistadas}h</p>
+              <p><span className="text-brown-medium/60">Horas cobradas:</span> {mudanca.conclusao.horasCobradas}h</p>
+              {mudanca.conclusao.combustivel && <p><span className="text-brown-medium/60">Combustível:</span> €{mudanca.conclusao.combustivel.valor} ({mudanca.conclusao.combustivel.litros}L)</p>}
+              {mudanca.conclusao.alimentacao?.teve && <p><span className="text-brown-medium/60">Alimentação:</span> €{mudanca.conclusao.alimentacao.valor}</p>}
+              {mudanca.conclusao.observacoes && <p><span className="text-brown-medium/60">Obs:</span> {mudanca.conclusao.observacoes}</p>}
             </CardContent>
           </Card>
         )}
       </main>
 
       {/* Action buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 space-y-2 z-50">
-        {mudanca.estado === 'aprovada' && (
+      <div className="fixed bottom-0 left-0 right-0 bg-cream/95 backdrop-blur-sm border-t border-sand-medium p-4 space-y-2 z-50">
+        {mudanca.estado === 'aprovada' && !showPrevisao && (
           <Button
-            className="w-full h-12 text-base"
-            onClick={() => handleAction('iniciar')}
-            disabled={actionLoading}
+            className="w-full h-12 text-base bg-gold hover:bg-gold-light text-night"
+            onClick={() => setShowPrevisao(true)}
           >
             <Truck className="h-5 w-5 mr-2" />
-            {actionLoading ? 'A iniciar...' : 'Iniciar Deslocamento'}
+            Iniciar Deslocamento
           </Button>
+        )}
+        {mudanca.estado === 'aprovada' && showPrevisao && (
+          <div className="space-y-3">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 text-center">Previsão de chegada</p>
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+              {previsaoOptions.map((min) => (
+                <button
+                  key={min}
+                  type="button"
+                  onClick={() => setPrevisaoMin(min)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                    previsaoMin === min
+                      ? 'bg-gold text-night shadow-md'
+                      : 'bg-sand-dark text-brown-medium hover:bg-sand-medium/50'
+                  }`}
+                >
+                  {formatPrevisao(min)}
+                </button>
+              ))}
+            </div>
+            <div className="bg-cream/80 rounded-lg p-3 text-center">
+              <p className="text-sm text-brown">
+                <span className="text-brown-medium/60">Destino:</span> {mudanca.moradaRecolha?.localidade || 'Morada de recolha'}
+              </p>
+              <p className="text-sm text-brown">
+                <span className="text-brown-medium/60">Previsão:</span> <strong>{formatPrevisao(previsaoMin)}</strong>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 h-10 border-gold/30 text-brown hover:bg-gold/10"
+                onClick={() => setShowPrevisao(false)}
+              >
+                Voltar
+              </Button>
+              <Button
+                className="flex-1 h-10 bg-gold hover:bg-gold-light text-night"
+                onClick={handleIniciar}
+                disabled={iniciarMutation.isPending}
+              >
+                {iniciarMutation.isPending ? 'A iniciar...' : 'Confirmar e Notificar'}
+              </Button>
+            </div>
+          </div>
         )}
         {mudanca.estado === 'a_caminho' && (
           <Button
-            className="w-full h-12 text-base"
+            className="w-full h-12 text-base bg-night hover:bg-night-light text-cream"
             onClick={() => handleAction('emServico')}
             disabled={actionLoading}
           >
@@ -282,7 +372,7 @@ export function DetalheMudancaPage() {
         )}
         {mudanca.estado === 'em_servico' && (
           <Button
-            className="w-full h-12 text-base"
+            className="w-full h-12 text-base bg-terracotta hover:bg-terracotta/90 text-cream"
             onClick={() => navigate(`/mudanca/${id}/ficha`)}
           >
             <CheckCircle2 className="h-5 w-5 mr-2" />
@@ -293,7 +383,7 @@ export function DetalheMudancaPage() {
           href={`tel:${mudanca.clienteTelefone}`}
           className="block"
         >
-          <Button variant="outline" className="w-full h-10">
+          <Button variant="outline" className="w-full h-10 border-gold/30 text-brown hover:bg-gold/10">
             <Phone className="h-4 w-4 mr-2" /> Contactar Cliente
           </Button>
         </a>

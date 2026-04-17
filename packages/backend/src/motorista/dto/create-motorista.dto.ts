@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail, IsOptional, IsEnum, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateMotoristaDto {
@@ -32,8 +32,18 @@ export class CreateMotoristaDto {
   @IsOptional()
   veiculoId?: string;
 
-  @ApiProperty({ enum: ['disponivel', 'em_servico', 'indisponivel'], default: 'disponivel' })
-  @IsEnum(['disponivel', 'em_servico', 'indisponivel'])
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  userId?: string;
+
+  @ApiProperty({ enum: ['disponivel', 'em_servico', 'ocupado', 'indisponivel'], default: 'disponivel' })
+  @IsEnum(['disponivel', 'em_servico', 'ocupado', 'indisponivel'])
   @IsOptional()
   estado?: string;
+
+  @ApiProperty({ required: false, default: 0 })
+  @IsNumber()
+  @IsOptional()
+  valorHora?: number;
 }

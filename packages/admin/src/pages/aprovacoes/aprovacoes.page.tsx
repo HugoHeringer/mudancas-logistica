@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, XCircle, Eye, AlertTriangle } from 'lucide-react';
-import { mudancasApi, motoristasApi } from '../../lib/api';
+import { mudancasApi, motoristasApi, ajudantesApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth.store';
+import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
 import { EmptyState } from '../../components/empty-state';
@@ -28,13 +29,20 @@ import {
 } from '../../components/ui/select';
 
 const EQUIPA_LABELS: Record<string, string> = {
-  motorista: 'Motorista',
-  motorista_1_ajudante: 'Motorista + 1 Ajudante',
-  motorista_2_ajudantes: 'Motorista + 2 Ajudantes',
+  motorist: 'Motorista',
+  motorist_1_ajudante: 'Motorista + 1 Ajudante',
+  motorist_2_ajudantes: 'Motorista + 2 Ajudantes',
+};
+
+const EQUIPA_AJUDANTES: Record<string, number> = {
+  motorist: 0,
+  motorist_1_ajudante: 1,
+  motorist_2_ajudantes: 2,
 };
 
 export function AprovacoesPage() {
   const { user } = useAuthStore();
+  const { podeVer } = usePermissao();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedMudanca, setSelectedMudanca] = useState<any>(null);
@@ -45,6 +53,7 @@ export function AprovacoesPage() {
 
   // Form state
   const [motoristaId, setMotoristaId] = useState('');
+  const [ajudantesSelecionados, setAjudantesSelecionados] = useState<string[]>([]);
   const [tempoEstimado, setTempoEstimado] = useState('2');
   const [observacoesAdmin, setObservacoesAdmin] = useState('');
   const [motivoRecusa, setMotivoRecusa] = useState('');
@@ -64,11 +73,17 @@ export function AprovacoesPage() {
     queryFn: () => motoristasApi.findDisponiveis().then((r) => r.data),
   });
 
+  const { data: ajudantesDisponiveis } = useQuery({
+    queryKey: ['ajudantes', 'disponiveis'],
+    queryFn: () => ajudantesApi.findDisponiveis().then((r) => r.data),
+  });
+
   const aprovarMutation = useMutation({
-    mutationFn: (data: { id: string; aprovadoPor: string; motoristaId: string; tempoEstimadoHoras: number; observacoesAdmin?: string }) =>
+    mutationFn: (data: { id: string; aprovadoPor: string; motoristaId: string; ajudantesIds?: string[]; tempoEstimadoHoras: number; observacoesAdmin?: string }) =>
       mudancasApi.approve(data.id, {
         aprovadoPor: data.aprovadoPor,
         motoristaId: data.motoristaId,
+        ajudantesIds: data.ajudantesIds,
         tempoEstimadoHoras: data.tempoEstimadoHoras,
         observacoesAdmin: data.observacoesAdmin,
       }),
@@ -101,6 +116,7 @@ export function AprovacoesPage() {
 
   const resetForm = () => {
     setMotoristaId('');
+    setAjudantesSelecionados([]);
     setTempoEstimado('2');
     setObservacoesAdmin('');
     setMotivoRecusa('');
@@ -158,7 +174,7 @@ export function AprovacoesPage() {
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-gray-100 rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-muted rounded-lg animate-pulse" />
           ))}
         </div>
       ) : mudancas.length === 0 ? (
@@ -178,7 +194,7 @@ export function AprovacoesPage() {
                     <div className="flex items-center gap-2 mb-2">
                       <StatusBadge status={mudanca.estado} />
                       {mudanca.tipoServico === 'urgente' && (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-destructive/10 text-destructive rounded-full">
                           URGENTE
                         </span>
                       )}
@@ -219,14 +235,17 @@ export function AprovacoesPage() {
                       <Eye className="h-4 w-4 mr-1" />
                       Ver
                     </Button>
+                    {podeVer('aprovar') && (
                     <Button
                       size="sm"
                       onClick={() => handleOpenAprovar(mudanca)}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 text-white"
                     >
                       <CheckCircle className="h-4 w-4 mr-1" />
                       Aprovar
                     </Button>
+                    )}
+                    {podeVer('recusar') && (
                     <Button
                       variant="destructive"
                       size="sm"
@@ -235,6 +254,7 @@ export function AprovacoesPage() {
                       <XCircle className="h-4 w-4 mr-1" />
                       Recusar
                     </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -257,7 +277,7 @@ export function AprovacoesPage() {
               <div className="flex items-center gap-2">
                 <StatusBadge status={selectedMudanca.estado} />
                 {selectedMudanca.tipoServico === 'urgente' && (
-                  <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-destructive/10 text-destructive rounded-full">
                     URGENTE
                   </span>
                 )}
@@ -277,7 +297,7 @@ export function AprovacoesPage() {
                 <CardContent className="text-sm">
                   <p>{renderMorada(selectedMudanca.moradaRecolha)}</p>
                   {selectedMudanca.eInternacional && selectedMudanca.moradaRecolha?.pais && (
-                    <p className="text-blue-600 mt-1">Pais: {selectedMudanca.moradaRecolha.pais}</p>
+                    <p className="text-primary mt-1">Pais: {selectedMudanca.moradaRecolha.pais}</p>
                   )}
                 </CardContent>
               </Card>
@@ -287,7 +307,7 @@ export function AprovacoesPage() {
                 <CardContent className="text-sm">
                   <p>{renderMorada(selectedMudanca.moradaEntrega)}</p>
                   {selectedMudanca.eInternacional && selectedMudanca.moradaEntrega?.pais && (
-                    <p className="text-blue-600 mt-1">Pais: {selectedMudanca.moradaEntrega.pais}</p>
+                    <p className="text-primary mt-1">Pais: {selectedMudanca.moradaEntrega.pais}</p>
                   )}
                 </CardContent>
               </Card>
@@ -299,7 +319,7 @@ export function AprovacoesPage() {
                   {selectedMudanca.horaPretendida && <p><span className="font-medium">Hora:</span> {selectedMudanca.horaPretendida}</p>}
                   <p><span className="font-medium">Equipa:</span> {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa}</p>
                   {selectedMudanca.veiculo && <p><span className="font-medium">Veículo:</span> {selectedMudanca.veiculo.nome} ({selectedMudanca.veiculo.metrosCubicos}m³)</p>}
-                  {selectedMudanca.eInternacional && <p><span className="font-medium text-blue-600">Internacional</span></p>}
+                  {selectedMudanca.eInternacional && <p><span className="font-medium text-primary">Internacional</span></p>}
                 </CardContent>
               </Card>
 
@@ -327,6 +347,7 @@ export function AprovacoesPage() {
               )}
 
               <DialogFooter>
+                {podeVer('recusar') && (
                 <Button
                   variant="destructive"
                   onClick={() => { setShowDetail(false); handleOpenRecusar(selectedMudanca); }}
@@ -334,13 +355,16 @@ export function AprovacoesPage() {
                   <XCircle className="h-4 w-4 mr-1" />
                   Recusar
                 </Button>
+                )}
+                {podeVer('aprovar') && (
                 <Button
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => { setShowDetail(false); handleOpenAprovar(selectedMudanca); }}
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Aprovar
                 </Button>
+                )}
               </DialogFooter>
             </div>
           )}
@@ -358,9 +382,9 @@ export function AprovacoesPage() {
           </DialogHeader>
           {selectedMudanca && (
             <div className="space-y-4">
-              <div className="bg-blue-50 p-3 rounded-lg text-sm">
-                <p className="font-medium text-blue-900">{selectedMudanca.clienteNome}</p>
-                <p className="text-blue-700">{selectedMudanca.dataPretendida} {selectedMudanca.horaPretendida && `às ${selectedMudanca.horaPretendida}`}</p>
+              <div className="bg-primary/10 p-3 rounded-lg text-sm">
+                <p className="font-medium text-foreground">{selectedMudanca.clienteNome}</p>
+                <p className="text-primary">{selectedMudanca.dataPretendida} {selectedMudanca.horaPretendida && `às ${selectedMudanca.horaPretendida}`}</p>
               </div>
 
               <div className="space-y-2">
@@ -377,6 +401,43 @@ export function AprovacoesPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Ajudantes (opcional)</Label>
+                {selectedMudanca && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Equipa: {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa} — máximo {EQUIPA_AJUDANTES[selectedMudanca.equipa] || 0} ajudante(s)
+                  </p>
+                )}
+                {(ajudantesDisponiveis || []).length > 0 ? (
+                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                    {(ajudantesDisponiveis as any[]).map((a: any) => (
+                      <label key={a.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={ajudantesSelecionados.includes(a.id)}
+                          onChange={(e) => {
+                            const maxAjudantes = selectedMudanca ? (EQUIPA_AJUDANTES[selectedMudanca.equipa] || 0) : 0;
+                            if (e.target.checked) {
+                              if (ajudantesSelecionados.length >= maxAjudantes) {
+                                toast({ title: 'Limite atingido', description: `Esta equipa permite apenas ${maxAjudantes} ajudante(s)`, variant: 'destructive' });
+                                return;
+                              }
+                              setAjudantesSelecionados([...ajudantesSelecionados, a.id]);
+                            } else {
+                              setAjudantesSelecionados(ajudantesSelecionados.filter((id) => id !== a.id));
+                            }
+                          }}
+                          className="rounded border-border"
+                        />
+                        <span className="text-sm">{a.nome}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem ajudantes disponíveis</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -409,7 +470,7 @@ export function AprovacoesPage() {
               Cancelar
             </Button>
             <Button
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 text-white"
               disabled={!motoristaId || aprovarMutation.isPending}
               onClick={() => {
                 if (!selectedMudanca || !motoristaId) return;
@@ -417,6 +478,7 @@ export function AprovacoesPage() {
                   id: selectedMudanca.id,
                   aprovadoPor: user?.id || '',
                   motoristaId,
+                  ajudantesIds: ajudantesSelecionados.length > 0 ? ajudantesSelecionados : undefined,
                   tempoEstimadoHoras: parseFloat(tempoEstimado),
                   observacoesAdmin: observacoesAdmin || undefined,
                 });
@@ -438,9 +500,9 @@ export function AprovacoesPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-              <p className="text-sm text-red-700">
+            <div className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+              <p className="text-sm text-destructive">
                 Esta ação não pode ser desfeita. O cliente será notificado imediatamente.
               </p>
             </div>

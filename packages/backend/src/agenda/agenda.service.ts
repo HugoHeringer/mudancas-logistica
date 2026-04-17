@@ -51,12 +51,24 @@ export class AgendaService {
     const inicio = new Date(dataInicio);
     const fim = new Date(inicio);
     fim.setDate(fim.getDate() + 6);
+    const inicioStr = inicio.toISOString().split('T')[0];
+    const fimStr = fim.toISOString().split('T')[0];
 
-    const slots = await this.getSlotsByRange(
-      tenantId,
-      inicio.toISOString().split('T')[0],
-      fim.toISOString().split('T')[0],
-    );
+    const [slots, mudancas] = await Promise.all([
+      this.getSlotsByRange(tenantId, inicioStr, fimStr),
+      this.prisma.mudanca.findMany({
+        where: {
+          tenantId,
+          dataPretendida: { gte: inicioStr, lte: fimStr },
+          estado: { in: ['aprovada', 'a_caminho', 'em_servico', 'concluida'] },
+        },
+        include: {
+          motorista: { select: { id: true, nome: true } },
+          veiculo: { select: { id: true, nome: true } },
+        },
+        orderBy: { horaPretendida: 'asc' },
+      }),
+    ]);
 
     // Agrupar por data
     const porData = slots.reduce((acc, slot) => {
@@ -67,26 +79,41 @@ export class AgendaService {
       return acc;
     }, {} as Record<string, any[]>);
 
-    return Object.entries(porData).map(([data, slotsDia]) => ({
-      data,
-      slots: slotsDia,
-      capacidadeTotal: slotsDia.reduce((acc, s) => acc + s.capacidadeTotal, 0),
-      capacidadeOcupada: slotsDia.reduce((acc, s) => acc + s.capacidadeOcupada, 0),
-      disponivel: slotsDia.some(
-        (s) => !s.eBloqueado && s.capacidadeOcupada < s.capacidadeTotal,
-      ),
-    }));
+    return {
+      dias: Object.entries(porData).map(([data, slotsDia]) => ({
+        data,
+        slots: slotsDia,
+        capacidadeTotal: slotsDia.reduce((acc, s) => acc + s.capacidadeTotal, 0),
+        capacidadeOcupada: slotsDia.reduce((acc, s) => acc + s.capacidadeOcupada, 0),
+        disponivel: slotsDia.some(
+          (s) => !s.eBloqueado && s.capacidadeOcupada < s.capacidadeTotal,
+        ),
+      })),
+      mudancas,
+    };
   }
 
   async getAgendaMensal(tenantId: string, ano: number, mes: number) {
     const inicio = new Date(ano, mes - 1, 1);
     const fim = new Date(ano, mes, 0);
+    const inicioStr = inicio.toISOString().split('T')[0];
+    const fimStr = fim.toISOString().split('T')[0];
 
-    const slots = await this.getSlotsByRange(
-      tenantId,
-      inicio.toISOString().split('T')[0],
-      fim.toISOString().split('T')[0],
-    );
+    const [slots, mudancas] = await Promise.all([
+      this.getSlotsByRange(tenantId, inicioStr, fimStr),
+      this.prisma.mudanca.findMany({
+        where: {
+          tenantId,
+          dataPretendida: { gte: inicioStr, lte: fimStr },
+          estado: { in: ['aprovada', 'a_caminho', 'em_servico', 'concluida'] },
+        },
+        include: {
+          motorista: { select: { id: true, nome: true } },
+          veiculo: { select: { id: true, nome: true } },
+        },
+        orderBy: { horaPretendida: 'asc' },
+      }),
+    ]);
 
     // Agrupar por data e calcular ocupação
     const porData = slots.reduce((acc, slot) => {
@@ -104,7 +131,7 @@ export class AgendaService {
     }, {} as Record<string, any>);
 
     // Gerar todos os dias do mês
-    const diasMes = [];
+    const diasMes: any[] = [];
     for (let d = 1; d <= fim.getDate(); d++) {
       const data = new Date(ano, mes - 1, d).toISOString().split('T')[0];
       const info = porData[data] || { total: 0, ocupada: 0, bloqueada: false };
@@ -117,7 +144,7 @@ export class AgendaService {
       });
     }
 
-    return diasMes;
+    return { dias: diasMes, mudancas };
   }
 
   async criarSlots(tenantId: string, data: string, slots: any[]) {
@@ -143,6 +170,19 @@ export class AgendaService {
 
     return this.prisma.slotAgenda.createMany({
       data: novosSlots,
+    });
+  }
+
+  async getBloqueios(tenantId: string, dataInicio?: string, dataFim?: string) {
+    const where: any = { tenantId };
+    if (dataInicio || dataFim) {
+      where.OR = [
+        { dataInicio: { lte: dataFim || '9999-12-31' }, dataFim: { gte: dataInicio || '0000-01-01' } },
+      ];
+    }
+    return this.prisma.bloqueioAgenda.findMany({
+      where,
+      orderBy: { dataInicio: 'asc' },
     });
   }
 
