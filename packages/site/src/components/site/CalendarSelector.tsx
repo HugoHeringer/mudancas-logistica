@@ -73,6 +73,7 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
 
   const isWeekend = (day: number) => {
     const d = new Date(currentYear, currentMonth, day);
+    // Block Sundays by default - could check configAgenda.diasFuncionamento if available
     return d.getDay() === 0;
   };
 

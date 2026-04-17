@@ -85,7 +85,19 @@ export class AjudanteService {
       throw new NotFoundException('Ajudante não encontrado');
     }
 
-    return ajudante;
+    // Get mudancas history
+    const mudancas = await this.prisma.mudanca.findMany({
+      where: {
+        tenantId,
+        estado: 'concluida',
+      },
+      orderBy: { dataPretendida: 'desc' },
+      take: 20,
+    });
+
+    const historico = mudancas.filter((m) => m.ajudantesIds?.includes(id));
+
+    return { ...ajudante, historico };
   }
 
   async update(tenantId: string, id: string, dto: UpdateAjudanteDto) {

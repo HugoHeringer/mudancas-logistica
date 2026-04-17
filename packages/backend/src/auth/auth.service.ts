@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -98,6 +98,16 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
+    // Validar se tenant existe
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: registerDto.tenantId },
+      select: { id: true },
+    });
+
+    if (!tenant) {
+      throw new BadRequestException('Empresa inválida');
+    }
+
     // Verificar se usuário já existe
     const existingUser = await this.prisma.user.findFirst({
       where: {

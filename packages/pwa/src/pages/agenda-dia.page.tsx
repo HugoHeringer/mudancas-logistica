@@ -32,10 +32,10 @@ export function AgendaDiaPage() {
   const mudancasDoDia = mudancas || [];
   const dataObj = new Date(dataSelecionada + 'T12:00:00');
 
-  // Week days for horizontal scroll
+  // Week days for horizontal scroll - show 14 days (2 weeks)
   const weekDays: Date[] = [];
   const today = new Date();
-  for (let i = -3; i <= 3; i++) {
+  for (let i = -3; i <= 10; i++) {
     weekDays.push(addDays(today, i));
   }
 

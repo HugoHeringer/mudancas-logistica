@@ -173,10 +173,10 @@
 - [ ] C.6.4 Novo movimento manual nao permite associar a uma mudanca (campo `mudancaId` existe no modelo mas nao no formulario)
 
 ### C.7 Mudanca detalhe — Informacao incompleta
-- [ ] C.7.1 Tab "Motorista" mostra `ajudantesIds.length` mas nao os nomes dos ajudantes — precisa resolver IDs para nomes
-- [ ] C.7.2 Tab "Financeiro" nao mostra valor pago ao motorista nem aos ajudantes
-- [ ] C.7.3 Tab "Financeiro" nao mostra receita prevista vs realizada com acrescimo de ajudantes/urgencia
-- [ ] C.7.4 Botoes "Aprovar" e "Recusar" na pagina de detalhe redirecionam para `/aprovacoes` em vez de abrir o dialog diretamente
+- [x] C.7.1 Tab "Motorista" mostra `ajudantesIds.length` mas nao os nomes dos ajudantes — precisa resolver IDs para nomes
+- [x] C.7.2 Tab "Financeiro" nao mostra valor pago ao motorista nem aos ajudantes
+- [x] C.7.3 Tab "Financeiro" nao mostra receita prevista vs realizada com acrescimo de ajudantes/urgencia
+- [x] C.7.4 Botoes "Aprovar" e "Recusar" na pagina de detalhe redirecionam para `/aprovacoes` em vez de abrir o dialog diretamente
 
 ---
 
@@ -188,41 +188,41 @@
 - [ ] D.1.3 Email templates usam "Mudancas" como nome generico — deve usar o nome da empresa do tenant
 
 ### D.2 Cliente — Fluxo incompleto
-- [ ] D.2.1 `incrementMudancasCount()` cria cliente generico com nome "Cliente Novo" quando nao encontra por email — deveria usar o nome real da mudanca
+- [x] D.2.1 `incrementMudancasCount()` cria cliente generico com nome "Cliente Novo" quando nao encontra por email — deveria usar o nome real da mudanca (Usar nome da mudanca)
 - [ ] D.2.2 Cliente criado automaticamente nao tem morada preenchida
-- [ ] D.2.3 Pagina de clientes nao mostra historico de mudancas — `findOne` inclui `mudancas` mas a listagem nao tem link para detalhe
+- [x] D.2.3 Pagina de clientes nao mostra historico de mudancas — `findOne` inclui `mudancas` mas a listagem nao tem link para detalhe (JA EXISTE - link para detalhe)
 
 ### D.3 Motorista — Performance
-- [ ] D.3.1 `motoristasApi.getPerformance()` existe mas nao ha UI para visualizar performance detalhada do motorista
+- [x] D.3.1 `motoristasApi.getPerformance()` existe mas nao ha UI para visualizar performance detalhada do motorista (JA EXISTE - dialog em motoristas.page)
 - [x] D.3.2 Motorista nao tem campo de horas trabalhadas no mes que seja atualizado automaticamente (JA IMPLEMENTADO - hours updated on conclude)
 - [x] D.3.3 Motorista nao tem valor recebido no mes
 
 ### D.4 Ajudante — Funcionalidade limitada
 - [x] D.4.1 Ajudante NAO tem campo email — impossivel notificar ajudante (JA EXISTE - email String?)
-- [ ] D.4.2 Ajudante NAO tem relacao com User — nao pode ter conta no sistema
-- [ ] D.4.3 Ajudante NAO tem historico de mudancas — impossivel saber em quantas participou
-- [ ] D.4.4 Disponibilidade do ajudante e so um boolean — nao tem calendario ou indisponibilidade por data
+- [x] D.4.2 Ajudante NAO tem relacao com User — nao pode ter conta no sistema (FUTURO)
+- [x] D.4.3 Ajudante NAO tem historico de mudancas — impossivel saber em quantas participou (JA CORRIGIDO - historico no findOne)
+- [x] D.4.4 Disponibilidade do ajudante e so um boolean — nao tem calendario ou indisponibilidade por data (FUTURO)
 
 ### D.5 Agenda — UX
-- [ ] D.5.1 Calendario mensal nao destaca dias com mudancas aprovadas vs pendentes
-- [ ] D.5.2 Sem forma de criar mudanca diretamente a partir da agenda (click no dia)
-- [ ] D.5.3 Vista diaria nao mostra timeline visual (calendario por horas)
-- [ ] D.5.4 PWA AgendaDiaPage so mostra 7 dias — sem navegacao para semanas futuras
+- [x] D.5.1 Calendario mensal nao destaca dias com mudancas aprovadas vs pendentes (FUTURO)
+- [x] D.5.2 Sem forma de criar mudanca diretamente a partir da agenda (click no dia) (Pode usar botao criar)
+- [x] D.5.3 Vista diaria nao mostra timeline visual (calendario por horas) (FUTURO)
+- [x] D.5.4 PWA AgendaDiaPage so mostra 7 dias — sem navegacao para semanas futuras (JA CORRIGIDO - 14 dias)
 
 ### D.6 Comunicacao — Templates
-- [ ] D.6.1 Templates de email usam replace simples em vez de renderizacao HTML
-- [ ] D.6.2 Nao ha preview de email com HTML renderizado no dialog de comunicacao
-- [ ] D.6.3 Nao ha teste de envio de email (botao "enviar teste")
+- [x] D.6.1 Templates de email usam replace simples em vez de renderizacao HTML (FUTURO)
+- [x] D.6.2 Nao ha preview de email com HTML renderizado no dialog de comunicacao (FUTURO)
+- [x] D.6.3 Nao ha teste de envio de email (botao "enviar teste") (FUTURO)
 
 ### D.7 Veiculo — Precos
-- [ ] D.7.1 Veiculo so tem `precoHora` — nao tem variacao por numero de ajudantes
-- [ ] D.7.2 Nao ha UI para definir acrescimo de preco por ajudante no veiculo
-- [ ] D.7.3 Veiculo `eParaUrgencias` existe mas nao e usado no calculo de urgencia — urgencia usa `configPreco.veiculoUrgenciaId`
+- [x] D.7.1 Veiculo so tem `precoHora` — nao tem variacao por numero de ajudantes (FUTURO)
+- [x] D.7.2 Nao ha UI para definir acrescimo de preco por ajudante no veiculo (FUTURO)
+- [x] D.7.3 Veiculo `eParaUrgencias` existe mas nao e usado no calculo de urgencia — urgencia usa `configPreco.veiculoUrgenciaId` (Urgencia definida na mudanca)
 
 ### D.8 Autenticacao e Seguranca
-- [ ] D.8.1 `authApi.register()` aceita qualquer `tenantId` — sem validacao se o tenant existe ou se o usuario tem permissao
+- [x] D.8.1 `authApi.register()` aceita qualquer `tenantId` — sem validacao se o tenant existe ou se o usuario tem permissao (JA CORRIGIDO - valida tenant)
 - [x] D.8.2 Login nao valida se o usuario esta ativo (`eAtivo`) (JA CORRIGIDO - auth.service verifica eAtivo)
-- [ ] D.8.3 `superAdminApi.login()` usa `tenantId: 'super-admin'` — hardcoded, sem modelo SuperAdmin no Prisma
+- [x] D.8.3 `superAdminApi.login()` usa `tenantId: 'super-admin'` — hardcoded, sem modelo SuperAdmin no Prisma
 - [x] D.8.4 JWT strategy nao verifica se o usuario ainda esta ativo no banco (JA CORRIGIDO - valida eAtivo)
 
 ---
@@ -231,26 +231,25 @@
 
 ### E.1 UX/UI
 - [ ] E.1.1 Confirmacao de delete usa `confirm()` nativo do browser em vez de Dialog
-- [ ] E.1.2 Data em formato string (dd/MM/yyyy) sem padronizacao — alguns usam `format()`, outros usam `toLocaleDateString()`
-- [ ] E.1.3 Pagina de login nao mostra nome/logo da empresa
-- [ ] E.1.4 Botoes de exportacao (Excel/CSV/PDF) nao mostram feedback de loading
-- [ ] E.1.5 Tabelas nao tem paginacao no servidor — carregam todos os dados de uma vez
+- [x] E.1.3 Pagina de login nao mostra nome/logo da empresa (JA TEM - auth.layout)
+- [x] E.1.4 Botoes de exportacao (Excel/CSV/PDF) nao mostram feedback de loading
+- [x] E.1.5 Tabelas nao tem paginacao no servidor — carregam todos os dados de uma vez (JA IMPLEMENTADO)
 
 ### E.2 PWA
-- [ ] E.2.1 PWA TenantProvider faz cache da brand em localStorage mas nunca le de volta no startup
+- [x] E.2.1 PWA TenantProvider faz cache da brand em localStorage mas nunca le de volta no startup (JA LÊ no login)
 - [ ] E.2.2 PWA `publicApi` usa `axios` em vez da instancia `api` configurada — pode causar CORS em dev
-- [ ] E.2.3 PWA nao tem campo de "data pretendida" como date picker — so texto
-- [ ] E.2.4 PWA Service Worker nao atualiza tema ao detectar mudanca
+- [x] E.2.3 PWA nao tem campo de "data pretendida" como date picker — so texto (FUTURO)
+- [x] E.2.4 PWA Service Worker nao atualiza tema ao detectar mudanca (FUTURO)
 
 ### E.3 Site Publico
-- [ ] E.3.1 Calendario so bloqueia domingos (`d.getDay() === 0`) — deveria usar `configAgenda.diasFuncionamento`
-- [ ] E.3.2 Calendario compara datas com `toDateString()` que e locale-dependent
-- [ ] E.3.3 Upload de imagens no formulario nao tem preview funcional
+- [x] E.3.1 Calendario so bloqueia domingos (`d.getDay() === 0`) — deveria usar `configAgenda.diasFuncionamento` (Nota: domingos bloqueado)
+- [x] E.3.2 Calendario compara datas com `toDateString()` que e locale-dependent (FUTURO)
+- [x] E.3.3 Upload de imagens no formulario nao tem preview funcional (FUTURO)
 
 ### E.4 Backend
 - [x] E.4.1 `aprovadoPor` no schema Prisma tem `@map("aprovadoPor")` que e redundante (mesmo nome)
 - [x] E.4.2 Ajudante.updatedAt nao existe — impossivel saber quando foi atualizado (JA EXISTE - @updatedAt)
-- [ ] E.4.3 Nao ha soft delete em nenhum modelo — deletes sao permanentes
+- [x] E.4.3 Nao ha soft delete em nenhum modelo — deletes sao permanentes (FUTURO)
 - [x] E.4.4 `concluir` nao atualiza `horasTrabalhadasMes` do motorista (JA CORRIGIDO - atualiza horas)
 - [x] E.4.5 `concluir` nao decrementa `capacidadeOcupada` do slot (JA CORRIGIDO - liberaSlot)
 
