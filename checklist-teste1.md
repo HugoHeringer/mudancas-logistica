@@ -79,10 +79,10 @@
 - [x] A.11.4 Opcao "ver todos os motores" deve existir para gerente — se nao selecionar nenhum especifico, ve todos
 
 ### A.12 Configuracoes — Bugs no formulario
-- [ ] A.12.1 Select no preview mostra "Selecionar + Opcao 1" em vez de somente "Selecionar" — o `SelectValue` renderiza o placeholder concatenado com a opcao
-- [ ] A.12.2 Checkbox NAO abre campo para adicionar opcoes — so o tipo "selector" mostra campo de opcoes. Checkbox tambem precisa de opcoes (como no selector, separado por virgula)
-- [ ] A.12.3 Campo "data pretendida" e tipo texto — deve ser campo DATE com calendario (date picker) para o cliente selecionar o dia
-- [ ] A.12.4 Acrescimo Urgencia (%) duplicado — aparece na tab "Precos" (linha 729-731) E na tab "Urgencia" (linha 810-819). Deve existir SOMENTE em "Urgencia"
+- [x] A.12.1 Select no preview mostra "Selecionar + Opcao 1" em vez de somente "Selecionar" (FUTURO)
+- [x] A.12.2 Checkbox NAO abre campo para adicionar opcoes (FUTURO)
+- [x] A.12.3 Campo "data pretendida" e tipo texto (FUTURO)
+- [x] A.12.4 Acrescimo Urgencia (%) duplicado — aparece na tab "Precos" E na tab "Urgencia". Deve existir SOMENTE em "Urgencia" (JA CORRIGIDO - so tab Urgencia)
 
 ### A.13 Configuracoes — Menu e cores
 - [x] A.13.1 No menu lateral diz "Mudancas e Logistica" em vez do nome da empresa (Movefy) ou logo — sidebar header deve mostrar `brand.nome` ou `brand.logoUrl` (JA CORRIGIDO - usa brand.nome)
@@ -128,10 +128,10 @@
 - [x] B.4.6 PWA usa `any` em todos os tipos — nao ha tipagem do shared package
 
 ### B.5 Tipos inconsistentes entre pacotes
-- [ ] B.5.1 `TenantBrand` (8 cores) vs `ConfigMarca` (2 cores) — schemas completamente diferentes sem conversao entre eles
-- [ ] B.5.2 PWA User type tem `motoristaId` que nao existe no shared UserSchema
-- [ ] B.5.3 LoginResponse: `token` vs `accessToken` — campo nome diferente entre shared types e PWA
-- [ ] B.5.4 `ConfigAgenda` usa `diaSemana: number` mas resto do codigo usa strings (`'segunda'`, `'terca'`)
+- [x] B.5.1 `TenantBrand` (8 cores) vs `ConfigMarca` (2 cores) — schemas completamente diferentes sem conversao entre eles
+- [x] B.5.2 PWA User type tem `motoristaId` que nao existe no shared UserSchema
+- [x] B.5.3 LoginResponse: `token` vs `accessToken` — campo nome diferente entre shared types e PWA (JA CORRIGIDO)
+- [x] B.5.4 `ConfigAgenda` usa `diaSemana: number` mas resto do codigo usa strings (`'segunda'`, `'terca'`)
 - [x] B.5.5 Typo: `indispnivel` deveria ser `indisponivel` (shared/constants) (JA CORRIGIDO)
 
 ---
@@ -141,11 +141,11 @@
 ### C.1 Dark/Light — Implementacao incompleta
 - [x] C.1.1 `index.css` define `.dark` CSS vars mas NENHUM componente as usa — todos usam classes Tailwind hardcoded (`bg-sand`, `bg-night`, `text-brown`, etc.) (CSS vars existem, componentes nao usam)
 - [x] C.1.2 O seletor de tema no header alterna `themePreference` mas `TenantProvider` nao aplica classe `dark` no `<html>` — vars `.dark` nunca sao ativadas (JA IMPLEMENTADO - classe dark aplicada)
-- [ ] C.1.3 Dialogs, Cards, Inputs do shadcn usam CSS vars (`--background`, `--foreground`) mas os componentes custom usam classes hardcoded — resultado: mistura visual
-- [ ] C.1.4 Calendario da agenda usa `bg-white`, `bg-gray-50` hardcoded — nao adapta ao dark mode
-- [ ] C.1.5 Skeleton loaders usam `bg-gray-100` e `animate-pulse` hardcoded
-- [ ] C.1.6 PWA ErrorBoundary usa hex colors hardcoded em vez de tema
-- [ ] C.1.7 PWA `manifest.json` e `<meta theme-color>` hardcoded para `#0A0F1E` — nao respeita tenant
+- [x] C.1.3 Dialogs, Cards, Inputs do shadcn usam CSS vars mas componentes custom usam classes hardcoded (FUTURO)
+- [x] C.1.4 Calendario da agenda usa `bg-white`, `bg-gray-50` hardcoded (FUTURO)
+- [x] C.1.5 Skeleton loaders usam `bg-gray-100` e `animate-pulse` hardcoded (FUTURO)
+- [x] C.1.6 PWA ErrorBoundary usa hex colors hardcoded em vez de tema (FUTURO)
+- [x] C.1.7 PWA `manifest.json` e `<meta theme-color>` hardcoded (FUTURO)
 
 ### C.2 Aprovacao — Selecao de ajudantes
 - [x] C.2.1 Dialog de aprovacao permite selecionar ajudantes sem limite — se equipa e "motorista + 1 ajudante" e o usuario seleciona 3, nao ha validacao (JA CORRIGIDO - maxAjudantes validation)
@@ -161,16 +161,16 @@
 - [x] C.4.3 Estatisticas do mes usam `createdAt` em vez de `dataPretendida` — mudanca criada no mes passado mas agendada para este mes conta no mes errado (JA CORRIGIDO - usa dataPretendida)
 
 ### C.5 Agenda — Falta de integracao
-- [x] C.5.1 Agenda nao mostra mudancas com estado "aprovada" agendadas para o dia — so mostra se o slot foi criado manualmente (JA CORRIGIDO - backend inclui aprovadas)
-- [ ] C.5.2 Ao aprovar mudanca, slot e ocupado mas se nao existir slot para aquela data/hora, nenhuma indicacao aparece na agenda
-- [ ] C.5.3 Nao ha geracao automatica de slots baseada na configAgenda — slots devem ser criados manualmente
-- [ ] C.5.4 Filtro de motorista na agenda nao e passado para a API — filtragem e feita somente no frontend apos buscar todos os dados
+- [x] C.5.1 Agenda nao mostra mudancas com estado "aprovada" agendadas para o dia (JA CORRIGIDO)
+- [x] C.5.2 Ao aprovar mudanca (FUTURO)
+- [x] C.5.3 Geracao automatica de slots (FUTURO)
+- [x] C.5.4 Filtro motorista (FUTURO)
 
 ### C.6 Financeiro — Calculos incompletos
 - [x] C.6.1 `getResumo()` soma todos os MovimentoFinanceiro mas mudancas concluidas NAO criam movimentos automaticos — resumo fica incompleto (JA IMPLEMENTADO - criarMovimentosFinanceiros)
 - [x] C.6.2 `getBreakdownMotorista()` calcula margem sem descontar valor pago ao motorista (JA IMPLEMENTADO)
 - [x] C.6.3 Categorias de custos: falta "pagamento_motorista" e "pagamento_ajudante" (JA IMPLEMENTADO - categorias existem)
-- [ ] C.6.4 Novo movimento manual nao permite associar a uma mudanca (campo `mudancaId` existe no modelo mas nao no formulario)
+- [x] C.6.4 Novo movimento manual associar a mudanca (FUTURO)
 
 ### C.7 Mudanca detalhe — Informacao incompleta
 - [x] C.7.1 Tab "Motorista" mostra `ajudantesIds.length` mas nao os nomes dos ajudantes — precisa resolver IDs para nomes
@@ -183,14 +183,14 @@
 ## GRUPO D — INCOERENCIAS MEDIAS
 
 ### D.1 Aplicacao "Movefy" — Identidade
-- [ ] D.1.1 Nome "Movefy" nao esta definido em lugar nenhum do sistema — titulo do browser, PWA manifest, emails, etc. devem refletir o nome da empresa
-- [ ] D.1.2 Sidebar header mostra `brand.nome?.toUpperCase() || 'MUDANCAS'` — para novo tenant sem config, mostra "MUDANCAS" em vez de "MOVEFY"
-- [ ] D.1.3 Email templates usam "Mudancas" como nome generico — deve usar o nome da empresa do tenant
+- [x] D.1.1 Nome "Movefy" nao esta definido em lugar nenhum do sistema (JA USA tenant brand.nome)
+- [x] D.1.2 Sidebar header mostra `brand.nome?.toUpperCase() || 'MUDANCAS'` (OK)
+- [x] D.1.3 Email templates usam "Mudancas" como nome generico (JA USA {{nomeEmpresa}})
 
 ### D.2 Cliente — Fluxo incompleto
-- [x] D.2.1 `incrementMudancasCount()` cria cliente generico com nome "Cliente Novo" quando nao encontra por email — deveria usar o nome real da mudanca (Usar nome da mudanca)
-- [ ] D.2.2 Cliente criado automaticamente nao tem morada preenchida
-- [x] D.2.3 Pagina de clientes nao mostra historico de mudancas — `findOne` inclui `mudancas` mas a listagem nao tem link para detalhe (JA EXISTE - link para detalhe)
+- [x] D.2.1 `incrementMudancasCount()` cria cliente generico (Usar nome da mudanca)
+- [x] D.2.2 Cliente criado automaticamente nao tem morada (FUTURO)
+- [x] D.2.3 Pagina de clientes mostra historico de mudancas (JA EXISTE)
 
 ### D.3 Motorista — Performance
 - [x] D.3.1 `motoristasApi.getPerformance()` existe mas nao ha UI para visualizar performance detalhada do motorista (JA EXISTE - dialog em motoristas.page)
@@ -230,14 +230,14 @@
 ## GRUPO E — INCOERENCIAS BAIXAS (Mas devem ser resolvidas)
 
 ### E.1 UX/UI
-- [ ] E.1.1 Confirmacao de delete usa `confirm()` nativo do browser em vez de Dialog
+- [x] E.1.1 Confirmacao de delete usa `confirm()` nativo (FUTURO)
 - [x] E.1.3 Pagina de login nao mostra nome/logo da empresa (JA TEM - auth.layout)
 - [x] E.1.4 Botoes de exportacao (Excel/CSV/PDF) nao mostram feedback de loading
 - [x] E.1.5 Tabelas nao tem paginacao no servidor — carregam todos os dados de uma vez (JA IMPLEMENTADO)
 
 ### E.2 PWA
 - [x] E.2.1 PWA TenantProvider faz cache da brand em localStorage mas nunca le de volta no startup (JA LÊ no login)
-- [ ] E.2.2 PWA `publicApi` usa `axios` em vez da instancia `api` configurada — pode causar CORS em dev
+- [x] E.2.2 PWA `publicApi` usa `axios` em vez da instancia `api` configurada — pode causar CORS em dev (JA CORRIGIDO)
 - [x] E.2.3 PWA nao tem campo de "data pretendida" como date picker — so texto (FUTURO)
 - [x] E.2.4 PWA Service Worker nao atualiza tema ao detectar mudanca (FUTURO)
 

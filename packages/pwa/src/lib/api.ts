@@ -80,5 +80,5 @@ export const mudancasApi = {
 };
 
 export const publicApi = {
-  getTenantBrand: (subdomain: string) => axios.get(`${API_BASE_URL}/public/tenant/${subdomain}`),
+  getTenantBrand: (subdomain: string) => api.get(`/public/tenant/${subdomain}`),
 };
