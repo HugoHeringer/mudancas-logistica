@@ -221,6 +221,44 @@ export function injectBrandCSS(cores: TenantBrandCores, fontes: TenantBrandFonte
   root.style.setProperty('--dark-background', darkBgHsl);
   root.style.setProperty('--dark-foreground', textLightHsl);
 
+  // --- Curated Transit Surface Layer System ---
+  // Generates tonal surface layers from the tenant fundo color (like Material Design)
+  const fundoRgb = hexToRgb(isDark ? cores.fundoEscuro : cores.fundo);
+  const isLightTheme = !isDark;
+
+  if (fundoRgb) {
+    const { r, g, b } = fundoRgb;
+    if (isLightTheme) {
+      root.style.setProperty('--surface', `rgb(${r}, ${g}, ${b})`);
+      root.style.setProperty('--surface-container-lowest', `rgb(255, 255, 255)`);
+      root.style.setProperty('--surface-container-low', `rgb(${Math.max(r - 10, 0)}, ${Math.max(g - 10, 0)}, ${Math.max(b - 10, 0)})`);
+      root.style.setProperty('--surface-container', `rgb(${Math.max(r - 17, 0)}, ${Math.max(g - 17, 0)}, ${Math.max(b - 17, 0)})`);
+      root.style.setProperty('--surface-container-high', `rgb(${Math.max(r - 24, 0)}, ${Math.max(g - 24, 0)}, ${Math.max(b - 24, 0)})`);
+      root.style.setProperty('--surface-container-highest', `rgb(${Math.max(r - 31, 0)}, ${Math.max(g - 31, 0)}, ${Math.max(b - 31, 0)})`);
+    } else {
+      root.style.setProperty('--surface', `rgb(${r}, ${g}, ${b})`);
+      root.style.setProperty('--surface-container-lowest', `rgb(${Math.max(r - 5, 0)}, ${Math.max(g - 5, 0)}, ${Math.max(b - 5, 0)})`);
+      root.style.setProperty('--surface-container-low', `rgb(${Math.min(r + 8, 255)}, ${Math.min(g + 8, 255)}, ${Math.min(b + 8, 255)})`);
+      root.style.setProperty('--surface-container', `rgb(${Math.min(r + 15, 255)}, ${Math.min(g + 15, 255)}, ${Math.min(b + 15, 255)})`);
+      root.style.setProperty('--surface-container-high', `rgb(${Math.min(r + 22, 255)}, ${Math.min(g + 22, 255)}, ${Math.min(b + 22, 255)})`);
+      root.style.setProperty('--surface-container-highest', `rgb(${Math.min(r + 30, 255)}, ${Math.min(g + 30, 255)}, ${Math.min(b + 30, 255)})`);
+    }
+  }
+
+  // Sidebar surface (always uses fundoEscuro — the tenant's dark color)
+  const darkRgb = hexToRgb(cores.fundoEscuro);
+  if (darkRgb) {
+    const { r, g, b } = darkRgb;
+    root.style.setProperty('--sidebar-bg', `rgb(${r}, ${g}, ${b})`);
+    root.style.setProperty('--sidebar-bg-elevated', `rgb(${Math.min(r + 12, 255)}, ${Math.min(g + 12, 255)}, ${Math.min(b + 12, 255)})`);
+    root.style.setProperty('--sidebar-border', hexWithOpacity(cores.acento, 0.10));
+    root.style.setProperty('--sidebar-text', cores.textoClaro);
+    root.style.setProperty('--sidebar-text-muted', hexWithOpacity(cores.textoClaro, 0.50));
+    root.style.setProperty('--sidebar-accent', cores.acento);
+    root.style.setProperty('--sidebar-accent-bg', hexWithOpacity(cores.acento, 0.10));
+    root.style.setProperty('--sidebar-accent-text', cores.acento);
+  }
+
   // Theme class for CSS selectors
   root.classList.toggle('dark', isDark);
   root.classList.toggle('light', !isDark);

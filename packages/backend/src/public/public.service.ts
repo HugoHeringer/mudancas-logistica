@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMudancaDto } from '../mudanca/dto/create-mudanca.dto';
+import { AgendaService } from '../agenda/agenda.service';
 
 @Injectable()
 export class PublicService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private agendaService: AgendaService,
+  ) {}
 
   async criarMudanca(tenantId: string, dto: CreateMudancaDto) {
     // Verify tenant exists and is active
@@ -16,7 +20,7 @@ export class PublicService {
       throw new NotFoundException('Empresa não encontrada');
     }
 
-    return this.prisma.mudanca.create({
+    const mudanca = await this.prisma.mudanca.create({
       data: {
         tenantId,
         estado: 'pendente',
@@ -36,6 +40,20 @@ export class PublicService {
         documentacao: dto.documentacao,
       },
     });
+
+    // [3.5] Occupy slot when creating mudanca from public site
+    if (dto.dataPretendida && dto.horaPretendida) {
+      try {
+        const dataStr = typeof dto.dataPretendida === 'string'
+          ? dto.dataPretendida.split('T')[0]
+          : new Date(dto.dataPretendida).toISOString().split('T')[0];
+        await this.agendaService.ocuparSlot(tenantId, dataStr, dto.horaPretendida);
+      } catch {
+        // Slot occupation failed (slot may not exist), mudanca still created
+      }
+    }
+
+    return mudanca;
   }
 
   async getVeiculos(tenantId: string) {
@@ -73,10 +91,12 @@ export class PublicService {
     }
 
     // Get mudanças for that date to check availability
+    const inicioDia = new Date(data + 'T00:00:00.000');
+    const fimDia = new Date(data + 'T23:59:59.999');
     const mudancas = await this.prisma.mudanca.findMany({
       where: {
         tenantId,
-        dataPretendida: data,
+        dataPretendida: { gte: inicioDia, lte: fimDia },
         estado: { in: ['aprovada', 'a_caminho', 'em_servico'] },
       },
       select: {

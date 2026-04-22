@@ -8,6 +8,7 @@ import { EmptyState } from '../../components/empty-state';
 import { DataTable } from '../../components/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { PageHeader } from '../../components/ui/page-header';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -124,16 +125,16 @@ export function ClientesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Clientes</h2>
-          <p className="text-muted-foreground">Gestão de clientes e histórico</p>
-        </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Novo Cliente
-        </Button>
-      </div>
+      <PageHeader
+        title="Clientes"
+        subtitle="Gestão de clientes e histórico"
+        actions={
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Novo Cliente
+          </Button>
+        }
+      />
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

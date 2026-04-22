@@ -5,16 +5,16 @@
   "description": "Sistema de Gestão de Mudanças - SaaS Multi-tenant",
   "scripts": {
     "dev": "concurrently \"npm:dev:*\"",
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:admin": "npm run dev --workspace=admin",
-    "dev:pwa": "npm run dev --workspace=pwa",
-    "dev:site": "npm run dev --workspace=site",
-    "dev:superadmin": "npm run dev --workspace=superadmin",
+    "dev:backend": "npm run dev --workspace=@mudancas/backend",
+    "dev:admin": "npm run dev --workspace=@mudancas/admin",
+    "dev:pwa": "npm run dev --workspace=@mudancas/pwa",
+    "dev:site": "npm run dev --workspace=@mudancas/site",
+    "dev:superadmin": "npm run dev --workspace=@mudancas/superadmin",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces",
-    "db:migrate": "npm run db:migrate --workspace=backend",
-    "db:seed": "npm run db:seed --workspace=backend"
+    "db:migrate": "npm run db:migrate --workspace=@mudancas/backend",
+    "db:seed": "npm run db:seed --workspace=@mudancas/backend"
   },
   "workspaces": [
     "packages/*"

@@ -1,7 +1,7 @@
 export function getTenantId(req: any): string {
   const tenantId = req.tenantId || req.user?.tenantId;
   if (!tenantId) {
-    throw new Error('Tenant ID não encontrado');
+    throw new Error('Tenant ID não encontrado no request');
   }
   return tenantId;
 }

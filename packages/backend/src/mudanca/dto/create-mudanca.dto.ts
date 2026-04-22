@@ -104,6 +104,11 @@ export class CreateMudancaDto {
   veiculoId?: string;
 
   @ApiProperty()
+  @IsString()
+  @IsOptional()
+  motoristaId?: string;
+
+  @ApiProperty()
   @IsEnum(['motorista', 'motorista_1_ajudante', 'motorista_2_ajudantes'])
   @IsNotEmpty()
   equipa: string;
@@ -129,4 +134,9 @@ export class CreateMudancaDto {
   @IsString()
   @IsOptional()
   documentacao?: string;
+
+  @ApiProperty({ required: false })
+  @IsObject()
+  @IsOptional()
+  camposPersonalizados?: Record<string, any>;
 }

@@ -152,8 +152,8 @@ async function main() {
       email: 'maria@email.pt',
       telefone: '923456789',
       moradas: {
-        recolha: { rua: 'Rua das Flores', numero: '10', andar: '2º', codigoPostal: '1000-001', localidade: 'Lisboa', elevador: true },
-        entrega: { rua: 'Avenida da Liberdade', numero: '50', andar: '5º', codigoPostal: '1250-001', localidade: 'Lisboa', elevador: true },
+        recolha: { rua: 'Rua das Flores', numero: '10', andar: '2o', codigoPostal: '1000-001', localidade: 'Lisboa', elevador: true },
+        entrega: { rua: 'Avenida da Liberdade', numero: '50', andar: '5o', codigoPostal: '1250-001', localidade: 'Lisboa', elevador: true },
       },
     },
   });
@@ -161,7 +161,7 @@ async function main() {
   console.log(`  ✓ Cliente: ${cliente.nome} ${cliente.apelido}`);
 
   // 7. Create Mudanças (different states for testing)
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
 
   const mudancas = [
     {
@@ -171,8 +171,8 @@ async function main() {
       clienteNome: 'Maria Santos',
       clienteEmail: 'maria@email.pt',
       clienteTelefone: '923456789',
-      moradaRecolha: { rua: 'Rua das Flores', numero: '10', andar: '2º', codigoPostal: '1000-001', localidade: 'Lisboa', elevador: true },
-      moradaEntrega: { rua: 'Avenida da Liberdade', numero: '50', andar: '5º', codigoPostal: '1250-001', localidade: 'Lisboa', elevador: true },
+      moradaRecolha: { rua: 'Rua das Flores', numero: '10', andar: '2o', codigoPostal: '1000-001', localidade: 'Lisboa', elevador: true },
+      moradaEntrega: { rua: 'Avenida da Liberdade', numero: '50', andar: '5o', codigoPostal: '1250-001', localidade: 'Lisboa', elevador: true },
       dataPretendida: today,
       horaPretendida: '09:00',
       equipa: 'motorista_1_ajudante',
@@ -194,7 +194,7 @@ async function main() {
       clienteEmail: 'pedro@email.pt',
       clienteTelefone: '934567890',
       moradaRecolha: { rua: 'Rua do Sol', numero: '25', codigoPostal: '2000-001', localidade: 'Santarem', elevador: false },
-      moradaEntrega: { rua: 'Rua da Lua', numero: '30', andar: '1º', codigoPostal: '1000-002', localidade: 'Lisboa', elevador: true },
+      moradaEntrega: { rua: 'Rua da Lua', numero: '30', andar: '1o', codigoPostal: '1000-002', localidade: 'Lisboa', elevador: true },
       dataPretendida: today,
       horaPretendida: '14:00',
       equipa: 'motorista',
@@ -214,16 +214,16 @@ async function main() {
       clienteEmail: 'ana@email.pt',
       clienteTelefone: '945678901',
       moradaRecolha: { rua: 'Travessa do Forno', numero: '5', codigoPostal: '3000-001', localidade: 'Coimbra', elevador: false },
-      moradaEntrega: { rua: 'Rua Principal', numero: '100', andar: '3º', codigoPostal: '4000-001', localidade: 'Porto', elevador: true },
+      moradaEntrega: { rua: 'Rua Principal', numero: '100', andar: '3o', codigoPostal: '4000-001', localidade: 'Porto', elevador: true },
       dataPretendida: today,
       horaPretendida: '10:00',
       equipa: 'motorista_2_ajudantes',
       materiais: { protecaoFilme: 4, protecaoCartao: 5, caixas: 20, fitaCola: 4 },
-      observacoes: 'Mudança urgente. Edifício antigo, escadas estreitas.',
+      observacoes: 'Mudanca urgente. Edifício antigo, escadas estreitas.',
       aprovadoPor: adminUser.id,
       aprovadoEm: new Date(),
       tempoEstimadoHoras: 6,
-      observacoesAdmin: 'Urgente — prioridade máxima.',
+      observacoesAdmin: 'Urgente - prioridade maxima.',
       veiculoId: veiculo.id,
       motoristaId: motorista.id,
     },
@@ -262,8 +262,8 @@ async function main() {
       clienteNome: 'Sofia Ferreira',
       clienteEmail: 'sofia@email.pt',
       clienteTelefone: '967890123',
-      moradaRecolha: { rua: 'Calçada do Carmo', numero: '15', codigoPostal: '1200-001', localidade: 'Lisboa' },
-      moradaEntrega: { rua: 'Rua da Esperança', numero: '40', andar: '4º', codigoPostal: '1350-001', localidade: 'Lisboa', elevador: false },
+      moradaRecolha: { rua: 'Calcada do Carmo', numero: '15', codigoPostal: '1200-001', localidade: 'Lisboa' },
+      moradaEntrega: { rua: 'Rua da Esperanca', numero: '40', andar: '4o', codigoPostal: '1350-001', localidade: 'Lisboa', elevador: false },
       dataPretendida: today,
       horaPretendida: '16:00',
       equipa: 'motorista',
@@ -272,14 +272,33 @@ async function main() {
   ];
 
   for (const m of mudancas) {
-    await prisma.mudanca.upsert({
-      where: { id: m.id },
-      update: {},
-      create: {
-        tenantId: tenant.id,
-        ...m,
-      } as any,
-    });
+    try {
+      // Use raw SQL to avoid Prisma Client 0x00 byte bug with implicit many-to-many (ajudantesIds)
+      const recolha = JSON.stringify(m.moradaRecolha);
+      const entrega = JSON.stringify(m.moradaEntrega);
+      const mat = JSON.stringify(m.materiais);
+      const concl = m.conclusao ? JSON.stringify(m.conclusao) : null;
+
+      await prisma.$executeRaw`
+        INSERT INTO "Mudanca" (
+          id, "tenantId", estado, "tipoServico", "clienteNome", "clienteEmail", "clienteTelefone",
+          "moradaRecolha", "moradaEntrega", "dataPretendida", "horaPretendida", equipa, materiais,
+          "eInternacional", "createdAt", "updatedAt",
+          observacoes, "aprovadoPor", "aprovadoEm", "tempoEstimadoHoras", "observacoesAdmin",
+          "veiculoId", "motoristaId", "clienteId", conclusao, "concluidoPor", "concluidoEm"
+        ) VALUES (
+          ${m.id}, ${tenant.id}, ${m.estado}, ${m.tipoServico}, ${m.clienteNome}, ${m.clienteEmail}, ${m.clienteTelefone},
+          ${recolha}::jsonb, ${entrega}::jsonb, ${m.dataPretendida}, ${m.horaPretendida || null}, ${m.equipa}, ${mat}::jsonb,
+          false, NOW(), NOW(),
+          ${m.observacoes || null}, ${m.aprovadoPor || null}, ${m.aprovadoEm || null}, ${m.tempoEstimadoHoras || null}, ${m.observacoesAdmin || null},
+          ${m.veiculoId || null}, ${m.motoristaId || null}, ${m.clienteId || null}, ${concl}::jsonb, ${m.concluidoPor || null}, ${m.concluidoEm || null}
+        )
+        ON CONFLICT (id) DO NOTHING
+      `;
+      console.log(`  ✓ Mudanca: ${m.id} (${m.estado})`);
+    } catch (err: any) {
+      console.error(`  ✗ Mudanca ${m.id} failed: ${err.message}`);
+    }
   }
 
   console.log(`  ✓ ${mudancas.length} mudanças criadas (aprovada, a_caminho, em_servico, concluida, pendente)`);

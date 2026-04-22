@@ -155,16 +155,13 @@ export class MudancaService {
       throw new NotFoundException('Mudança não encontrada');
     }
 
-    // Resolve ajudante names from IDs
-    if (mudanca.ajudantesIds && mudanca.ajudantesIds.length > 0) {
-      const ajudantes = await this.prisma.ajudante.findMany({
-        where: { id: { in: mudanca.ajudantesIds } },
-        select: { id: true, nome: true, telefone: true },
-      });
-      (mudanca as any).ajudantes = ajudantes;
-    } else {
-      (mudanca as any).ajudantes = [];
-    }
+    // Resolve ajudante names from relation
+    const ajudantes = await this.prisma.mudanca.findUnique({
+      where: { id, tenantId },
+      include: { ajudantes: { select: { id: true, nome: true, telefone: true } } },
+    });
+    // Verify tenantId ownership of the mudanca (already checked above, so this is safe)
+    (mudanca as any).ajudantes = ajudantes?.ajudantes || [];
 
     return mudanca;
   }
@@ -211,8 +208,18 @@ export class MudancaService {
   async aprovar(tenantId: string, id: string, aprovarMudancaDto: AprovarMudancaDto) {
     const mudanca = await this.findOne(tenantId, id);
 
+    // [4.9] Validate configPreco exists before approving
+    const tenantConfig = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { configPreco: true },
+    });
+    const configPreco = (tenantConfig?.configPreco as any) || {};
+    if (!configPreco.precoHora) {
+      throw new Error('Configuração de preço (precoHora) não definida para este tenant. Configure antes de aprovar mudanças.');
+    }
+
     // Atualizar estado do motorista
-    if (aprovarMudancaDto.motoristaId) {
+if (aprovarMudancaDto.motoristaId) {
       await this.prisma.motorista.update({
         where: { id: aprovarMudancaDto.motoristaId },
         data: { estado: 'ocupado' },
@@ -240,11 +247,6 @@ export class MudancaService {
     const veiculo = mudanca.veiculoId
       ? await this.prisma.veiculo.findUnique({ where: { id: mudanca.veiculoId } })
       : null;
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { configPreco: true },
-    });
-    const configPreco = (tenant?.configPreco as any) || {};
     const precoBaseHora = veiculo?.precoHora || configPreco.precoHora || 0;
     const acrescimo1Ajudante = configPreco.acrescimo1Ajudante || configPreco.motorista1AjudantePrecoDiferenca || 0;
     const acrescimo2Ajudantes = configPreco.acrescimo2Ajudantes || configPreco.motorista2AjudantesPrecoDiferenca || 0;
@@ -262,23 +264,39 @@ export class MudancaService {
     }
     const receitaPrevista = (aprovarMudancaDto.tempoEstimadoHoras || 4) * precoHoraPrevisto;
 
-    const updated = await this.prisma.mudanca.update({
+const updated = await this.prisma.mudanca.update({
       where: { id },
       data: {
         estado: 'aprovada',
-        aprovadoPor: aprovarMudancaDto.aprovadoPor,
+        aprovadoPor:aprovarMudancaDto.aprovadoPor,
         aprovadoEm: new Date(),
-        motoristaId: aprovarMudancaDto.motoristaId,
-        ajudantesIds: aprovarMudancaDto.ajudantesIds || [],
-        tempoEstimadoHoras: aprovarMudancaDto.tempoEstimadoHoras,
-        observacoesAdmin: aprovarMudancaDto.observacoesAdmin,
+        motoristaId:aprovarMudancaDto.motoristaId,
+        veiculoId:aprovarMudancaDto.veiculoId || null,
+        tempoEstimadoHoras:aprovarMudancaDto.tempoEstimadoHoras,
+        observacoesAdmin:aprovarMudancaDto.observacoesAdmin,
         receitaPrevista,
       },
-      include: {
-        veiculo: true,
-        motorista: true,
-      },
     });
+
+    // Connect ajudantes via relation - validate they belong to tenant first
+    if (aprovarMudancaDto.ajudantesIds && aprovarMudancaDto.ajudantesIds.length > 0) {
+      const validAjudantes = await this.prisma.ajudante.findMany({
+        where: { id: { in: aprovarMudancaDto.ajudantesIds }, tenantId },
+        select: { id: true },
+      });
+      const validIds = validAjudantes.map((a) => a.id);
+      if (validIds.length !== aprovarMudancaDto.ajudantesIds.length) {
+        throw new Error('Um ou mais ajudantes não pertencem a este tenant');
+      }
+      await this.prisma.mudanca.update({
+        where: { id },
+        data: {
+          ajudantes: {
+            set: validIds.map((ajId) => ({ id: ajId })),
+          },
+        },
+      });
+    }
 
     // Email ao cliente
     if (updated.clienteEmail) {
@@ -441,7 +459,7 @@ export class MudancaService {
     const ajudantesIds = concluirMudancaDto.ajudantesConfirmados || [];
     if (ajudantesIds.length > 0) {
       const ajudantes = await this.prisma.ajudante.findMany({
-        where: { id: { in: ajudantesIds } },
+        where: { id: { in: ajudantesIds }, tenantId },
         select: { id: true, valorHora: true },
       });
       totalPagoAjudantes = ajudantes.reduce((sum, a) => sum + (a.valorHora || 0) * horasRegistadas, 0);
@@ -466,7 +484,7 @@ export class MudancaService {
         valorHoraMotorista,
         valorHoraAjudante: ajudantesIds.length > 0
           ? (await this.prisma.ajudante.findMany({
-              where: { id: { in: ajudantesIds } },
+              where: { id: { in: ajudantesIds }, tenantId },
               select: { valorHora: true },
             })).reduce((sum, a) => sum + (a.valorHora || 0), 0) / ajudantesIds.length
           : 0,
@@ -519,7 +537,8 @@ export class MudancaService {
     // Liberar slot na agenda
     if (mudanca.veiculoId && mudanca.dataPretendida && mudanca.horaPretendida) {
       try {
-        await this.agendaService.liberarSlot(tenantId, mudanca.dataPretendida, mudanca.horaPretendida);
+        const dataStr = new Date(mudanca.dataPretendida).toISOString().split('T')[0];
+        await this.agendaService.liberarSlot(tenantId, dataStr, mudanca.horaPretendida);
       } catch (e) {
         // Slot pode não existir, ignora erro
       }
@@ -673,7 +692,10 @@ export class MudancaService {
     const where: any = { tenantId, motoristaId: motorista.id };
 
     if (filters?.data) {
-      where.dataPretendida = filters.data;
+      // [2.8] Use date range for single date filter (DateTime field)
+      const inicioDia = new Date(filters.data + 'T00:00:00.000');
+      const fimDia = new Date(filters.data + 'T23:59:59.999');
+      where.dataPretendida = { gte: inicioDia, lte: fimDia };
     }
 
     if (filters?.estado) {
@@ -699,7 +721,11 @@ export class MudancaService {
   }
 
   async getDashboard(tenantId: string, userId?: string) {
-    const hoje = new Date().toISOString().split('T')[0];
+    // [2.1] Use date range for "today" comparison instead of raw ISO string
+    const hoje = new Date();
+    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999);
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 
     // Resolve gerente motorista restrictions
     let motoristaFilter: string[] | null = null;
@@ -728,28 +754,32 @@ export class MudancaService {
       concluidasSemFicha,
       estatisticasMes,
     ] = await Promise.all([
+      // [2.1] Use date range for today's mudancas
       this.prisma.mudanca.findMany({
-        where: { ...baseWhere, dataPretendida: hoje },
+        where: { ...baseWhere, dataPretendida: { gte: inicioDia, lte: fimDia } },
         include: { motorista: true, veiculo: true },
       }),
       this.prisma.mudanca.count({ where: { ...baseWhere, estado: 'pendente' } }),
       this.prisma.mudanca.count({ where: { ...baseWhere, estado: { in: ['a_caminho', 'em_servico', 'ocupado'] } } }),
+      // [2.2] concluidasSemFicha: concluidas WITHOUT ficha (conclusao is null)
       this.prisma.mudanca.count({
         where: {
           ...baseWhere,
           estado: 'concluida',
-          NOT: { conclusao: Prisma.JsonNull },
+          conclusao: Prisma.JsonNull,
         },
       }),
+      // [2.3] Add receitaPrevista to aggregate and use proper month start
       this.prisma.mudanca.aggregate({
-      where: {
-        ...baseWhere,
-        dataPretendida: {
-          gte: new Date(new Date().setDate(1)).toISOString().split('T')[0],
+        where: {
+          ...baseWhere,
+          dataPretendida: {
+            gte: inicioMes,
+          },
         },
-      },
         _sum: {
           receitaRealizada: true,
+          receitaPrevista: true,
           custosOperacionais: true,
           margem: true,
         },
@@ -768,6 +798,7 @@ export class MudancaService {
       mes: {
         total: estatisticasMes._count,
         receita: estatisticasMes._sum.receitaRealizada || 0,
+        receitaPrevista: estatisticasMes._sum.receitaPrevista || 0,
         custos: estatisticasMes._sum.custosOperacionais || 0,
         margem: estatisticasMes._sum.margem || 0,
       },

@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, XCircle, Eye, AlertTriangle } from 'lucide-react';
-import { mudancasApi, motoristasApi, ajudantesApi } from '../../lib/api';
+import { CheckCircle, XCircle, Eye, AlertTriangle, Clock } from 'lucide-react';
+import { mudancasApi, motoristasApi, ajudantesApi, veiculosApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth.store';
 import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
 import { EmptyState } from '../../components/empty-state';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { GlassCard } from '../../components/luxury/GlassCard';
+import { PageHeader } from '../../components/ui/page-header';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -32,6 +35,9 @@ const EQUIPA_LABELS: Record<string, string> = {
   motorist: 'Motorista',
   motorist_1_ajudante: 'Motorista + 1 Ajudante',
   motorist_2_ajudantes: 'Motorista + 2 Ajudantes',
+  motorista: 'Motorista',
+  motorista_1_ajudante: 'Motorista + 1 Ajudante',
+  motorista_2_ajudantes: 'Motorista + 2 Ajudantes',
 };
 
 const EQUIPA_AJUDANTES: Record<string, number> = {
@@ -40,7 +46,14 @@ const EQUIPA_AJUDANTES: Record<string, number> = {
   motorist_2_ajudantes: 2,
 };
 
+function getEquipaAjudantesCount(equipa: string): number {
+  // Normalize: "motorista_*" -> "motorist_*"
+  const normalized = equipa.replace('motorista_', 'motorist_');
+  return EQUIPA_AJUDANTES[normalized] ?? 0;
+}
+
 export function AprovacoesPage() {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { podeVer } = usePermissao();
   const { toast } = useToast();
@@ -51,8 +64,21 @@ export function AprovacoesPage() {
   const [showRecusar, setShowRecusar] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
 
+  // Reset form when approve dialog closes
+  useEffect(() => {
+    if (!showAprovar) {
+      setSelectedMudanca(null);
+      setMotoristaId('');
+      setVeiculoId('');
+      setAjudantesSelecionados([]);
+      setTempoEstimado('2');
+      setObservacoesAdmin('');
+    }
+  }, [showAprovar]);
+
   // Form state
   const [motoristaId, setMotoristaId] = useState('');
+  const [veiculoId, setVeiculoId] = useState('');
   const [ajudantesSelecionados, setAjudantesSelecionados] = useState<string[]>([]);
   const [tempoEstimado, setTempoEstimado] = useState('2');
   const [observacoesAdmin, setObservacoesAdmin] = useState('');
@@ -61,28 +87,34 @@ export function AprovacoesPage() {
   const { data: pendentes, isLoading } = useQuery({
     queryKey: ['mudancas', 'pendentes', filtroTipo],
     queryFn: async () => {
-      const filters: any = { estado: 'pendente' };
+      const filters: any = { estado: ['pendente'] };
       if (filtroTipo !== 'todos') filters.tipoServico = filtroTipo;
       const res = await mudancasApi.findAll(filters);
-      return res.data;
+      return res.data?.items || res.data || [];
     },
   });
 
-  const { data: motoristasDisponiveis } = useQuery({
-    queryKey: ['motoristas', 'disponiveis'],
-    queryFn: () => motoristasApi.findDisponiveis().then((r) => r.data),
+const { data: todosMotoristas } = useQuery({
+    queryKey: ['motoristas', 'todos'],
+    queryFn: () =>motoristasApi.findAll().then((r) => r.data),
   });
 
-  const { data: ajudantesDisponiveis } = useQuery({
-    queryKey: ['ajudantes', 'disponiveis'],
-    queryFn: () => ajudantesApi.findDisponiveis().then((r) => r.data),
+  const { data: veiculos } = useQuery({
+    queryKey: ['veiculos'],
+    queryFn: () => veiculosApi.findAll().then((r) => r.data),
   });
 
-  const aprovarMutation = useMutation({
-    mutationFn: (data: { id: string; aprovadoPor: string; motoristaId: string; ajudantesIds?: string[]; tempoEstimadoHoras: number; observacoesAdmin?: string }) =>
+  const { data: todosAjudantes } = useQuery({
+    queryKey: ['ajudantes', 'todos'],
+    queryFn: () =>ajudantesApi.findAll().then((r) => r.data),
+});
+
+  const approveMutation = useMutation({
+    mutationFn: (data: { id: string; aprovadoPor: string; motoristaId: string; veiculoId?: string | null; ajudantesIds?: string[]; tempoEstimadoHoras: number; observacoesAdmin?: string }) =>
       mudancasApi.approve(data.id, {
         aprovadoPor: data.aprovadoPor,
         motoristaId: data.motoristaId,
+        veiculoId: data.veiculoId,
         ajudantesIds: data.ajudantesIds,
         tempoEstimadoHoras: data.tempoEstimadoHoras,
         observacoesAdmin: data.observacoesAdmin,
@@ -116,6 +148,7 @@ export function AprovacoesPage() {
 
   const resetForm = () => {
     setMotoristaId('');
+    setVeiculoId('');
     setAjudantesSelecionados([]);
     setTempoEstimado('2');
     setObservacoesAdmin('');
@@ -124,8 +157,33 @@ export function AprovacoesPage() {
 
   const handleOpenAprovar = (mudanca: any) => {
     setSelectedMudanca(mudanca);
+    if (mudanca.veiculoId) {
+      setVeiculoId(mudanca.veiculoId);
+    } else {
+      setVeiculoId('');
+    }
+    setMotoristaId('');
+    setAjudantesSelecionados([]);
+    setTempoEstimado('2');
+    setObservacoesAdmin('');
     setShowDetail(false);
     setShowAprovar(true);
+  };
+
+  const handleMotoristaChange = (mid: string) => {
+    setMotoristaId(mid);
+    if (mid) {
+      const selected = (todosMotoristas as any[])?.find((m: any) => m.id === mid);
+      if (selected?.veiculoId) {
+        setVeiculoId(selected.veiculoId);
+      } else {
+        setVeiculoId('');
+      }
+    }
+  };
+
+  const handleVeiculoChange = (vid: string) => {
+    setVeiculoId(vid === '_none' ? '' : vid);
   };
 
   const handleOpenRecusar = (mudanca: any) => {
@@ -135,8 +193,7 @@ export function AprovacoesPage() {
   };
 
   const handleOpenDetail = (mudanca: any) => {
-    setSelectedMudanca(mudanca);
-    setShowDetail(true);
+    navigate(`/mudancas/${mudanca.id}`);
   };
 
   const renderMorada = (morada: any) => {
@@ -148,15 +205,10 @@ export function AprovacoesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header com filtros */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Aprovações</h2>
-          <p className="text-muted-foreground">
-            {mudancas.length} solicitação(ões) pendente(s)
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        title="Aprovações"
+        subtitle={`${mudancas.length} solicitação(ões) pendente(s)`}
+        actions={
           <Select value={filtroTipo} onValueChange={setFiltroTipo}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar por tipo" />
@@ -167,14 +219,14 @@ export function AprovacoesPage() {
               <SelectItem value="urgente">Urgente</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        }
+      />
 
       {/* Lista de solicitações */}
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-muted rounded-lg animate-pulse" />
+            <div key={i} className="h-32 rounded-xl animate-pulse" style={{ background: 'var(--surface-container-low)' }} />
           ))}
         </div>
       ) : mudancas.length === 0 ? (
@@ -184,81 +236,67 @@ export function AprovacoesPage() {
           description="Todas as solicitações foram processadas. Novas solicitações aparecerão aqui."
         />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {mudancas.map((mudanca: any) => (
-            <Card key={mudanca.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                  {/* Info principal */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <StatusBadge status={mudanca.estado} />
-                      {mudanca.tipoServico === 'urgente' && (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-destructive/10 text-destructive rounded-full">
-                          URGENTE
-                        </span>
-                      )}
-                      <StatusBadge status={mudanca.equipa} />
-                    </div>
-                    <h3 className="font-semibold text-lg">{mudanca.clienteNome}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {mudanca.clienteEmail} | {mudanca.clienteTelefone}
-                    </p>
-                    <div className="mt-2 text-sm text-muted-foreground space-y-1">
-                      <p>
-                        <span className="font-medium">Data:</span>{' '}
-                        {mudanca.dataPretendida}
-                        {mudanca.horaPretendida && ` às ${mudanca.horaPretendida}`}
-                      </p>
-                      <p>
-                        <span className="font-medium">Recolha:</span>{' '}
-                        {renderMorada(mudanca.moradaRecolha)}
-                      </p>
-                      <p>
-                        <span className="font-medium">Entrega:</span>{' '}
-                        {renderMorada(mudanca.moradaEntrega)}
-                      </p>
-                      <p>
-                        <span className="font-medium">Equipa:</span>{' '}
-                        {EQUIPA_LABELS[mudanca.equipa] || mudanca.equipa}
-                      </p>
-                    </div>
+            <GlassCard key={mudanca.id} hover className="p-5">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-5">
+                {/* Info principal */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <StatusBadge status={mudanca.estado} />
+                    {mudanca.tipoServico === 'urgente' && (
+                      <span className="px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full"
+                        style={{ background: 'hsl(var(--destructive)/0.1)', color: 'hsl(var(--destructive))' }}>
+                        Urgente
+                      </span>
+                    )}
                   </div>
 
-                  {/* Ações */}
-                  <div className="flex flex-row lg:flex-col gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenDetail(mudanca)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver
-                    </Button>
-                    {podeVer('aprovar') && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleOpenAprovar(mudanca)}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Aprovar
-                    </Button>
-                    )}
-                    {podeVer('recusar') && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleOpenRecusar(mudanca)}
-                    >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Recusar
-                    </Button>
-                    )}
+                  <h3
+                    className="text-lg font-light mb-1"
+                    style={{ fontFamily: 'var(--tenant-font-display)', color: 'hsl(var(--foreground))' }}
+                  >
+                    {mudanca.clienteNome}
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
+                    {[
+                      { label: 'Data', value: `${mudanca.dataPretendida}${mudanca.horaPretendida ? ` às ${mudanca.horaPretendida}` : ''}` },
+                      { label: 'Equipa', value: EQUIPA_LABELS[mudanca.equipa] || mudanca.equipa },
+                      { label: 'Recolha', value: renderMorada(mudanca.moradaRecolha) },
+                      { label: 'Entrega', value: renderMorada(mudanca.moradaEntrega) },
+                    ].map(({ label, value }) => (
+                      <div key={label}>
+                        <span className="ct-ledger-label">{label}</span>
+                        <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--foreground))' }}>{value}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Separador vertical */}
+                <div className="hidden lg:block w-px self-stretch" style={{ background: 'hsl(var(--border))' }} />
+
+                {/* Ações */}
+                <div className="flex flex-row lg:flex-col gap-2 lg:min-w-[120px]">
+                  <Button variant="outline" size="sm" className="flex-1 lg:flex-none" onClick={() => handleOpenDetail(mudanca)}>
+                    <Eye className="h-3.5 w-3.5 mr-1.5" /> Ver
+                  </Button>
+                  {podeVer('aprovar') && (
+                    <Button size="sm" className="flex-1 lg:flex-none bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                      onClick={() => handleOpenAprovar(mudanca)}>
+                      <CheckCircle className="h-3.5 w-3.5 mr-1.5" /> Aprovar
+                    </Button>
+                  )}
+                  {podeVer('recusar') && (
+                    <Button variant="destructive" size="sm" className="flex-1 lg:flex-none"
+                      onClick={() => handleOpenRecusar(mudanca)}>
+                      <XCircle className="h-3.5 w-3.5 mr-1.5" /> Recusar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </GlassCard>
           ))}
         </div>
       )}
@@ -385,18 +423,22 @@ export function AprovacoesPage() {
               <div className="bg-primary/10 p-3 rounded-lg text-sm">
                 <p className="font-medium text-foreground">{selectedMudanca.clienteNome}</p>
                 <p className="text-primary">{selectedMudanca.dataPretendida} {selectedMudanca.horaPretendida && `às ${selectedMudanca.horaPretendida}`}</p>
+                {selectedMudanca.veiculo && (
+                  <p className="text-muted-foreground mt-1">Veículo: {selectedMudanca.veiculo.nome || selectedMudanca.veiculo.matricula}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Motorista</Label>
-                <Select value={motoristaId} onValueChange={setMotoristaId}>
+                <Select value={motoristaId} onValueChange={handleMotoristaChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar motorista disponível" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(motoristasDisponiveis || []).map((m: any) => (
+                    {(todosMotoristas || []).map((m: any) => (
                       <SelectItem key={m.id} value={m.id}>
                         {m.nome} {m.veiculo ? `— ${m.veiculo.nome}` : ''}
+                        {m.estado !== 'disponivel' && m.estado !== 'indisponivel' && ` (${m.estado})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -404,26 +446,41 @@ export function AprovacoesPage() {
               </div>
 
               <div className="space-y-2">
+                <Label>Veículo</Label>
+                <Select value={veiculoId} onValueChange={handleVeiculoChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar veículo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Sem veículo</SelectItem>
+                    {(veiculos || []).map((v: any) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.nome} - {v.matricula}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  O veículo é pré-selecionado conforme escolha do cliente. Selecione outro se necessário.
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Ajudantes (opcional)</Label>
                 {selectedMudanca && (
                   <p className="text-xs text-muted-foreground mb-2">
-                    Equipa: {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa} — máximo {EQUIPA_AJUDANTES[selectedMudanca.equipa] || 0} ajudante(s)
+                    Cliente escolheu: {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa} ({getEquipaAjudantesCount(selectedMudanca.equipa)} ajudante(s))
                   </p>
                 )}
-                {(ajudantesDisponiveis || []).length > 0 ? (
+                {(todosAjudantes || []).length > 0 ? (
                   <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
-                    {(ajudantesDisponiveis as any[]).map((a: any) => (
+                    {(todosAjudantes as any[]).map((a: any) => (
                       <label key={a.id} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={ajudantesSelecionados.includes(a.id)}
                           onChange={(e) => {
-                            const maxAjudantes = selectedMudanca ? (EQUIPA_AJUDANTES[selectedMudanca.equipa] || 0) : 0;
                             if (e.target.checked) {
-                              if (ajudantesSelecionados.length >= maxAjudantes) {
-                                toast({ title: 'Limite atingido', description: `Esta equipa permite apenas ${maxAjudantes} ajudante(s)`, variant: 'destructive' });
-                                return;
-                              }
                               setAjudantesSelecionados([...ajudantesSelecionados, a.id]);
                             } else {
                               setAjudantesSelecionados(ajudantesSelecionados.filter((id) => id !== a.id));
@@ -437,6 +494,16 @@ export function AprovacoesPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Sem ajudantes disponíveis</p>
+                )}
+                {selectedMudanca && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Equipa escolhida: {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa} → {getEquipaAjudantesCount(selectedMudanca.equipa)} ajudante(s)
+                  </p>
+                )}
+                {selectedMudanca && ajudantesSelecionados.length > getEquipaAjudantesCount(selectedMudanca.equipa) && (
+                  <p className="text-xs text-amber-600">
+                    ⚠️ Admin selecionou {ajudantesSelecionados.length} ajudante(s), mais do que a escolha do cliente
+                  </p>
                 )}
               </div>
 
@@ -471,20 +538,22 @@ export function AprovacoesPage() {
             </Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
-              disabled={!motoristaId || aprovarMutation.isPending}
-              onClick={() => {
+              disabled={!motoristaId || approveMutation.isPending}
+onClick={() => {
                 if (!selectedMudanca || !motoristaId) return;
-                aprovarMutation.mutate({
+                // [3.1] Use admin's dropdown selections, NOT the mudanca's original (null) values
+                approveMutation.mutate({
                   id: selectedMudanca.id,
                   aprovadoPor: user?.id || '',
-                  motoristaId,
+                  motoristaId: motoristaId,
+                  veiculoId: veiculoId || null,
                   ajudantesIds: ajudantesSelecionados.length > 0 ? ajudantesSelecionados : undefined,
                   tempoEstimadoHoras: parseFloat(tempoEstimado),
                   observacoesAdmin: observacoesAdmin || undefined,
                 });
               }}
             >
-              {aprovarMutation.isPending ? 'A aprovar...' : 'Confirmar Aprovação'}
+              {approveMutation.isPending ? 'A aprovar...' : 'Confirmar Aprovação'}
             </Button>
           </DialogFooter>
         </DialogContent>

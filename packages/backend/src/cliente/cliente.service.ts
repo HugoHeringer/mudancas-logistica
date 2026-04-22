@@ -101,6 +101,7 @@ export class ClienteService {
       where: { id },
       data: updateClienteDto as any,
     });
+    // Note: findOne above already verified tenantId ownership
   }
 
   async merge(tenantId: string, sourceId: string, targetId: string) {

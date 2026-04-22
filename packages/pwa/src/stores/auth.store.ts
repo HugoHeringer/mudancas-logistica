@@ -49,11 +49,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // [7.1] Always persist auth state so reload doesn't log out motorista
       partialize: (state) => ({
-        user: state.guardarSessao ? state.user : null,
-        accessToken: state.guardarSessao ? state.accessToken : null,
-        refreshToken: state.guardarSessao ? state.refreshToken : null,
-        isAuthenticated: state.guardarSessao ? state.isAuthenticated : false,
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
         guardarSessao: state.guardarSessao,
       }),
     }

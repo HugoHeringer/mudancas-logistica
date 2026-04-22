@@ -1,36 +1,28 @@
-import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-
-class HorarioDto {
-  @IsNumber()
-  diaSemana: number;
-
-  @IsString()
-  horaInicio: string;
-
-  @IsString()
-  horaFim: string;
-
-  @IsNumber()
-  ativo: number;
-}
 
 export class UpdateConfigAgendaDto {
-  @ApiProperty({ type: [HorarioDto] })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HorarioDto)
+  @ApiProperty({ required: false })
+  @IsString()
   @IsOptional()
-  horarios?: HorarioDto[];
+  horaAbertura?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  horaFecho?: string;
+
+  @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
-  capacidadePorSlot?: number;
+  capacidadeSlot?: number;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
   duracaoSlotMinutos?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  diasFuncionamento?: Record<string, boolean>;
 }

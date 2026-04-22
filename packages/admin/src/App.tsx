@@ -16,6 +16,7 @@ const DashboardPage = lazy(() => import('./pages/dashboard/dashboard.page').then
 const AprovacoesPage = lazy(() => import('./pages/aprovacoes/aprovacoes.page').then(m => ({ default: m.AprovacoesPage })));
 const AgendaPage = lazy(() => import('./pages/agenda/agenda.page').then(m => ({ default: m.AgendaPage })));
 const MudancasPage = lazy(() => import('./pages/mudancas/mudancas.page').then(m => ({ default: m.MudancasPage })));
+const NovaMudancaPage = lazy(() => import('./pages/mudancas/nova-mudanca.page').then(m => ({ default: m.NovaMudancaPage })));
 const MudancaDetalhePage = lazy(() => import('./pages/mudancas/mudanca-detalhe.page').then(m => ({ default: m.MudancaDetalhePage })));
 const ClientesPage = lazy(() => import('./pages/clientes/clientes.page').then(m => ({ default: m.ClientesPage })));
 const MotoristasPage = lazy(() => import('./pages/motoristas/motoristas.page').then(m => ({ default: m.MotoristasPage })));
@@ -89,6 +90,7 @@ function App() {
           <Route path="/aprovacoes" element={<ProtectedRoute path="/aprovacoes"><AprovacoesPage /></ProtectedRoute>} />
           <Route path="/agenda" element={<ProtectedRoute path="/agenda"><AgendaPage /></ProtectedRoute>} />
           <Route path="/mudancas" element={<ProtectedRoute path="/mudancas"><MudancasPage /></ProtectedRoute>} />
+          <Route path="/mudancas/nova" element={<ProtectedRoute path="/mudancas"><NovaMudancaPage /></ProtectedRoute>} />
           <Route path="/mudancas/:id" element={<ProtectedRoute path="/mudancas"><MudancaDetalhePage /></ProtectedRoute>} />
           <Route path="/clientes" element={<ProtectedRoute path="/clientes"><ClientesPage /></ProtectedRoute>} />
           <Route path="/motoristas" element={<ProtectedRoute path="/motoristas"><MotoristasPage /></ProtectedRoute>} />

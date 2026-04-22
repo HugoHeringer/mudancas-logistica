@@ -8,6 +8,8 @@ import { EmptyState } from '../../components/empty-state';
 import { DataTable } from '../../components/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { GlassCard } from '../../components/luxury/GlassCard';
+import { PageHeader } from '../../components/ui/page-header';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -162,16 +164,16 @@ export function MotoristasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Motoristas</h2>
-          <p className="text-muted-foreground">Gestão de motoristas e performance</p>
-        </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Novo Motorista
-        </Button>
-      </div>
+      <PageHeader
+        title="Motoristas"
+        subtitle="Gestão de motoristas e performance"
+        actions={
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Novo Motorista
+          </Button>
+        }
+      />
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -281,11 +283,23 @@ export function MotoristasPage() {
             <DialogDescription>Dados do mês atual</DialogDescription>
           </DialogHeader>
           {performance && (
-            <div className="grid grid-cols-2 gap-4">
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Mudanças</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{performance.mudancasNoMes}</p></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Horas Trabalhadas</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{performance.horasTrabalhadas}h</p></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Receita Gerada</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-green-600">€{performance.receitaGerada?.toFixed(2)}</p></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Margem</CardTitle></CardHeader><CardContent><p className={`text-2xl font-bold ${performance.margem >= 0 ? 'text-green-600' : 'text-red-600'}`}>€{performance.margem?.toFixed(2)}</p></CardContent></Card>
+            <div className="grid grid-cols-2 gap-3">
+              <GlassCard className="p-4">
+                <span className="ct-ledger-label">Mudanças</span>
+                <p className="text-2xl font-light mt-1" style={{ fontFamily: 'var(--tenant-font-display)' }}>{performance.mudancasNoMes}</p>
+              </GlassCard>
+              <GlassCard className="p-4">
+                <span className="ct-ledger-label">Horas</span>
+                <p className="text-2xl font-light mt-1" style={{ fontFamily: 'var(--tenant-font-display)' }}>{performance.horasTrabalhadas}h</p>
+              </GlassCard>
+              <GlassCard className="p-4">
+                <span className="ct-ledger-label">Receita Gerada</span>
+                <p className="text-2xl font-light mt-1 text-emerald-600" style={{ fontFamily: 'var(--tenant-font-display)' }}>€{performance.receitaGerada?.toFixed(2)}</p>
+              </GlassCard>
+              <GlassCard className="p-4">
+                <span className="ct-ledger-label">Margem</span>
+                <p className={`text-2xl font-light mt-1 ${performance.margem >= 0 ? 'text-emerald-600' : 'text-destructive'}`} style={{ fontFamily: 'var(--tenant-font-display)' }}>€{performance.margem?.toFixed(2)}</p>
+              </GlassCard>
             </div>
           )}
           <DialogFooter>

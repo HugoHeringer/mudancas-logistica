@@ -15,16 +15,8 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AgendaService } from './agenda.service';
 import { CreateBloqueioDto } from './dto/create-bloqueio.dto';
 import { UpdateConfigAgendaDto } from './dto/update-config-agenda.dto';
-import { TenantRequest } from '../prisma/prisma.middleware';
+import { TenantRequest, getTenantId } from '../prisma';
 import { Roles } from '../auth/decorators/roles.decorator';
-
-function getTenantId(req: TenantRequest): string {
-  const tenantId = req.tenantId || req.user?.tenantId;
-  if (!tenantId) {
-    throw new Error('Tenant ID não encontrado');
-  }
-  return tenantId;
-}
 
 @ApiTags('agenda')
 @Controller('agenda')

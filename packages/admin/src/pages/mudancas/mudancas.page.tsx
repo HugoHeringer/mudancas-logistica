@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Search } from 'lucide-react';
+import { Truck, Search, Plus } from 'lucide-react';
 import { mudancasApi, motoristasApi } from '../../lib/api';
 import { StatusBadge } from '../../components/status-badge';
 import { EmptyState } from '../../components/empty-state';
 import { DataTable } from '../../components/data-table';
+import { PageHeader } from '../../components/ui/page-header';
 import { ColumnDef } from '@tanstack/react-table';
 import { Input } from '../../components/ui/input';
+import { Button } from '../../components/ui/button';
 import {
   Select,
   SelectContent,
@@ -43,17 +45,23 @@ export function MudancasPage() {
   const [filtroMotorista, setFiltroMotorista] = useState<string>('todos');
   const [busca, setBusca] = useState('');
 
-  const { data: mudancas, isLoading } = useQuery({
+  const { data: mudancasData, isLoading } = useQuery({
     queryKey: ['mudancas', filtroEstado, filtroTipo, filtroMotorista],
     queryFn: async () => {
       const filters: any = {};
-      if (filtroEstado !== 'todos') filters.estado = filtroEstado;
+      if (filtroEstado === 'todos') {
+        filters.estado = ['aprovada', 'a_caminho', 'em_servico', 'concluida', 'cancelada'];
+      } else {
+        filters.estado = [filtroEstado];
+      }
       if (filtroTipo !== 'todos') filters.tipoServico = filtroTipo;
       if (filtroMotorista !== 'todos') filters.motoristaId = filtroMotorista;
       const res = await mudancasApi.findAll(filters);
-      return res.data as Mudanca[];
+      return res.data?.items || res.data || [];
     },
   });
+
+  const mudancas = mudancasData || [];
 
   const { data: motoristas } = useQuery({
     queryKey: ['motoristas'],
@@ -123,14 +131,16 @@ export function MudancasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Mudanças</h2>
-          <p className="text-muted-foreground">
-            Histórico completo de todas as mudanças
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Mudanças"
+        subtitle="Histórico completo de todas as mudanças"
+        actions={
+          <Button onClick={() => navigate('/mudancas/nova')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Mudança
+          </Button>
+        }
+      />
 
       {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -149,7 +159,6 @@ export function MudancasPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os estados</SelectItem>
-            <SelectItem value="pendente">Pendente</SelectItem>
             <SelectItem value="aprovada">Aprovada</SelectItem>
             <SelectItem value="a_caminho">A Caminho</SelectItem>
             <SelectItem value="em_servico">Em Serviço</SelectItem>

@@ -237,11 +237,11 @@ export const formularioApi = {
 };
 
 export const uploadApi = {
-  upload: (file: File, tenantId: string, entidade?: string, entidadeId?: string) => {
+  upload: (file: File, entidade?: string, entidadeId?: string) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post('/upload', formData, {
-      params: { tenantId, entidade, entidadeId },
+    return api.post('/upload/file', formData, {
+      params: { entidade, entidadeId },
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

@@ -73,7 +73,7 @@ export class VeiculoController {
     @Param('id') id: string,
     @Body() body: { estado: string },
   ) {
-    return this.veiculoService.updateEstado(id, body.estado);
+    return this.veiculoService.updateEstado(getTenantId(req), id, body.estado);
   }
 
   @Delete(':id')

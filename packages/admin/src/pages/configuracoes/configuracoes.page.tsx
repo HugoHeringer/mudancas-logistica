@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tenantsApi, agendaApi, uploadApi, formularioApi, authApi, veiculosApi } from '../../lib/api';
 import { CardSkeleton } from '../../components/ui/skeleton';
@@ -488,30 +488,35 @@ export function ConfiguracoesPage() {
   // Password state
   const [passwordForm, setPasswordForm] = useState({ current: '', nova: '', confirmar: '' });
 
-  // Initialize state from query data
-  if (tenant && !marcaLoaded) {
-    const cm = tenant.configMarca || {};
-    setMarca({
-      nome: cm.nome || '',
-      telefone: cm.contacto?.telefone || cm.telefone || '',
-      email: cm.contacto?.email || cm.email || '',
-      morada: cm.contacto?.morada || cm.morada || '',
-      logoUrl: cm.logoUrl || '',
-      faviconUrl: cm.faviconUrl || '',
-      redesSociais: cm.contacto?.redesSociais
-        ? `Facebook: ${cm.contacto.redesSociais.facebook || ''}\nInstagram: ${cm.contacto.redesSociais.instagram || ''}`
-        : cm.redesSociais || '',
-      corPrincipal: cm.cores?.primaria || cm.corPrincipal || DEFAULT_CORES.corPrincipal,
-      corSecundaria: cm.cores?.secundaria || cm.corSecundaria || DEFAULT_CORES.corSecundaria,
-      corDetalhe: cm.cores?.acento || cm.corDetalhe || DEFAULT_CORES.corDetalhe,
-    });
-    setPrecos(tenant.configPreco || {});
-    setMarcaLoaded(true);
-  }
-  if (configAgenda && !agendaLoaded) {
-    setAgendaConfig(configAgenda);
-    setAgendaLoaded(true);
-  }
+  // [4.8] Move setState from render to useEffect
+  useEffect(() => {
+    if (tenant && !marcaLoaded) {
+      const cm = tenant.configMarca || {};
+      setMarca({
+        nome: cm.nome || '',
+        telefone: cm.contacto?.telefone || cm.telefone || '',
+        email: cm.contacto?.email || cm.email || '',
+        morada: cm.contacto?.morada || cm.morada || '',
+        logoUrl: cm.logoUrl || '',
+        faviconUrl: cm.faviconUrl || '',
+        redesSociais: cm.contacto?.redesSociais
+          ? `Facebook: ${cm.contacto.redesSociais.facebook || ''}\nInstagram: ${cm.contacto.redesSociais.instagram || ''}`
+          : cm.redesSociais || '',
+        corPrincipal: cm.cores?.primaria || cm.corPrincipal || DEFAULT_CORES.corPrincipal,
+        corSecundaria: cm.cores?.secundaria || cm.corSecundaria || DEFAULT_CORES.corSecundaria,
+        corDetalhe: cm.cores?.acento || cm.corDetalhe || DEFAULT_CORES.corDetalhe,
+      });
+      setPrecos(tenant.configPreco || {});
+      setMarcaLoaded(true);
+    }
+  }, [tenant, marcaLoaded]);
+
+  useEffect(() => {
+    if (configAgenda && !agendaLoaded) {
+      setAgendaConfig(configAgenda);
+      setAgendaLoaded(true);
+    }
+  }, [configAgenda, agendaLoaded]);
 
   const updateTenantMutation = useMutation({
     mutationFn: (data: any) => tenantsApi.update(user!.tenantId, data),

@@ -9,6 +9,8 @@ import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { GlassCard } from '../../components/luxury/GlassCard';
+import { PageHeader } from '../../components/ui/page-header';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -240,41 +242,36 @@ export function AgendaPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Agenda</h2>
-          <p className="text-muted-foreground">Visão calendarizada de todas as mudanças confirmadas</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Action buttons */}
-          {podeVer('criar') && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setShowCriarSlot(true)}>
-                <Plus className="h-4 w-4 mr-1" />
-                Slot
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowCriarBloqueio(true)}>
-                <Ban className="h-4 w-4 mr-1" />
-                Bloqueio
-              </Button>
-            </>
-          )}
-
-          <Button variant="outline" size="sm" onClick={goToToday}>Hoje</Button>
-          <Button variant="outline" size="icon" onClick={() => navigateDate('prev')}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium min-w-[160px] text-center">
-            {vista === 'diaria'
-              ? format(dataAtual, "d 'de' MMMM 'de' yyyy", { locale: ptBR })
-              : format(dataAtual, "MMMM 'de' yyyy", { locale: ptBR })}
-          </span>
-          <Button variant="outline" size="icon" onClick={() => navigateDate('next')}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Agenda"
+        subtitle="Visão calendarizada de todas as mudanças confirmadas"
+        actions={
+          <div className="flex items-center gap-2">
+            {podeVer('criar') && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setShowCriarSlot(true)}>
+                  <Plus className="h-4 w-4 mr-1" /> Slot
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowCriarBloqueio(true)}>
+                  <Ban className="h-4 w-4 mr-1" /> Bloqueio
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="sm" onClick={goToToday}>Hoje</Button>
+            <Button variant="outline" size="icon" onClick={() => navigateDate('prev')}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[160px] text-center" style={{ color: 'hsl(var(--foreground))' }}>
+              {vista === 'diaria'
+                ? format(dataAtual, "d 'de' MMMM 'de' yyyy", { locale: ptBR })
+                : format(dataAtual, "MMMM 'de' yyyy", { locale: ptBR })}
+            </span>
+            <Button variant="outline" size="icon" onClick={() => navigateDate('next')}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filtros e vista */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -308,10 +305,10 @@ export function AgendaPage() {
 
       {/* Vista Mensal */}
       {vista === 'mensal' && (
-        <div className="border rounded-lg bg-card">
-          <div className="grid grid-cols-7 border-b">
+        <GlassCard className="overflow-hidden p-0">
+          <div className="grid grid-cols-7" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
             {diasSemana.map((dia) => (
-              <div key={dia} className="p-2 text-center text-sm font-medium text-muted-foreground border-r last:border-r-0">{dia}</div>
+              <div key={dia} className="p-2 text-center text-xs font-medium tracking-wider uppercase" style={{ color: 'hsl(var(--muted-foreground))', borderRight: '1px solid hsl(var(--border))' }}>{dia}</div>
             ))}
           </div>
           <div className="grid grid-cols-7">
@@ -321,34 +318,55 @@ export function AgendaPage() {
               const isToday = isSameDay(date, new Date());
               const slotInfo = getSlotInfoForDay(date);
               return (
-                <div key={i} className={`min-h-[100px] p-1 border-r border-b last:border-r-0 ${!isCurrentMonth ? 'bg-muted/50' : ''} ${isToday ? 'bg-primary/10' : ''} ${slotInfo.status === 'bloqueada' ? 'bg-muted' : ''}`}>
-                  <div className="flex items-center gap-1">
-                    <span className={`text-sm p-1 ${!isCurrentMonth ? 'text-muted-foreground' : ''} ${isToday ? 'font-bold text-primary' : ''}`}>
+                <div
+                  key={i}
+                  className="min-h-[90px] p-1.5"
+                  style={{
+                    background: !isCurrentMonth
+                      ? 'var(--surface-container-low)'
+                      : isToday
+                      ? 'hsl(var(--primary) / 0.06)'
+                      : slotInfo.status === 'bloqueada'
+                      ? 'hsl(var(--muted) / 0.5)'
+                      : 'transparent',
+                    borderRight: '1px solid hsl(var(--border))',
+                    borderBottom: '1px solid hsl(var(--border))',
+                  }}
+                >
+                  <div className="flex items-center gap-1 mb-1">
+                    <span
+                      className="text-sm leading-none p-0.5"
+                      style={{ color: isToday ? 'hsl(var(--primary))' : !isCurrentMonth ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))', fontWeight: isToday ? 600 : 400 }}
+                    >
                       {format(date, 'd')}
                     </span>
                     {slotInfo.status !== 'sem_slots' && (
-                      <span className={`w-2 h-2 rounded-full ${getStatusColor(slotInfo.status)}`} title={getStatusLabel(slotInfo.status)} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(slotInfo.status)}`} title={getStatusLabel(slotInfo.status)} />
                     )}
                   </div>
                   <div className="space-y-0.5">
                     {dayMudancas.slice(0, 3).map((m: any) => (
                       <div
                         key={m.id}
-                        className={`text-xs p-0.5 rounded cursor-pointer hover:opacity-80 truncate ${m.estado === 'aprovada' ? 'bg-blue-500/10' : m.estado === 'em_servico' ? 'bg-cyan-500/10' : m.estado === 'a_caminho' ? 'bg-purple-500/10' : 'bg-muted'}`}
+                        className="text-[10px] px-1 py-0.5 rounded cursor-pointer truncate transition-opacity hover:opacity-70"
+                        style={{
+                          background: m.estado === 'aprovada' ? 'hsl(var(--primary) / 0.12)' : m.estado === 'em_servico' ? 'hsl(var(--accent) / 0.12)' : 'hsl(var(--muted))',
+                          color: 'hsl(var(--foreground))',
+                        }}
                         onClick={() => navigate(`/mudancas/${m.id}`)}
                       >
-                        <span className="font-medium">{m.horaPretendida || ''}</span> {m.clienteNome}
+                        <span style={{ color: 'hsl(var(--primary))', fontWeight: 500 }}>{m.horaPretendida || ''}</span> {m.clienteNome}
                       </div>
                     ))}
                     {dayMudancas.length > 3 && (
-                      <p className="text-xs text-muted-foreground text-center">+{dayMudancas.length - 3} mais</p>
+                      <p className="text-[10px] text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>+{dayMudancas.length - 3}</p>
                     )}
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Vista Semanal */}

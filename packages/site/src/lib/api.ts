@@ -14,4 +14,5 @@ export const publicApi = {
     api.get(`/public/disponibilidade?tenantId=${tenantId}&data=${data}`),
   getTenantInfo: (subdomain: string) => api.get(`/public/tenant/${subdomain}`),
   getTenantBrand: (subdomain: string) => api.get(`/public/tenant/${subdomain}/brand`),
+  getCamposFormulario: (tenantId: string) => api.get(`/public/formulario/campos?tenantId=${tenantId}`),
 };

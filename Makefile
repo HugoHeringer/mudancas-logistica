@@ -42,16 +42,16 @@ docker-logs: ## Show Docker logs
 	docker compose logs -f
 
 db-migrate: ## Run database migrations
-	npm run db:migrate --workspace=packages/backend
+	npm run db:migrate --workspace=@mudancas/backend
 
 db-seed: ## Seed database
-	npm run db:seed --workspace=packages/backend
+	npm run db:seed --workspace=@mudancas/backend
 
 db-studio: ## Open Prisma Studio
-	npm run db:studio --workspace=packages/backend
+	npm run db:studio --workspace=@mudancas/backend
 
 db-reset: ## Reset database
-	npm run db:migrate --workspace=packages/backend -- --reset
+	npm run db:migrate --workspace=@mudancas/backend -- --reset
 
 clean: ## Clean build artifacts
 	rm -rf packages/*/dist

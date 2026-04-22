@@ -88,7 +88,8 @@ export class VeiculoService {
     });
   }
 
-  async updateEstado(id: string, estado: string) {
+  async updateEstado(tenantId: string, id: string, estado: string) {
+    await this.findOne(tenantId, id);
     return this.prisma.veiculo.update({
       where: { id },
       data: { estado },

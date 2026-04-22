@@ -108,6 +108,12 @@ export class AuthService {
       throw new BadRequestException('Empresa inválida');
     }
 
+    // Restringir perfis: register so permite motorista/operacional
+    const perfisPermitidos = ['motorista', 'operacional'];
+    if (!perfisPermitidos.includes(registerDto.perfil)) {
+      throw new BadRequestException('Registo apenas permitido para perfil motorista ou operacional');
+    }
+
     // Verificar se usuário já existe
     const existingUser = await this.prisma.user.findFirst({
       where: {
@@ -146,10 +152,16 @@ export class AuthService {
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
+        include: { tenant: { select: { estado: true } } },
       });
 
       if (!user || !user.eAtivo) {
         throw new UnauthorizedException('Utilizador inválido');
+      }
+
+      // Verificar se tenant ainda está ativo
+      if (user.tenant?.estado !== 'ativa') {
+        throw new UnauthorizedException('Empresa inativa ou suspensa');
       }
 
       const newPayload = {
@@ -162,7 +174,8 @@ export class AuthService {
       return {
         accessToken: this.jwtService.sign(newPayload),
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException('Refresh token inválido');
     }
   }

@@ -12,6 +12,11 @@ export class AprovarMudancaDto {
   @IsNotEmpty()
   motoristaId: string;
 
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  veiculoId?: string;
+
   @ApiProperty({ type: [String], required: false })
   @IsArray()
   @IsString({ each: true })

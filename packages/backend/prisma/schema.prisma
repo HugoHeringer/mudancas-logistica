@@ -114,6 +114,7 @@ model Mudanca {
   observacoes   String?
   eInternacional Boolean @default(false)
   documentacao  String?
+  camposPersonalizados Json?   @default("{}")
 
   // Aprovação
   aprovadoPor   String?  @map("aprovadoPor")
@@ -222,6 +223,7 @@ model Veiculo {
   precoHora     Float
   estado        String   @default("disponivel") // disponivel, em_servico, em_manutencao
   eParaUrgencias Boolean @default(false)
+  imagemUrl    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

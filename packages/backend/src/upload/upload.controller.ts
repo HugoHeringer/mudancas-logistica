@@ -25,21 +25,21 @@ import { TenantRequest, getTenantId } from '../prisma';
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post()
+  @Post('file')
+  @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   }))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload de ficheiro (autenticado)' })
   async uploadFile(
+    @Request() req: TenantRequest,
     @UploadedFile() file: Express.Multer.File,
-    @Query('tenantId') tenantId: string,
     @Query('entidade') entidade?: string,
     @Query('entidadeId') entidadeId?: string,
   ) {
     if (!file) throw new BadRequestException('Nenhum ficheiro enviado');
-    if (!tenantId) throw new BadRequestException('tenantId obrigatorio');
-    return this.uploadService.salvarFicheiro(tenantId, file, entidade, entidadeId);
+    return this.uploadService.salvarFicheiro(getTenantId(req), file, entidade, entidadeId);
   }
 
   @Post('logo')
@@ -80,6 +80,22 @@ export class UploadController {
   ) {
     if (!file) throw new BadRequestException('Nenhum ficheiro enviado');
     return this.uploadService.salvarBanner(getTenantId(req), file);
+  }
+
+  @Post('veiculo')
+  @ApiBearerAuth()
+  @Roles('admin')
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  }))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload de imagem do veículo' })
+  async uploadVeiculo(
+    @Request() req: TenantRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Nenhum ficheiro enviado');
+    return this.uploadService.salvarFicheiro(getTenantId(req), file, 'veiculo', undefined);
   }
 
   @Get('banners')
@@ -124,19 +140,20 @@ export class UploadController {
   }
 
   @Post('multiple')
+  @ApiBearerAuth()
   @UseInterceptors(FilesInterceptor('files', 10, {
     limits: { fileSize: 10 * 1024 * 1024 },
   }))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload multiplos ficheiros (autenticado)' })
   async uploadFiles(
+    @Request() req: TenantRequest,
     @UploadedFiles() files: Express.Multer.File[],
-    @Query('tenantId') tenantId: string,
     @Query('entidade') entidade?: string,
     @Query('entidadeId') entidadeId?: string,
   ) {
     if (!files?.length) throw new BadRequestException('Nenhum ficheiro enviado');
-    if (!tenantId) throw new BadRequestException('tenantId obrigatorio');
+    const tenantId = getTenantId(req);
     return Promise.all(
       files.map((file) => this.uploadService.salvarFicheiro(tenantId, file, entidade, entidadeId))
     );
@@ -161,21 +178,23 @@ export class UploadController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar ficheiros' })
   async listarFicheiros(
-    @Query('tenantId') tenantId: string,
+    @Request() req: TenantRequest,
     @Query('entidade') entidade?: string,
     @Query('entidadeId') entidadeId?: string,
   ) {
-    return this.uploadService.listarFicheiros(tenantId, entidade, entidadeId);
+    return this.uploadService.listarFicheiros(getTenantId(req), entidade, entidadeId);
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Eliminar ficheiro' })
   async eliminarFicheiro(
+    @Request() req: TenantRequest,
     @Param('id') id: string,
-    @Query('tenantId') tenantId: string,
   ) {
-    return this.uploadService.eliminarFicheiro(tenantId, id);
+    return this.uploadService.eliminarFicheiro(getTenantId(req), id);
   }
 }

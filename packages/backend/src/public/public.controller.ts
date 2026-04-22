@@ -7,16 +7,21 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PublicService } from './public.service';
 import { CreateMudancaDto } from '../mudanca/dto/create-mudanca.dto';
 import { Public } from '../auth/decorators/public.decorator';
+import { FormularioService } from '../formulario/formulario.service';
 
 @ApiTags('public')
 @Controller('public')
 export class PublicController {
-  constructor(private readonly publicService: PublicService) {}
+  constructor(
+    private readonly publicService: PublicService,
+    private readonly formularioService: FormularioService,
+  ) {}
 
   @Public()
   @Post('mudancas')
@@ -25,9 +30,16 @@ export class PublicController {
   criarMudanca(@Body() dto: CreateMudancaDto) {
     const tenantId = dto.tenantId;
     if (!tenantId) {
-      throw new Error('tenantId é obrigatório');
+      throw new BadRequestException('tenantId é obrigatório');
     }
     return this.publicService.criarMudanca(tenantId, dto);
+  }
+
+  @Public()
+  @Get('formulario/campos')
+  @ApiOperation({ summary: 'Listar campos ativos do formulário (público)' })
+  getCamposFormulario(@Query('tenantId') tenantId: string) {
+    return this.formularioService.findAtivos(tenantId);
   }
 
   @Public()

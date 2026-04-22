@@ -17,15 +17,15 @@ export class CreateMotoristaDto {
   @IsNotEmpty()
   telefone: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  cartaConducao: string;
+  @IsOptional()
+  cartaConducao?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  validadeCarta: string;
+  @IsOptional()
+  validadeCarta?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -44,6 +44,6 @@ export class CreateMotoristaDto {
 
   @ApiProperty({ required: false, default: 0 })
   @IsNumber()
-  @IsOptional()
-  valorHora?: number;
+  @IsNotEmpty()
+  valorHora: number;
 }

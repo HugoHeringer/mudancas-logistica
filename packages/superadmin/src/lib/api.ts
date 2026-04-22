@@ -9,7 +9,7 @@ export const api = axios.create({
 
 // Request interceptor — attach token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('superadmin_token');
+  const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

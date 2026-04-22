@@ -34,36 +34,47 @@ export class AjudanteService {
 
     const now = new Date();
     const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
-    const fimMes = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const inicioStr = inicioMes.toISOString().split('T')[0];
-    const fimStr = fimMes.toISOString().split('T')[0];
+    const fimMes = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-    const ajudantesWithCount = await Promise.all(
+    // [2.5] Implement real ajudante counts
+    const ajudantesComContagem = await Promise.all(
       ajudantes.map(async (a) => {
-        const mudancas = await this.prisma.mudanca.findMany({
+        const mudancasMes = await this.prisma.mudanca.findMany({
           where: {
             tenantId,
             estado: 'concluida',
-            dataPretendida: { gte: inicioStr, lte: fimStr },
-            ajudantesIds: { has: a.id },
+            dataPretendida: { gte: inicioMes, lte: fimMes },
+            ajudantes: { some: { id: a.id } },
           },
-          select: { conclusao: true },
+          select: {
+            conclusao: true,
+          },
         });
 
-        const horasTrabalhadasMes = mudancas.reduce(
-          (sum, m) => sum + ((m.conclusao as any)?.horasCobradas || 0),
-          0,
-        );
+        const horasTrabalhadasMes = mudancasMes.reduce((sum, m) => {
+          const horasRegistadas = m.conclusao && typeof m.conclusao === 'object' && 'horasRegistadas' in m.conclusao
+            ? (m.conclusao as any).horasRegistadas
+            : 0;
+          return sum + (horasRegistadas || 0);
+        }, 0);
+
+        const mudancasTotal = await this.prisma.mudanca.count({
+          where: {
+            tenantId,
+            estado: 'concluida',
+            ajudantes: { some: { id: a.id } },
+          },
+        });
 
         return {
           ...a,
-          mudancasParticipadas: mudancas.length,
+          mudancasParticipadas: mudancasTotal,
           horasTrabalhadasMes,
         };
       }),
     );
 
-    return ajudantesWithCount;
+    return ajudantesComContagem;
   }
 
   async findDisponiveis(tenantId: string, data?: string) {
@@ -85,17 +96,16 @@ export class AjudanteService {
       throw new NotFoundException('Ajudante não encontrado');
     }
 
-    // Get mudancas history
-    const mudancas = await this.prisma.mudanca.findMany({
+    // Get mudancas history using Prisma relation filter
+    const historico = await this.prisma.mudanca.findMany({
       where: {
         tenantId,
         estado: 'concluida',
+        ajudantes: { some: { id } },
       },
       orderBy: { dataPretendida: 'desc' },
       take: 20,
     });
-
-    const historico = mudancas.filter((m) => m.ajudantesIds?.includes(id));
 
     return { ...ajudante, historico };
   }
@@ -131,7 +141,7 @@ export class AjudanteService {
         tenantId,
         estado: 'concluida',
         dataPretendida: { gte: inicioStr, lte: fimStr },
-        ajudantesIds: { has: id },
+        ajudantes: { some: { id } },
       },
       select: {
         id: true,

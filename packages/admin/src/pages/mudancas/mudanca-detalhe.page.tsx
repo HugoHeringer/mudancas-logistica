@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, User, Truck, Wallet, FileText, CheckCircle, XCircle, Ban, AlertTriangle, Mail } from 'lucide-react';
-import { mudancasApi, comunicacaoApi } from '../../lib/api';
+import { mudancasApi, comunicacaoApi, motoristasApi, veiculosApi } from '../../lib/api';
 import { usePermissao } from '../../hooks/use-permissao';
+import { useAuthStore } from '../../stores/auth.store';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
+import { Input } from '../../components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import {
   Dialog,
@@ -19,22 +21,53 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../../components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 
 const EQUIPA_LABELS: Record<string, string> = {
+  motorist: 'Motorista',
+  motorist_1_ajudante: 'Motorista + 1 Ajudante',
+  motorist_2_ajudantes: 'Motorista + 2 Ajudantes',
   motorista: 'Motorista',
   motorista_1_ajudante: 'Motorista + 1 Ajudante',
   motorista_2_ajudantes: 'Motorista + 2 Ajudantes',
 };
 
+const EQUIPA_AJUDANTES: Record<string, number> = {
+  motorist: 0,
+  motorist_1_ajudante: 1,
+  motorist_2_ajudantes: 2,
+  motorista: 0,
+  motorista_1_ajudante: 1,
+  motorista_2_ajudantes: 2,
+};
+
+function getEquipaAjudantesCount(equipa: string): number {
+  const normalized = equipa.replace('motorista_', 'motorist_');
+  return EQUIPA_AJUDANTES[normalized] ?? 0;
+}
+
 export function MudancaDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { podeVer } = usePermissao();
+  const { user } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [showCancelar, setShowCancelar] = useState(false);
   const [motivoCancelamento, setMotivoCancelamento] = useState('');
+  const [showAprovar, setShowAprovar] = useState(false);
+  const [motoristaId, setMotoristaId] = useState('');
+  const [veiculoId, setVeiculoId] = useState('');
+  const [ajudantesSelecionados, setAjudantesSelecionados] = useState<string[]>([]);
+  const [tempoEstimado, setTempoEstimado] = useState('2');
+  const [observacoesAdmin, setObservacoesAdmin] = useState('');
 
   const { data: mudanca, isLoading } = useQuery({
     queryKey: ['mudancas', id],
@@ -47,6 +80,74 @@ export function MudancaDetalhePage() {
     queryFn: () => comunicacaoApi.getEmailLogs({ mudancaId: id }).then((r) => r.data),
     enabled: !!id,
   });
+
+  const { data: motoristasDisponiveis } = useQuery({
+    queryKey: ['motoristas', 'disponiveis'],
+    queryFn: () => motoristasApi.findDisponiveis().then((r) => r.data),
+  });
+
+  const { data: veiculos } = useQuery({
+    queryKey: ['veiculos'],
+    queryFn: () => veiculosApi.findAll().then((r) => r.data),
+  });
+
+  const { data: ajudantesDisponiveis } = useQuery({
+    queryKey: ['ajudantes', 'disponiveis'],
+    queryFn: () => import('../../lib/api').then((api) => api.ajudantesApi.findDisponiveis().then((r: any) => r.data)),
+  });
+
+  const handleMotoristaChange = (mid: string) => {
+    setMotoristaId(mid);
+    if (mid) {
+      const selected = (motoristasDisponiveis as any[])?.find((m: any) => m.id === mid);
+      if (selected?.veiculoId) {
+        setVeiculoId(selected.veiculoId);
+      } else {
+        setVeiculoId('');
+      }
+    }
+  };
+
+  const handleVeiculoChange = (vid: string) => {
+    setVeiculoId(vid === '_none' ? '' : vid);
+  };
+
+  const approveMutation = useMutation({
+    mutationFn: (data: any) =>
+      mudancasApi.approve(data.id, {
+        aprovadoPor: data.aprovadoPor,
+        motoristId: data.motoristaId,
+        veiculoId: data.veiculoId,
+        ajudantesIds: data.ajudantesIds,
+        tempoEstimadoHoras: data.tempoEstimadoHoras,
+        observacoesAdmin: data.observacoesAdmin,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mudancas'] });
+      toast({ title: 'Mudança aprovada', description: 'A agenda foi atualizada e o motorista notificado.' });
+      setShowAprovar(false);
+      navigate('/aprovacoes');
+    },
+    onError: () => {
+      toast({ title: 'Erro', description: 'Não foi possível aprovar a mudança.', variant: 'destructive' });
+    },
+  });
+
+const handleApprove = () => {
+    if (!motoristaId) {
+      toast({ title: 'Selecione um motorista', variant: 'destructive' });
+      return;
+    }
+approveMutation.mutate({
+      id: mudanca!.id,
+      aprovadoPor: user!.id,
+      motoristaId: motoristaId,
+      veiculoId: veiculoId || null,
+      ajudantesIds: ajudantesSelecionados.length > 0 ? ajudantesSelecionados : undefined,
+      tempoEstimadoHoras: parseFloat(tempoEstimado),
+      observacoesAdmin: observacoesAdmin || undefined,
+    });
+  };
 
   const cancelarMutation = useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo?: string }) =>
@@ -137,7 +238,10 @@ export function MudancaDetalhePage() {
           {canApprove && (
             <Button
               className="bg-green-600 hover:bg-green-700"
-              onClick={() => navigate('/aprovacoes')}
+              onClick={() => {
+                if (mudanca?.veiculoId) setVeiculoId(mudanca.veiculoId);
+                setShowAprovar(true);
+              }}
             >
               <CheckCircle className="h-4 w-4 mr-1" />
               Aprovar
@@ -649,6 +753,137 @@ export function MudancaDetalhePage() {
               }}
             >
               {cancelarMutation.isPending ? 'A cancelar...' : 'Confirmar Cancelamento'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Aprovação */}
+      <Dialog open={showAprovar} onOpenChange={setShowAprovar}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aprovar Mudança</DialogTitle>
+            <DialogDescription>
+              Atribua um motorista e defina o tempo estimado.
+            </DialogDescription>
+          </DialogHeader>
+          {mudanca && (
+            <div className="space-y-4">
+              <div className="bg-primary/10 p-3 rounded-lg text-sm">
+                <p className="font-medium text-foreground">{mudanca.clienteNome}</p>
+                <p className="text-primary">{new Date(mudanca.dataPretendida).toLocaleDateString('pt-PT')} {mudanca.horaPretendida && `às ${mudanca.horaPretendida}`}</p>
+                {mudanca.veiculo && (
+                  <p className="text-muted-foreground mt-1">Veículo: {mudanca.veiculo.nome || mudanca.veiculo.matricula}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Motorista</Label>
+                <Select value={motoristaId} onValueChange={handleMotoristaChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar motorista disponível" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(motoristasDisponiveis || []).map((m: any) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.nome} {m.veiculo ? `— ${m.veiculo.nome}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Veículo</Label>
+                <Select value={veiculoId || '_none'} onValueChange={handleVeiculoChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar veículo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Sem veículo</SelectItem>
+                    {(veiculos || []).map((v: any) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.nome} - {v.matricula}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Ajudantes (opcional)</Label>
+                {mudanca && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Cliente escolheu: {EQUIPA_LABELS[mudanca.equipa] || mudanca.equipa} ({getEquipaAjudantesCount(mudanca.equipa)} ajudante(s))
+                  </p>
+                )}
+                {(ajudantesDisponiveis || []).length > 0 ? (
+                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                    {(ajudantesDisponiveis as any[]).map((a: any) => (
+                      <label key={a.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={ajudantesSelecionados.includes(a.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAjudantesSelecionados([...ajudantesSelecionados, a.id]);
+                            } else {
+                              setAjudantesSelecionados(ajudantesSelecionados.filter((id) => id !== a.id));
+                            }
+                          }}
+                          className="rounded border-border"
+                        />
+                        <span className="text-sm">{a.nome}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem ajudantes disponíveis</p>
+                )}
+                {mudanca && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Equipa escolhida: {EQUIPA_LABELS[mudanca.equipa] || mudanca.equipa} → {getEquipaAjudantesCount(mudanca.equipa)} ajudante(s)
+                  </p>
+                )}
+                {mudanca && ajudantesSelecionados.length > getEquipaAjudantesCount(mudanca.equipa) && (
+                  <p className="text-xs text-amber-600">
+                    ⚠️ Admin selecionou {ajudantesSelecionados.length} ajudante(s), mais do que a escolha do cliente
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tempo estimado (horas)</Label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  max="24"
+                  value={tempoEstimado}
+                  onChange={(e) => setTempoEstimado(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Observações internas (opcional)</Label>
+                <Textarea
+                  value={observacoesAdmin}
+                  onChange={(e) => setObservacoesAdmin(e.target.value)}
+                  placeholder="Notas para o motorista..."
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAprovar(false)}>
+              Voltar
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              disabled={!motoristaId || approveMutation.isPending}
+              onClick={handleApprove}
+            >
+              {approveMutation.isPending ? 'A aprovar...' : 'Confirmar Aprovação'}
             </Button>
           </DialogFooter>
         </DialogContent>

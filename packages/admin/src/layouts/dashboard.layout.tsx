@@ -21,6 +21,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  Bell,
 } from 'lucide-react';
 import { useAppStore } from '../stores/app.store';
 import { useAuthStore } from '../stores/auth.store';
@@ -28,238 +29,299 @@ import { useTenantTheme } from '../theme/TenantProvider';
 import { usePermissao } from '../hooks/use-permissao';
 import { cn } from '../lib/utils';
 import { NotificationPopover } from '../components/notifications/NotificationPopover';
-import { NoiseOverlay } from '../components/luxury/NoiseOverlay';
 
 const allNavigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Aprovações', href: '/aprovacoes', icon: CheckSquare },
-  { name: 'Agenda', href: '/agenda', icon: Calendar },
-  { name: 'Mudanças', href: '/mudancas', icon: Truck },
-  { name: 'Clientes', href: '/clientes', icon: Users },
-  { name: 'Motoristas', href: '/motoristas', icon: Car },
-  { name: 'Ajudantes', href: '/ajudantes', icon: UserCheck },
-  { name: 'Veículos', href: '/veiculos', icon: Building },
-  { name: 'Financeiro', href: '/financeiro', icon: Wallet },
-  { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
-  { name: 'Comunicação', href: '/comunicacao', icon: Mail },
-  { name: 'Utilizadores', href: '/utilizadores', icon: UserCog },
-  { name: 'Configurações', href: '/configuracoes', icon: Settings },
+  { name: 'Dashboard',    href: '/',              icon: LayoutDashboard },
+  { name: 'Aprovações',   href: '/aprovacoes',    icon: CheckSquare },
+  { name: 'Agenda',       href: '/agenda',        icon: Calendar },
+  { name: 'Mudanças',     href: '/mudancas',      icon: Truck },
+  { name: 'Clientes',     href: '/clientes',      icon: Users },
+  { name: 'Motoristas',   href: '/motoristas',    icon: Car },
+  { name: 'Ajudantes',    href: '/ajudantes',     icon: UserCheck },
+  { name: 'Veículos',     href: '/veiculos',      icon: Building },
+  { name: 'Financeiro',   href: '/financeiro',    icon: Wallet },
+  { name: 'Relatórios',   href: '/relatorios',    icon: BarChart3 },
+  { name: 'Comunicação',  href: '/comunicacao',   icon: Mail },
+  { name: 'Utilizadores', href: '/utilizadores',  icon: UserCog },
+  { name: 'Configurações',href: '/configuracoes', icon: Settings },
 ];
+
+// Sidebar link component — keeps JSX clean
+function NavLink({
+  item,
+  collapsed,
+  active,
+  onClick,
+}: {
+  item: typeof allNavigation[0];
+  collapsed: boolean;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      to={item.href}
+      onClick={onClick}
+      title={collapsed ? item.name : undefined}
+      className={cn(
+        'ct-sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm',
+        collapsed && 'justify-center',
+        active && 'active',
+      )}
+    >
+      <item.icon className={cn('ct-icon flex-shrink-0', collapsed ? 'h-5 w-5' : 'h-[18px] w-[18px]')} />
+      {!collapsed && <span className="tracking-wide truncate">{item.name}</span>}
+    </Link>
+  );
+}
+
+// Brand logo / name for sidebar header
+function SidebarBrand({ brand, expanded }: { brand: any; expanded: boolean }) {
+  if (expanded) {
+    return brand.logoUrl ? (
+      <img src={brand.logoUrl} alt={brand.nome} className="h-8 object-contain max-w-[160px]" />
+    ) : (
+      <span
+        className="text-base tracking-[0.15em] font-light truncate"
+        style={{
+          color: 'var(--sidebar-text)',
+          fontFamily: 'var(--tenant-font-display)',
+        }}
+      >
+        {brand.nome?.toUpperCase() || 'MOVEFY'}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="text-xl font-light"
+      style={{
+        color: 'var(--sidebar-accent)',
+        fontFamily: 'var(--tenant-font-display)',
+      }}
+    >
+      {brand.nome?.charAt(0)?.toUpperCase() || 'M'}
+    </span>
+  );
+}
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { sidebarOpen, toggleSidebar } = useAppStore();
   const { user, logout } = useAuthStore();
-  const { brand, theme, themePreference, setTheme } = useTenantTheme();
+  const { brand, themePreference, setTheme } = useTenantTheme();
   const { podeVerRota } = usePermissao();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navigation = allNavigation.filter((item) => podeVerRota(item.href));
+  const currentPage = navigation.find((n) => n.href === location.pathname)?.name || 'Dashboard';
 
   return (
     <div className="min-h-screen bg-background relative">
-      <NoiseOverlay />
 
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-background/90 backdrop-blur-md border-b border-border z-40 flex items-center justify-between px-4">
+      {/* ── MOBILE TOPBAR ────────────────────────────────── */}
+      <div className="lg:hidden fixed top-0 inset-x-0 h-14 z-50 flex items-center justify-between px-4 ct-topbar">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-md hover:bg-muted transition-colors text-foreground"
+          className="p-2 rounded-lg transition-colors"
+          style={{ color: 'hsl(var(--foreground))' }}
+          aria-label="Menu"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
+
         <span
-          className="text-base tracking-[0.1em] text-cream font-light"
-          style={{ fontFamily: 'var(--tenant-font-display)' }}
+          className="text-sm font-light tracking-[0.12em]"
+          style={{
+            fontFamily: 'var(--tenant-font-display)',
+            color: 'hsl(var(--foreground))',
+          }}
         >
-          {brand.nome || 'Mudanças'}
+          {brand.nome || 'Movefy'}
         </span>
+
         <div className="w-10" />
       </div>
 
-      {/* Mobile sidebar overlay */}
+      {/* ── MOBILE SIDEBAR OVERLAY ───────────────────────── */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-30 bg-night/60 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40"
+          style={{ background: 'rgba(10, 15, 30, 0.7)', backdropFilter: 'blur(4px)' }}
           onClick={() => setMobileOpen(false)}
         >
-          <div
-            className="w-72 bg-night h-full shadow-2xl flex flex-col"
+          <aside
+            className="ct-sidebar w-72 h-full flex flex-col shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Mobile sidebar header */}
-            <div className="h-16 flex-shrink-0 flex items-center px-6 border-b border-gold/10">
-              {brand.logoUrl ? (
-                <img src={brand.logoUrl} alt={brand.nome} className="h-8 object-contain" />
-              ) : (
-                <span
-                  className="text-lg tracking-[0.15em] text-cream font-light"
-                  style={{ fontFamily: 'var(--tenant-font-display)' }}
-                >
-                  {brand.nome?.toUpperCase() || 'MUDANCAS'}
-                </span>
-              )}
+            {/* Header */}
+            <div className="ct-sidebar-header h-14 flex-shrink-0 flex items-center px-5">
+              <SidebarBrand brand={brand} expanded={true} />
             </div>
 
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {/* Nav */}
+            <nav className="flex-1 overflow-y-auto p-3 space-y-0.5 scrollbar-thin">
               {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  collapsed={false}
+                  active={location.pathname === item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300',
-                    location.pathname === item.href
-                      ? 'bg-gold/10 text-gold'
-                      : 'text-cream/60 hover:text-cream hover:bg-white/[0.04]'
-                  )}
-                >
-                  <item.icon className="h-4.5 w-4.5 flex-shrink-0" />
-                  <span className="text-sm">{item.name}</span>
-                </Link>
+                />
               ))}
-              <div className="pt-4 mt-4 border-t border-gold/10">
-                <button
-                  onClick={() => { logout(); setMobileOpen(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-terracotta/80 hover:text-terracotta hover:bg-terracotta/10 transition-colors"
-                >
-                  <LogOut className="h-4.5 w-4.5" />
-                  <span className="text-sm">Terminar Sessão</span>
-                </button>
-              </div>
             </nav>
-          </div>
+
+            {/* Footer */}
+            <div className="flex-shrink-0 p-3" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+              <button
+                onClick={() => { logout(); setMobileOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
+                style={{ color: 'var(--ct-terracotta, #C4572A)' }}
+              >
+                <LogOut className="h-[18px] w-[18px]" />
+                <span>Terminar Sessão</span>
+              </button>
+            </div>
+          </aside>
         </div>
       )}
 
-      {/* Desktop sidebar */}
+      {/* ── DESKTOP SIDEBAR ──────────────────────────────── */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full bg-night transition-all duration-500 ease-out z-20 flex flex-col',
-          sidebarOpen ? 'w-64' : 'w-20'
+          'ct-sidebar hidden lg:flex fixed top-0 left-0 h-full z-20 flex-col transition-all duration-500 ease-out',
+          sidebarOpen ? 'w-64' : 'w-[72px]',
         )}
       >
-        {/* Sidebar header */}
-        <div className="h-16 flex items-center justify-center border-b border-gold/10 px-4 flex-shrink-0">
-          {sidebarOpen ? (
-            brand.logoUrl ? (
-              <img src={brand.logoUrl} alt={brand.nome} className="h-8 object-contain" />
-            ) : (
-              <span
-                className="text-base tracking-[0.15em] text-cream font-light"
-                style={{ fontFamily: 'var(--tenant-font-display)' }}
-              >
-                {brand.nome?.toUpperCase() || 'MUDANCAS'}
-              </span>
-            )
-          ) : (
-            <span
-              className="text-lg text-gold font-light"
-              style={{ fontFamily: 'var(--tenant-font-display)' }}
-            >
-              {brand.nome?.charAt(0)?.toUpperCase() || 'M'}
-            </span>
+        {/* Header — brand / logo */}
+        <div
+          className={cn(
+            'ct-sidebar-header h-16 flex-shrink-0 flex items-center px-4 transition-all duration-300',
+            sidebarOpen ? 'justify-start' : 'justify-center',
           )}
+        >
+          <SidebarBrand brand={brand} expanded={sidebarOpen} />
         </div>
 
         {/* Navigation (scrollable) */}
-        <nav className="flex-1 overflow-y-auto p-3 pb-1 space-y-1 mt-2 scrollbar-thin">
+        <nav className="flex-1 overflow-y-auto p-3 pb-2 space-y-0.5 mt-1 scrollbar-thin">
           {navigation.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group',
-                location.pathname === item.href
-                  ? 'bg-gold/10 text-gold'
-                  : 'text-cream/50 hover:text-cream hover:bg-white/[0.04]',
-                !sidebarOpen && 'justify-center'
-              )}
-              title={!sidebarOpen ? item.name : undefined}
-            >
-              <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
-              {sidebarOpen && (
-                <span className="text-sm tracking-wide">{item.name}</span>
-              )}
-            </Link>
+            <NavLink
+              key={item.href}
+              item={item}
+              collapsed={!sidebarOpen}
+              active={location.pathname === item.href}
+            />
           ))}
         </nav>
 
-        {/* Sidebar footer (non-floating) */}
-        <div className="flex-shrink-0 p-3 border-t border-gold/10">
+        {/* Footer — collapse toggle */}
+        <div className="flex-shrink-0 p-3" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
           <button
             onClick={toggleSidebar}
             className={cn(
-              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-cream/40 hover:text-cream hover:bg-white/[0.04] transition-all duration-300',
-              !sidebarOpen && 'justify-center'
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-300',
+              !sidebarOpen && 'justify-center',
             )}
+            style={{ color: 'var(--sidebar-text-muted)' }}
+            title={sidebarOpen ? 'Recolher' : 'Expandir'}
           >
-            <ChevronLeft className={cn(
-              'h-[18px] w-[18px] transition-transform duration-300',
-              !sidebarOpen && 'rotate-180'
-            )} />
-            {sidebarOpen && <span className="text-sm">Recolher</span>}
+            <ChevronLeft
+              className={cn(
+                'h-[18px] w-[18px] transition-transform duration-300 flex-shrink-0',
+                !sidebarOpen && 'rotate-180',
+              )}
+            />
+            {sidebarOpen && <span>Recolher</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ── MAIN CONTENT ─────────────────────────────────── */}
       <div
         className={cn(
           'transition-all duration-500',
-          sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+          sidebarOpen ? 'lg:ml-64' : 'lg:ml-[72px]',
         )}
       >
-        {/* Top bar */}
-        <header className="h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
+        {/* ── DESKTOP TOPBAR ──────────────────────────────── */}
+        <header className="ct-topbar hidden lg:flex h-16 items-center justify-between px-6 sticky top-0 z-10">
+          {/* Page title */}
           <h1
-            className="text-xl font-light text-foreground"
-            style={{ fontFamily: 'var(--tenant-font-display)' }}
+            className="text-xl font-light tracking-tight"
+            style={{
+              fontFamily: 'var(--tenant-font-display)',
+              color: 'hsl(var(--foreground))',
+            }}
           >
-            {navigation.find((n) => n.href === location.pathname)?.name || 'Dashboard'}
+            {currentPage}
           </h1>
-          <div className="flex items-center gap-4">
+
+          {/* Right controls */}
+          <div className="flex items-center gap-3">
             {/* Theme selector */}
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 border border-border">
-              <button
-                onClick={() => setTheme('light')}
-                className={cn('p-1.5 rounded transition-colors', themePreference === 'light' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground')}
-                title="Tema claro"
-              >
-                <Sun className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setTheme('system')}
-                className={cn('p-1.5 rounded transition-colors', themePreference === 'system' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground')}
-                title="Tema do sistema"
-              >
-                <Monitor className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setTheme('dark')}
-                className={cn('p-1.5 rounded transition-colors', themePreference === 'dark' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground')}
-                title="Tema escuro"
-              >
-                <Moon className="w-4 h-4" />
-              </button>
+            <div
+              className="flex items-center gap-0.5 p-1 rounded-lg"
+              style={{
+                background: 'hsl(var(--muted) / 0.4)',
+                border: '1px solid hsl(var(--border))',
+              }}
+            >
+              {(
+                [
+                  { pref: 'light' as const,  Icon: Sun,     title: 'Tema claro' },
+                  { pref: 'system' as const, Icon: Monitor, title: 'Sistema' },
+                  { pref: 'dark' as const,   Icon: Moon,    title: 'Tema escuro' },
+                ] as const
+              ).map(({ pref, Icon, title }) => (
+                <button
+                  key={pref}
+                  onClick={() => setTheme(pref)}
+                  title={title}
+                  className="p-1.5 rounded transition-colors"
+                  style={{
+                    color: themePreference === pref ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+                    background: themePreference === pref ? 'hsl(var(--primary) / 0.12)' : 'transparent',
+                  }}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </button>
+              ))}
             </div>
+
+            {/* Notifications */}
             <NotificationPopover />
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-foreground">{user?.nome}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user?.perfil}</p>
+
+            {/* User info */}
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium" style={{ color: 'hsl(var(--foreground))' }}>
+                {user?.nome}
+              </p>
+              <p className="text-xs capitalize" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                {user?.perfil}
+              </p>
             </div>
+
+            {/* Logout */}
             <button
               onClick={logout}
-              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-terracotta transition-colors"
               title="Terminar Sessão"
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: 'hsl(var(--muted-foreground))' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ct-terracotta, #C4572A)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'hsl(var(--muted-foreground))')}
             >
               <LogOut className="h-[18px] w-[18px]" />
             </button>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="p-6">{children}</main>
+        {/* ── PAGE CONTENT ────────────────────────────────── */}
+        <main className="p-6 pt-[calc(3.5rem+1.5rem)] lg:pt-6 min-h-[calc(100vh-4rem)]">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -7,20 +7,81 @@ import { UpdateConfigAgendaDto } from './dto/update-config-agenda.dto';
 export class AgendaService {
   constructor(private prisma: PrismaService) {}
 
-  async getSlotsByDate(tenantId: string, data: string) {
-    return this.prisma.slotAgenda.findMany({
-      where: { tenantId, data },
+  async getSlotsByDate(tenantId: string, dataStr: string) {
+    // [2.7] Normalize date comparison for DateTime field
+    const inicioDia = new Date(dataStr + 'T00:00:00.000');
+    const fimDia = new Date(dataStr + 'T23:59:59.999');
+
+    const existingSlots = await this.prisma.slotAgenda.findMany({
+      where: { tenantId, data: { gte: inicioDia, lte: fimDia } },
       orderBy: { horaInicio: 'asc' },
     });
+
+    if (existingSlots.length > 0) {
+      return existingSlots;
+    }
+
+    const config = await this.getConfigAgenda(tenantId) as any;
+    const diaSemana = new Date(dataStr).getDay();
+    const diaSemanaMap = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+    const diaSemanaKey = diaSemanaMap[diaSemana];
+
+    if (config.diasFuncionamento && !config.diasFuncionamento[diaSemanaKey]) {
+      return [];
+    }
+
+    const horaAbertura = config.horaAbertura || '08:00';
+    const horaFecho = config.horaFecho || '18:00';
+    const duracaoMinutos = config.duracaoSlotMinutos || 60;
+    const capacidade = config.capacidadeSlot || 1;
+
+    const slotsData: any[] = [];
+    const [aberturaH, aberturaM] = horaAbertura.split(':').map(Number);
+    const [fechoH, fechoM] = horaFecho.split(':').map(Number);
+
+    let horaAtual = aberturaH * 60 + aberturaM;
+    const horaFim = fechoH * 60 + fechoM;
+
+    while (horaAtual + duracaoMinutos <= horaFim) {
+      const h = Math.floor(horaAtual / 60);
+      const m = horaAtual % 60;
+      const horaInicio = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      const hFim = Math.floor((horaAtual + duracaoMinutos) / 60);
+      const mFim = (horaAtual + duracaoMinutos) % 60;
+      const horaFimSlot = `${hFim.toString().padStart(2, '0')}:${mFim.toString().padStart(2, '0')}`;
+      slotsData.push({
+        tenantId,
+        data: dataStr,
+        horaInicio,
+        horaFim: horaFimSlot,
+        capacidadeTotal: capacidade,
+        capacidadeOcupada: 0,
+        eBloqueado: false,
+      });
+      horaAtual += duracaoMinutos;
+    }
+
+    // [2.4] Persist dynamically generated slots before returning
+    if (slotsData.length > 0) {
+      await this.prisma.slotAgenda.createMany({ data: slotsData });
+      return this.prisma.slotAgenda.findMany({
+        where: { tenantId, data: { gte: inicioDia, lte: fimDia } },
+        orderBy: { horaInicio: 'asc' },
+      });
+    }
+
+    return [];
   }
 
   async getSlotsByRange(tenantId: string, dataInicio: string, dataFim: string) {
+    const inicio = new Date(dataInicio + 'T00:00:00.000');
+    const fim = new Date(dataFim + 'T23:59:59.999');
     return this.prisma.slotAgenda.findMany({
       where: {
         tenantId,
         data: {
-          gte: dataInicio,
-          lte: dataFim,
+          gte: inicio,
+          lte: fim,
         },
       },
       orderBy: [{ data: 'asc' }, { horaInicio: 'asc' }],
@@ -51,11 +112,11 @@ export class AgendaService {
     const inicio = new Date(dataInicio);
     const fim = new Date(inicio);
     fim.setDate(fim.getDate() + 6);
-    const inicioStr = inicio.toISOString().split('T')[0];
-    const fimStr = fim.toISOString().split('T')[0];
+    const inicioStr = inicio.toISOString();
+    const fimStr = fim.toISOString();
 
     const [slots, mudancas] = await Promise.all([
-      this.getSlotsByRange(tenantId, inicioStr, fimStr),
+      this.getSlotsByRange(tenantId, inicio.toISOString().split('T')[0], fim.toISOString().split('T')[0]),
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
@@ -72,10 +133,11 @@ export class AgendaService {
 
     // Agrupar por data
     const porData = slots.reduce((acc, slot) => {
-      if (!acc[slot.data]) {
-        acc[slot.data] = [];
+      const dataKey = slot.data.toISOString().split('T')[0];
+      if (!acc[dataKey]) {
+        acc[dataKey] = [];
       }
-      acc[slot.data].push(slot);
+      acc[dataKey].push(slot);
       return acc;
     }, {} as Record<string, any[]>);
 
@@ -95,12 +157,12 @@ export class AgendaService {
 
   async getAgendaMensal(tenantId: string, ano: number, mes: number) {
     const inicio = new Date(ano, mes - 1, 1);
-    const fim = new Date(ano, mes, 0);
-    const inicioStr = inicio.toISOString().split('T')[0];
-    const fimStr = fim.toISOString().split('T')[0];
+    const fim = new Date(ano, mes, 0, 23, 59, 59);
+    const inicioStr = inicio.toISOString();
+    const fimStr = fim.toISOString();
 
     const [slots, mudancas] = await Promise.all([
-      this.getSlotsByRange(tenantId, inicioStr, fimStr),
+      this.getSlotsByRange(tenantId, inicio.toISOString().split('T')[0], fim.toISOString().split('T')[0]),
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
@@ -117,16 +179,17 @@ export class AgendaService {
 
     // Agrupar por data e calcular ocupação
     const porData = slots.reduce((acc, slot) => {
-      if (!acc[slot.data]) {
-        acc[slot.data] = {
+      const dataKey = slot.data.toISOString().split('T')[0];
+      if (!acc[dataKey]) {
+        acc[dataKey] = {
           total: 0,
           ocupada: 0,
           bloqueada: false,
         };
       }
-      acc[slot.data].total += slot.capacidadeTotal;
-      acc[slot.data].ocupada += slot.capacidadeOcupada;
-      if (slot.eBloqueado) acc[slot.data].bloqueada = true;
+      acc[dataKey].total += slot.capacidadeTotal;
+      acc[dataKey].ocupada += slot.capacidadeOcupada;
+      if (slot.eBloqueado) acc[dataKey].bloqueada = true;
       return acc;
     }, {} as Record<string, any>);
 
@@ -149,8 +212,10 @@ export class AgendaService {
 
   async criarSlots(tenantId: string, data: string, slots: any[]) {
     // Verificar se já existem slots para esta data
+    const inicioDia = new Date(data + 'T00:00:00.000');
+    const fimDia = new Date(data + 'T23:59:59.999');
     const existentes = await this.prisma.slotAgenda.findMany({
-      where: { tenantId, data },
+      where: { tenantId, data: { gte: inicioDia, lte: fimDia } },
     });
 
     if (existentes.length > 0) {
@@ -217,8 +282,14 @@ export class AgendaService {
   }
 
   async ocuparSlot(tenantId: string, data: string, horaInicio: string) {
+    // [2.4] Ensure slots exist for this date before trying to occupy
+    await this.getSlotsByDate(tenantId, data);
+
+    const inicioDia = new Date(data + 'T00:00:00.000');
+    const fimDia = new Date(data + 'T23:59:59.999');
+
     const slot = await this.prisma.slotAgenda.findFirst({
-      where: { tenantId, data, horaInicio },
+      where: { tenantId, data: { gte: inicioDia, lte: fimDia }, horaInicio },
     });
 
     if (!slot) {
@@ -232,8 +303,11 @@ export class AgendaService {
   }
 
   async liberarSlot(tenantId: string, data: string, horaInicio: string) {
+    const inicioDia = new Date(data + 'T00:00:00.000');
+    const fimDia = new Date(data + 'T23:59:59.999');
+
     const slot = await this.prisma.slotAgenda.findFirst({
-      where: { tenantId, data, horaInicio },
+      where: { tenantId, data: { gte: inicioDia, lte: fimDia }, horaInicio },
     });
 
     if (!slot) {

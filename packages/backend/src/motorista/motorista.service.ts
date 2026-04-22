@@ -11,7 +11,14 @@ export class MotoristaService {
     return this.prisma.motorista.create({
       data: {
         tenantId,
-        ...createMotoristaDto,
+        nome: createMotoristaDto.nome,
+        email: createMotoristaDto.email,
+        telefone: createMotoristaDto.telefone,
+        cartaConducao: createMotoristaDto.cartaConducao || '',
+        validadeCarta: createMotoristaDto.validadeCarta || '',
+        veiculoId: createMotoristaDto.veiculoId || null,
+        estado: createMotoristaDto.estado || 'disponivel',
+        valorHora: createMotoristaDto.valorHora || 0,
       },
       include: {
         veiculo: true,
@@ -130,7 +137,8 @@ export class MotoristaService {
     });
   }
 
-  async updateEstado(id: string, estado: string) {
+  async updateEstado(tenantId: string, id: string, estado: string) {
+    const motorista = await this.findOne(tenantId, id);
     return this.prisma.motorista.update({
       where: { id },
       data: { estado },

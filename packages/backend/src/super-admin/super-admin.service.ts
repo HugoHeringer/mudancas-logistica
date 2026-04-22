@@ -54,15 +54,6 @@ export class SuperAdminService {
       throw new ConflictException('Subdomínio já registado');
     }
 
-    // Verificar se email do admin já existe
-    const existingEmail = await this.prisma.user.findFirst({
-      where: { email: createTenantDto.adminEmail },
-    });
-
-    if (existingEmail) {
-      throw new ConflictException('Email de admin já registado');
-    }
-
     // Criar tenant
     const tenant = await this.prisma.tenant.create({
       data: {
@@ -73,6 +64,16 @@ export class SuperAdminService {
         configAgenda: createTenantDto.configAgenda || {},
       },
     });
+
+    // Verificar se email do admin já existe neste tenant
+    const existingEmail = await this.prisma.user.findFirst({
+      where: { email: createTenantDto.adminEmail, tenantId: tenant.id },
+    });
+
+    if (existingEmail) {
+      await this.prisma.tenant.delete({ where: { id: tenant.id } });
+      throw new ConflictException('Email de admin já registado neste tenant');
+    }
 
     // Criar admin
     const passwordHash = await bcrypt.hash(createTenantDto.adminPassword, 10);

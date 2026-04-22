@@ -334,7 +334,7 @@ export function UtilizadoresPage() {
                 perfil: formPerfil, tenantId: currentUser?.tenantId,
                 permissoes: formPerfil === 'gerente' ? {
                   verTodosMotoristas: formVerTodosMotoristas,
-                  motoresPermitidos: formMotoristasPermitidos,
+                  motoristasPermitidos: formMotoristasPermitidos,
                 } : undefined,
               })}
             >
@@ -427,7 +427,7 @@ export function UtilizadoresPage() {
                     id: editUser.id,
                     permissoes: {
                       verTodosMotoristas: editVerTodosMotoristas,
-                      motoresPermitidos: editMotoristasPermitidos,
+                      motoristasPermitidos: editMotoristasPermitidos,
                     },
                   });
                 }

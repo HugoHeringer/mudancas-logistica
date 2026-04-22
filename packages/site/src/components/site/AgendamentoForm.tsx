@@ -39,6 +39,7 @@ const schema = z.object({
   caixas: z.number().optional(),
   fitaCola: z.number().optional(),
   observacoes: z.string().optional(),
+  camposPersonalizados: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -61,6 +62,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [filePreviews, setFilePreviews] = useState<string[]>([]);
   const [selectedDate] = useState(propDate || '');
@@ -68,19 +70,29 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
   const [urgente] = useState(propUrgente);
   const [selectedVeiculoId, setSelectedVeiculoId] = useState('');
   const [veiculos, setVeiculos] = useState<any[]>([]);
+  const [camposPersonalizados, setCamposPersonalizados] = useState<any[]>([]);
+  const [valoresCampos, setValoresCampos] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (tenantId) {
       publicApi.getVeiculos(tenantId)
         .then(res => setVeiculos(res.data || []))
         .catch(() => setVeiculos([]));
+      publicApi.getCamposFormulario(tenantId)
+        .then(res => setCamposPersonalizados(res.data || []))
+        .catch(() => setCamposPersonalizados([]));
     }
   }, [tenantId]);
+
+  const handleCampoChange = (campoId: string, value: any) => {
+    setValoresCampos(prev => ({ ...prev, [campoId]: value }));
+  };
 
   const {
     register,
     handleSubmit,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -97,6 +109,23 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
 
   const internacional = watch('internacional');
 
+  // [7.5] Validate fields of current step before allowing navigation
+  const STEP_FIELDS: Record<number, (keyof FormData)[]> = {
+    1: ['nome', 'apelido', 'email', 'telefone'],
+    2: ['recRua', 'recNumero', 'recCodPostal', 'recLocalidade', 'entRua', 'entNumero', 'entCodPostal', 'entLocalidade'],
+    3: [],
+    4: [],
+  };
+
+  const goNext = async (nextStep: number) => {
+    const fields = STEP_FIELDS[step] || [];
+    if (fields.length > 0) {
+      const valid = await trigger(fields);
+      if (!valid) return;
+    }
+    setStep(nextStep);
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!tenantId) {
       console.error('Tenant ID nao disponivel');
@@ -107,7 +136,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
       rua: data.recRua,
       numero: data.recNumero,
       codigoPostal: data.recCodPostal,
-      locality: data.recLocalidade,
+      localidade: data.recLocalidade, // [7.3] Use localidade instead of locality
       andar: data.recAndar || undefined,
       elevador: data.recElevador || false,
       pais: data.recPais || 'Portugal',
@@ -117,15 +146,17 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
       rua: data.entRua,
       numero: data.entNumero,
       codigoPostal: data.entCodPostal,
-      locality: data.entLocalidade,
+      localidade: data.entLocalidade, // [7.3] Use localidade instead of locality
       andar: data.entAndar || undefined,
       elevador: data.entElevador || false,
       pais: data.entPais || 'Portugal',
     };
 
+    // [5.8] Determine equipa based on vehicle selection
     const equipa = selectedVeiculoId ? 'motorista' : 'motorista';
 
     setSubmitting(true);
+    setSubmitError(null);
     try {
       await publicApi.criarMudanca({
         tipoServico: urgente ? 'urgente' : 'normal',
@@ -147,10 +178,13 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
         observacoes: data.observacoes,
         eInternacional: data.internacional || false,
         tenantId,
+        camposPersonalizados: Object.keys(valoresCampos).length > 0 ? valoresCampos : undefined,
       });
       setSubmitted(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao submeter:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Ocorreu um erro ao submeter o pedido. Tente novamente.';
+      setSubmitError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -178,9 +212,99 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
     { num: 3, label: 'Veiculo', icon: Truck },
     { num: 4, label: 'Materiais', icon: Package },
   ];
+  const hasCustomFields = camposPersonalizados.length > 0;
+
+  const renderCampoField = (campo: any) => {
+    const value = valoresCampos[campo.id] ?? '';
+    switch (campo.tipo) {
+      case 'texto':
+        return (
+          <input
+            value={value}
+            onChange={(e) => handleCampoChange(campo.id, e.target.value)}
+            placeholder={campo.nome}
+            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+          />
+        );
+      case 'numero':
+        return (
+          <input
+            type="number"
+            value={value}
+            onChange={(e) => handleCampoChange(campo.id, Number(e.target.value))}
+            placeholder={campo.nome}
+            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+          />
+        );
+      case 'checkbox':
+        if (campo.opcoes?.length > 0) {
+          return (
+            <div className="space-y-2">
+              {campo.opcoes.map((op: string) => (
+                <label key={op} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={(value || []).includes(op)}
+                    onChange={(e) => {
+                      const current = valoresCampos[campo.id] || [];
+                      if (e.target.checked) {
+                        handleCampoChange(campo.id, [...current, op]);
+                      } else {
+                        handleCampoChange(campo.id, current.filter((v: string) => v !== op));
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  <span className="text-sm">{op}</span>
+                </label>
+              ))}
+            </div>
+          );
+        }
+        return (
+          <input
+            type="checkbox"
+            checked={!!value}
+            onChange={(e) => handleCampoChange(campo.id, e.target.checked)}
+            className="rounded"
+          />
+        );
+      case 'selector':
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => handleCampoChange(campo.id, e.target.value)}
+            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+          >
+            <option value="">{`Selecionar ${campo.nome}`}</option>
+            {(campo.opcoes || []).map((op: string) => (
+              <option key={op} value={op}>{op}</option>
+            ))}
+          </select>
+        );
+      default:
+        return (
+          <input
+            value={value}
+            onChange={(e) => handleCampoChange(campo.id, e.target.value)}
+            placeholder={campo.nome}
+            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+          />
+        );
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      {submitError && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-red-700">{submitError}</p>
+          </div>
+          <button type="button" onClick={() => setSubmitError(null)} className="text-red-400 hover:text-red-600">&times;</button>
+        </div>
+      )}
       {urgente && (
         <div className="flex items-center gap-3 p-4 bg-terracotta/10 border border-terracotta/30 rounded-lg">
           <AlertTriangle className="w-5 h-5 text-terracotta shrink-0" />
@@ -192,11 +316,11 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
       )}
 
       <div className="flex items-center justify-between mb-8">
-        {steps.map((s) => (
+        {[...steps, ...(hasCustomFields ? [{ num: 5, label: 'Extra', icon: Package }] : [])].map((s) => (
           <button
             key={s.num}
             type="button"
-            onClick={() => setStep(s.num)}
+            onClick={() => s.num > step ? goNext(s.num) : setStep(s.num)}
             className={cn(
               'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300',
               step === s.num
@@ -266,7 +390,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             </div>
 
             <div className="flex justify-end mt-6">
-              <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
+              <button type="button" onClick={() => goNext(2)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
                 Proximo
               </button>
             </div>
@@ -332,7 +456,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
               <button type="button" onClick={() => setStep(1)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
                 Anterior
               </button>
-              <button type="button" onClick={() => setStep(3)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
+              <button type="button" onClick={() => goNext(3)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
                 Proximo
               </button>
             </div>
@@ -363,6 +487,9 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                       onChange={() => setSelectedVeiculoId(v.id)}
                       className="rounded"
                     />
+                    {v.imagemUrl && (
+                      <img src={v.imagemUrl} alt={v.nome} className="w-16 h-12 object-cover rounded" />
+                    )}
                     <div className="flex-1">
                       <p className="font-medium text-sm">{v.nome}</p>
                       <p className="text-xs text-brown/60">{v.marca} {v.modelo}</p>
@@ -379,7 +506,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
               <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
                 Anterior
               </button>
-              <button type="button" onClick={() => setStep(4)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
+              <button type="button" onClick={() => goNext(4)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
                 Proximo
               </button>
             </div>
@@ -399,14 +526,18 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
               {MATERIAIS.map((m) => (
                 <div key={m.key} className="flex items-center justify-between p-3 bg-sand-dark/30 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      {...register(m.key as any)}
-                      className="rounded"
-                    />
                     <span className="text-sm">{m.label}</span>
                   </div>
-                  <span className="text-sm text-brown/60">{m.unitPrice}€/un</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      {...register(m.key as any, { valueAsNumber: true })}
+                      className="w-16 px-2 py-1 bg-sand-dark/50 border border-gold/10 rounded text-sm text-center focus:outline-none focus:border-primary/50"
+                    />
+                    <span className="text-sm text-brown/60">un x {m.unitPrice}€</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -423,6 +554,44 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
 
             <div className="flex justify-between mt-6">
               <button type="button" onClick={() => setStep(3)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
+                Anterior
+              </button>
+              {hasCustomFields ? (
+                <button type="button" onClick={() => goNext(5)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
+                  Proximo
+                </button>
+              ) : (
+                <GradientButton type="submit" disabled={submitting}>
+                  {submitting ? 'A submeter...' : 'Submeter Pedido'}
+                </GradientButton>
+              )}
+            </div>
+          </GlassCard>
+        </AnimatedSection>
+      )}
+
+      {hasCustomFields && step === 5 && (
+        <AnimatedSection>
+          <GlassCard className="p-6 md:p-8">
+            <h3 className="font-display text-2xl font-light mb-6 flex items-center gap-3">
+              <Package className="w-6 h-6 text-terracotta" />
+              Informacao Adicional
+            </h3>
+
+            <div className="space-y-4">
+              {camposPersonalizados.map((campo: any) => (
+                <div key={campo.id}>
+                  <label className="text-xs font-medium tracking-wide uppercase text-brown/50 mb-1.5 block">
+                    {campo.nome}
+                    {campo.obrigatorio && <span className="text-terracotta"> *</span>}
+                  </label>
+                  {renderCampoField(campo)}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between mt-6">
+              <button type="button" onClick={() => setStep(4)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
                 Anterior
               </button>
               <GradientButton type="submit" disabled={submitting}>

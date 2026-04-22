@@ -48,9 +48,17 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      // For now, use subdomain to resolve tenantId
-      // In production, the backend would resolve the subdomain
-      const response = await authApi.login(data.email, data.password, subdomain || 'demo');
+      if (!subdomain) {
+        toast({
+          title: 'Empresa obrigatória',
+          description: 'Por favor, indique o subdomain da sua empresa',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await authApi.login(data.email, data.password, subdomain);
       const { user, accessToken, refreshToken } = response.data;
 
       login(user, accessToken, refreshToken);
@@ -90,6 +98,24 @@ export function LoginPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="space-y-2">
+          <label
+            htmlFor="subdomain"
+            className="text-xs font-medium tracking-wider uppercase text-muted-foreground"
+          >
+            Empresa (subdomain)
+          </label>
+          <input
+            id="subdomain"
+            type="text"
+            placeholder="minha-empresa"
+            value={subdomain}
+            onChange={(e) => setSubdomain(e.target.value)}
+            className="w-full px-4 py-3 bg-transparent border-b border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors text-sm"
+          />
+          <p className="text-xs text-muted-foreground/50">ex: demo, minha-empresa</p>
+        </div>
+
         <div className="space-y-2">
           <label
             htmlFor="email"

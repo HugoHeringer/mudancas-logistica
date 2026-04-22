@@ -84,7 +84,7 @@ export class MotoristaController {
     @Param('id') id: string,
     @Body() body: { estado: string },
   ) {
-    return this.motoristaService.updateEstado(id, body.estado);
+    return this.motoristaService.updateEstado(getTenantId(req), id, body.estado);
   }
 
   @Delete(':id')

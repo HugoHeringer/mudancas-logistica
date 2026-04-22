@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Building } from 'lucide-react';
-import { veiculosApi } from '../../lib/api';
+import { Plus, Search, Building, Upload, X } from 'lucide-react';
+import { veiculosApi, uploadApi } from '../../lib/api';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
 import { EmptyState } from '../../components/empty-state';
@@ -54,6 +54,10 @@ export function VeiculosPage() {
   const [formM3, setFormM3] = useState('');
   const [formPrecoHora, setFormPrecoHora] = useState('');
   const [formUrgencias, setFormUrgencias] = useState(false);
+  const [formImagemUrl, setFormImagemUrl] = useState('');
+  const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImagem, setUploadingImagem] = useState(false);
 
   const { data: veiculos, isLoading } = useQuery({
     queryKey: ['veiculos'],
@@ -105,6 +109,7 @@ export function VeiculosPage() {
     setSelectedVeiculo(null);
     setFormNome(''); setFormMarca(''); setFormModelo(''); setFormMatricula('');
     setFormM3(''); setFormPrecoHora(''); setFormUrgencias(false);
+    setFormImagemUrl(''); setImagemPreview(null);
   };
 
   const openEdit = (v: Veiculo) => {
@@ -112,7 +117,24 @@ export function VeiculosPage() {
     setFormNome(v.nome); setFormMarca(v.marca); setFormModelo(v.modelo || '');
     setFormMatricula(v.matricula); setFormM3(String(v.metrosCubicos));
     setFormPrecoHora(String(v.precoHora)); setFormUrgencias(v.eParaUrgencias);
+    setFormImagemUrl((v as any).imagemUrl || '');
+    setImagemPreview((v as any).imagemUrl || null);
     setShowEdit(true);
+  };
+
+  const handleImagemUpload = async (file: File) => {
+    setUploadingImagem(true);
+    try {
+      const res = await uploadApi.upload(file, 'veiculo');
+      const url = res.data?.url;
+      setFormImagemUrl(url);
+      setImagemPreview(url);
+      toast({ title: 'Imagem carregada' });
+    } catch {
+      toast({ title: 'Erro ao carregar imagem', variant: 'destructive' });
+    } finally {
+      setUploadingImagem(false);
+    }
   };
 
   const filteredData = (veiculos || []).filter((v) => {
@@ -122,6 +144,19 @@ export function VeiculosPage() {
   });
 
   const columns: ColumnDef<Veiculo>[] = [
+    {
+      accessorKey: 'imagemUrl',
+      header: 'Imagem',
+      cell: ({ row }) => (
+        (row.original as any).imagemUrl ? (
+          <img src={(row.original as any).imagemUrl} alt={row.original.nome} className="w-12 h-12 object-cover rounded" />
+        ) : (
+          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+            <Building className="w-6 h-6 text-muted-foreground" />
+          </div>
+        )
+      ),
+    },
     { accessorKey: 'nome', header: 'Nome' },
     { accessorKey: 'marca', header: 'Marca' },
     { accessorKey: 'matricula', header: 'Matrícula' },
@@ -206,6 +241,43 @@ export function VeiculosPage() {
               <Switch checked={formUrgencias} onCheckedChange={setFormUrgencias} />
               <Label>Disponível para urgências</Label>
             </div>
+
+            <div className="space-y-2">
+              <Label>Imagem do Veículo</Label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImagemUpload(file);
+                }}
+                className="hidden"
+              />
+              {imagemPreview ? (
+                <div className="relative inline-block">
+                  <img src={imagemPreview} alt="Preview" className="w-32 h-24 object-cover rounded-lg border" />
+                  <button
+                    type="button"
+                    onClick={() => { setFormImagemUrl(''); setImagemPreview(null); }}
+                    className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImagem}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploadingImagem ? 'A carregar...' : 'Carregar imagem'}
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground">Tamanho recomendado: 800x600px</p>
+            </div>
           </div>
           <DialogFooter>
             {showEdit && selectedVeiculo && (
@@ -219,6 +291,7 @@ export function VeiculosPage() {
                   nome: formNome, marca: formMarca, modelo: formModelo || undefined,
                   matricula: formMatricula, metrosCubicos: parseFloat(formM3) || 0,
                   precoHora: parseFloat(formPrecoHora) || 0, eParaUrgencias: formUrgencias,
+                  imagemUrl: formImagemUrl || undefined,
                 };
                 if (showCreate) createMutation.mutate(payload);
                 else if (selectedVeiculo) updateMutation.mutate({ id: selectedVeiculo.id, data: payload });

@@ -46,8 +46,15 @@ export function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     setError('');
+
+    if (!subdomain) {
+      setError('Por favor, indique o subdomain da sua empresa');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await authApi.login(data.email, data.password, subdomain || 'demo');
+      const response = await authApi.login(data.email, data.password, subdomain);
       const { user, accessToken, refreshToken } = response.data;
 
       if (user.perfil !== 'motorista') {
