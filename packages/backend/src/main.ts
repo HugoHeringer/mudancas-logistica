@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './all-exceptions.filter';
+import { DecimalTransformInterceptor } from './prisma/decimal-transform.interceptor';
 import * as express from 'express';
 import * as path from 'path';
 
@@ -14,6 +15,9 @@ async function bootstrap() {
 
   // Global exception filter for debug logging
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Transform Prisma Decimal → number in all responses
+  app.useGlobalInterceptors(new DecimalTransformInterceptor());
 
   // Serve uploaded files statically
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));

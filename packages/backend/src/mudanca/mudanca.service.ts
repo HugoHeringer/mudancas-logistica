@@ -247,7 +247,7 @@ if (aprovarMudancaDto.motoristaId) {
     const veiculo = mudanca.veiculoId
       ? await this.prisma.veiculo.findUnique({ where: { id: mudanca.veiculoId } })
       : null;
-    const precoBaseHora = veiculo?.precoHora || configPreco.precoHora || 0;
+    const precoBaseHora = Number(veiculo?.precoHora || configPreco.precoHora || 0);
     const acrescimo1Ajudante = configPreco.acrescimo1Ajudante || configPreco.motorista1AjudantePrecoDiferenca || 0;
     const acrescimo2Ajudantes = configPreco.acrescimo2Ajudantes || configPreco.motorista2AjudantesPrecoDiferenca || 0;
     const acrescimoUrgencia = configPreco.acrescimoUrgencia || 0;
@@ -419,7 +419,7 @@ const updated = await this.prisma.mudanca.update({
 
     // --- RECEITA ---
     // Preço base por hora (veículo) + adicional por ajudante + urgência
-    const precoBaseHora = veiculo?.precoHora || configPreco.precoHora || 0;
+    const precoBaseHora = Number(veiculo?.precoHora || configPreco.precoHora || 0);
     const acrescimo1Ajudante = configPreco.acrescimo1Ajudante || configPreco.motorista1AjudantePrecoDiferenca || 0;
     const acrescimo2Ajudantes = configPreco.acrescimo2Ajudantes || configPreco.motorista2AjudantesPrecoDiferenca || 0;
     const acrescimoUrgencia = configPreco.acrescimoUrgencia || 0;
@@ -451,7 +451,7 @@ const updated = await this.prisma.mudanca.update({
     const motorista = mudanca.motoristaId
       ? await this.prisma.motorista.findUnique({ where: { id: mudanca.motoristaId } })
       : null;
-    const valorHoraMotorista = motorista?.valorHora || 0;
+    const valorHoraMotorista = Number(motorista?.valorHora || 0);
     const horasRegistadas = concluirMudancaDto.horasRegistadas || concluirMudancaDto.horasCobradas;
     const totalPagoMotorista = valorHoraMotorista * horasRegistadas;
 
@@ -462,7 +462,7 @@ const updated = await this.prisma.mudanca.update({
         where: { id: { in: ajudantesIds }, tenantId },
         select: { id: true, valorHora: true },
       });
-      totalPagoAjudantes = ajudantes.reduce((sum, a) => sum + (a.valorHora || 0) * horasRegistadas, 0);
+      totalPagoAjudantes = ajudantes.reduce((sum, a) => sum + Number(a.valorHora || 0) * horasRegistadas, 0);
     }
 
     // --- CUSTOS OPERACIONAIS (combustível + alimentação + motorista + ajudantes) ---
@@ -481,12 +481,12 @@ const updated = await this.prisma.mudanca.update({
         concluidoPor: concluirMudancaDto.concluidoPor,
         concluidoEm: new Date(),
         // Snapshot dos valores na data da mudança
-        valorHoraMotorista,
-        valorHoraAjudante: ajudantesIds.length > 0
+        valorHoraMotoristaSnapshot: valorHoraMotorista,
+        valorHoraAjudanteSnapshot: ajudantesIds.length > 0
           ? (await this.prisma.ajudante.findMany({
               where: { id: { in: ajudantesIds }, tenantId },
               select: { valorHora: true },
-            })).reduce((sum, a) => sum + (a.valorHora || 0), 0) / ajudantesIds.length
+            })).reduce((sum, a) => sum + Number(a.valorHora || 0), 0) / ajudantesIds.length
           : 0,
         totalPagoMotorista,
         totalPagoAjudantes,
@@ -529,7 +529,7 @@ const updated = await this.prisma.mudanca.update({
       await this.prisma.motorista.update({
         where: { id: motorista.id },
         data: {
-          horasTrabalhadasMes: (motorista.horasTrabalhadasMes || 0) + horasRegistadas,
+          horasTrabalhadasMes: Number(motorista.horasTrabalhadasMes || 0) + horasRegistadas,
         },
       });
     }

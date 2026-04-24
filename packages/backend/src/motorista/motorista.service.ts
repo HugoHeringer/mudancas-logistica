@@ -167,7 +167,7 @@ export class MotoristaService {
     );
 
     const receitaGerada = mudancas.reduce(
-      (acc, m) => acc + (m.receitaRealizada || 0),
+      (acc, m) => acc + Number(m.receitaRealizada || 0),
       0,
     );
 

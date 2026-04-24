@@ -581,8 +581,8 @@ approveMutation.mutate({
                     <span className="text-sm text-muted-foreground">Pagamento Motorista</span>
                     <span className="font-medium text-sm">
                       €{(mudanca.totalPagoMotorista || 0).toFixed(2)}
-                      {mudanca.valorHoraMotorista ? (
-                        <span className="text-muted-foreground ml-1">({mudanca.valorHoraMotorista}€/h)</span>
+                      {mudanca.valorHoraMotoristaSnapshot ? (
+                        <span className="text-muted-foreground ml-1">({mudanca.valorHoraMotoristaSnapshot}€/h)</span>
                       ) : null}
                     </span>
                   </div>
@@ -590,8 +590,8 @@ approveMutation.mutate({
                     <span className="text-sm text-muted-foreground">Pagamento Ajudantes</span>
                     <span className="font-medium text-sm">
                       €{(mudanca.totalPagoAjudantes || 0).toFixed(2)}
-                      {mudanca.valorHoraAjudante ? (
-                        <span className="text-muted-foreground ml-1">({mudanca.valorHoraAjudante}€/h)</span>
+                      {mudanca.valorHoraAjudanteSnapshot ? (
+                        <span className="text-muted-foreground ml-1">({mudanca.valorHoraAjudanteSnapshot}€/h)</span>
                       ) : null}
                     </span>
                   </div>

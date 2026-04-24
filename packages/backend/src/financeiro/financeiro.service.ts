@@ -70,8 +70,8 @@ export class FinanceiroService {
       }),
     ]);
 
-    const receitaTotal = receitas._sum.valor || 0;
-    const custosTotais = custos._sum.valor || 0;
+    const receitaTotal = Number(receitas._sum.valor) || 0;
+    const custosTotais = Number(custos._sum.valor) || 0;
     const margemTotal = receitaTotal - custosTotais;
     const margemPercentual = receitaTotal > 0 ? (margemTotal / receitaTotal) * 100 : 0;
 
@@ -121,11 +121,11 @@ export class FinanceiroService {
           mudancasCount: 0,
         };
       }
-      acc[mid].receitaGerada += m.receitaRealizada || 0;
+      acc[mid].receitaGerada += Number(m.receitaRealizada || 0);
       acc[mid].custosCombustivel += (m.conclusao as any)?.combustivel?.valor || 0;
       acc[mid].custosAlimentacao += (m.conclusao as any)?.alimentacao?.valor || 0;
-      acc[mid].custoMotorista += m.totalPagoMotorista || 0;
-      acc[mid].custoAjudantes += m.totalPagoAjudantes || 0;
+      acc[mid].custoMotorista += Number(m.totalPagoMotorista || 0);
+      acc[mid].custoAjudantes += Number(m.totalPagoAjudantes || 0);
       acc[mid].mudancasCount += 1;
       return acc;
     }, {} as any);
@@ -159,8 +159,8 @@ export class FinanceiroService {
         };
       }
       acc[tipo].quantidade += 1;
-      acc[tipo].receitaTotal += m.receitaRealizada || 0;
-      acc[tipo].margemTotal += m.margem || 0;
+      acc[tipo].receitaTotal += Number(m.receitaRealizada || 0);
+      acc[tipo].margemTotal += Number(m.margem || 0);
       return acc;
     }, {} as any);
 
@@ -243,8 +243,8 @@ export class FinanceiroService {
       .map((m) => ({
         mudancaId: m.id,
         motoristaNome: m.motorista?.nome || 'N/A',
-        totalPagoMotorista: m.totalPagoMotorista || 0,
-        totalPagoAjudantes: m.totalPagoAjudantes || 0,
+        totalPagoMotorista: Number(m.totalPagoMotorista || 0),
+        totalPagoAjudantes: Number(m.totalPagoAjudantes || 0),
       }))
       .filter((p) => p.totalPagoMotorista > 0 || p.totalPagoAjudantes > 0);
 

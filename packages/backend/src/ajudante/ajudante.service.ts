@@ -151,7 +151,7 @@ export class AjudanteService {
     });
 
     const mudancasNoMes = mudancas.length;
-    const totalPago = mudancas.reduce((sum, m) => sum + (m.totalPagoAjudantes || 0), 0);
+    const totalPago = mudancas.reduce((sum, m) => sum + Number(m.totalPagoAjudantes || 0), 0);
 
     // Estimate hours from conclusao data
     const horasTrabalhadas = mudancas.reduce((sum, m) => {
