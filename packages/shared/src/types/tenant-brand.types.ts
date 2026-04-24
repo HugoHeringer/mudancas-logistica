@@ -52,6 +52,7 @@ export interface TenantBrand {
   cores: TenantBrandCores;
   fontes: TenantBrandFontes;
   heroImageUrl?: string;
+  bannerUrls?: string[];
   galeriaUrls?: string[];
   avaliacoes?: TenantAvaliacoes;
   contacto?: TenantContacto;

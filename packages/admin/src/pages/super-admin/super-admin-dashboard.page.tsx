@@ -38,7 +38,7 @@ export function SuperAdminDashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((s) => (
-          <Card key={s.label} className="bg-[#141B2D] border-gold/10">
+          <Card key={s.label} className="bg-night-light border-gold/10">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -53,14 +53,14 @@ export function SuperAdminDashboardPage() {
       </div>
 
       {/* Tenant List */}
-      <Card className="bg-[#141B2D] border-gold/10">
+      <Card className="bg-night-light border-gold/10">
         <CardHeader>
           <CardTitle className="text-cream">Empresas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {(tenants || []).map((tenant: any) => (
-              <div key={tenant.id} className="flex items-center justify-between p-4 rounded-lg bg-[#0A0F1E] border border-gold/10 hover:border-gold/20 transition-colors">
+              <div key={tenant.id} className="flex items-center justify-between p-4 rounded-lg bg-night border border-gold/10 hover:border-gold/20 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-gold" />

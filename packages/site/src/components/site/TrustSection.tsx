@@ -8,10 +8,23 @@ function CounterItem({ end, suffix, label }: { end: number; suffix: string; labe
 
   return (
     <div ref={ref} className="text-center">
-      <div className="font-display text-5xl md:text-6xl font-light text-gold mb-2">
+      <div
+        className="font-display text-5xl md:text-6xl font-light mb-2"
+        style={{
+          color: 'var(--brand-accent)',
+          fontFamily: 'var(--tenant-font-display)',
+        }}
+      >
         {count}{suffix}
       </div>
-      <div className="text-cream-muted text-sm tracking-wide uppercase">{label}</div>
+      <div
+        className="text-sm tracking-wide uppercase"
+        style={{
+          color: 'color-mix(in srgb, var(--brand-on-surface-dark) 60%, transparent)',
+        }}
+      >
+        {label}
+      </div>
     </div>
   );
 }
@@ -24,8 +37,8 @@ export function TrustSection() {
       <div className="max-w-7xl mx-auto px-6">
         <AnimatedSection>
           <div className="text-center mb-16">
-            <span className="section-label">Confianca</span>
-            <h2 className="section-title">Numeros que falam por nos</h2>
+            <span className="section-label">Confiança</span>
+            <h2 className="section-title">Números que falam por nós</h2>
           </div>
         </AnimatedSection>
 
@@ -36,11 +49,11 @@ export function TrustSection() {
             <CounterItem
               end={brand.avaliacoes?.googleReviews || 500}
               suffix="+"
-              label="Mudancas Realizadas"
+              label="Mudanças Realizadas"
             />
           </AnimatedSection>
           <AnimatedSection delay={150}>
-            <CounterItem end={10} suffix="+" label="Anos de Experiencia" />
+            <CounterItem end={10} suffix="+" label="Anos de Experiência" />
           </AnimatedSection>
           <AnimatedSection delay={300}>
             <CounterItem end={50} suffix="+" label="Cidades Cobertas" />
@@ -49,7 +62,7 @@ export function TrustSection() {
             <CounterItem
               end={brand.avaliacoes?.googleRating ? Math.round(brand.avaliacoes.googleRating * 10) / 10 : 4.9}
               suffix=""
-              label="Classificacao Google"
+              label="Classificação Google"
             />
           </AnimatedSection>
         </div>

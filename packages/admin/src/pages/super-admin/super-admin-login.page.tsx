@@ -32,9 +32,9 @@ export function SuperAdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-night flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-transparent to-transparent" />
-      <Card className="w-full max-w-md bg-[#141B2D] border-gold/20 relative z-10">
+      <Card className="w-full max-w-md bg-night-light border-gold/20 relative z-10">
         <CardHeader className="text-center">
           <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-gold" />
@@ -53,7 +53,7 @@ export function SuperAdminLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@mudancas-logistica.pt"
-                className="bg-[#0A0F1E] border-gold/20 text-cream placeholder:text-cream/30"
+                className="bg-night border-gold/20 text-cream placeholder:text-cream/30"
                 required
               />
             </div>
@@ -63,7 +63,7 @@ export function SuperAdminLoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-[#0A0F1E] border-gold/20 text-cream"
+                className="bg-night border-gold/20 text-cream"
                 required
               />
             </div>

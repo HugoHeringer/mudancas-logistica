@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Building2, Plus, LogOut, Menu, X, Shield, ChevronLeft,
 } from 'lucide-react';
 import { useSuperAdminStore } from '../stores/super-admin.store';
+import { useTenantTheme } from '../theme/TenantProvider';
 import { cn } from '../lib/utils';
 
 const navigation = [
@@ -16,6 +17,7 @@ export function SuperAdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { email, logout } = useSuperAdminStore();
+  const { brand } = useTenantTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -25,15 +27,15 @@ export function SuperAdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1E]">
+    <div className="min-h-screen bg-night">
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#141B2D]/90 backdrop-blur-md border-b border-gold/10 z-40 flex items-center justify-between px-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-night-light/90 backdrop-blur-md border-b border-gold/10 z-40 flex items-center justify-between px-4">
         <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 rounded-md text-cream/70 hover:text-cream">
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-gold" />
-          <span className="text-sm text-cream/70 tracking-wider">SUPER ADMIN</span>
+          <span className="text-sm text-cream/70 tracking-wider">Central {brand.nome || 'Movefy'}</span>
         </div>
         <div className="w-10" />
       </div>
@@ -41,10 +43,10 @@ export function SuperAdminLayout() {
       {/* Mobile sidebar */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-30 bg-black/60" onClick={() => setMobileOpen(false)}>
-          <div className="w-72 bg-[#0D1321] h-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-72 bg-night h-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="h-16 flex items-center px-6 border-b border-gold/10">
               <Shield className="w-5 h-5 text-gold mr-2" />
-              <span className="text-sm tracking-[0.15em] text-cream font-light">PLATFORM</span>
+              <span className="text-sm tracking-[0.15em] text-cream font-light">{brand.nome || 'Movefy'}</span>
             </div>
             <nav className="p-4 space-y-1">
               {navigation.map((item) => (
@@ -66,13 +68,13 @@ export function SuperAdminLayout() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className={cn('hidden lg:flex flex-col fixed top-0 left-0 h-full bg-[#0D1321] transition-all duration-500 z-20',
+      <aside className={cn('hidden lg:flex flex-col fixed top-0 left-0 h-full bg-night transition-all duration-500 z-20',
         sidebarOpen ? 'w-64' : 'w-20')}>
         <div className="h-16 flex items-center justify-center border-b border-gold/10 px-4">
           {sidebarOpen ? (
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-gold" />
-              <span className="text-sm tracking-[0.15em] text-cream font-light">PLATFORM</span>
+              <span className="text-sm tracking-[0.15em] text-cream font-light">{brand.nome || 'Movefy'}</span>
             </div>
           ) : (
             <Shield className="w-5 h-5 text-gold" />
@@ -110,7 +112,7 @@ export function SuperAdminLayout() {
 
       {/* Main content */}
       <div className={cn('transition-all duration-500', sidebarOpen ? 'lg:ml-64' : 'lg:ml-20')}>
-        <header className="h-16 bg-[#141B2D]/80 backdrop-blur-md border-b border-gold/10 flex items-center justify-between px-6 sticky top-0 z-10">
+        <header className="h-16 bg-night-light/80 backdrop-blur-md border-b border-gold/10 flex items-center justify-between px-6 sticky top-0 z-10">
           <h1 className="text-xl font-light text-cream tracking-wide">
             {navigation.find((n) => n.href === location.pathname)?.name || 'Dashboard'}
           </h1>

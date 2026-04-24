@@ -20,12 +20,21 @@ export function GallerySection() {
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   return (
-    <section id="galeria" className="py-24 bg-sand">
+    <section
+      id="galeria"
+      className="py-24"
+      style={{ backgroundColor: 'var(--brand-surface)' }}
+    >
       <div className="max-w-7xl mx-auto px-6">
         <AnimatedSection>
           <div className="text-center mb-16">
             <span className="section-label">Galeria</span>
-            <h2 className="section-title">Os nossos trabalhos</h2>
+            <h2
+              className="section-title"
+              style={{ color: 'var(--brand-on-surface)' }}
+            >
+              Os nossos trabalhos
+            </h2>
           </div>
         </AnimatedSection>
 
@@ -43,8 +52,14 @@ export function GallerySection() {
                   alt={`Galeria ${i + 1}`}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-night/0 group-hover:bg-night/30 transition-all duration-500 flex items-center justify-center">
-                  <ZoomIn className="w-8 h-8 text-cream opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div
+                  className="absolute inset-0 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center"
+                  style={{ background: 'transparent' }}
+                >
+                  <ZoomIn
+                    className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ color: 'var(--brand-on-surface-dark)' }}
+                  />
                 </div>
               </div>
             </AnimatedSection>
@@ -55,11 +70,15 @@ export function GallerySection() {
       {/* Lightbox */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-[100] bg-night/90 backdrop-blur-sm flex items-center justify-center p-6"
+          className="fixed inset-0 z-[100] backdrop-blur-sm flex items-center justify-center p-6"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--brand-surface-dark) 90%, transparent)' }}
           onClick={() => setLightbox(null)}
         >
           <button
-            className="absolute top-6 right-6 text-cream hover:text-gold transition-colors"
+            className="absolute top-6 right-6 transition-colors"
+            style={{ color: 'var(--brand-on-surface-dark)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--brand-on-surface-dark)')}
             onClick={() => setLightbox(null)}
           >
             <X size={32} />

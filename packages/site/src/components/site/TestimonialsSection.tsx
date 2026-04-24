@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Quote } from 'lucide-react';
 import { useTenantTheme } from '../../theme/TenantProvider';
 import { GlassCard } from '../luxury/GlassCard';
 import { AnimatedSection } from '../luxury/AnimatedSection';
@@ -9,22 +9,22 @@ import { cn } from '../../lib/utils';
 const defaultTestimonials = [
   {
     nome: 'Ana Silva',
-    texto: 'Excelente servico! A equipa foi pontual, cuidou de tudo com muito profissionalismo. Recomendo vivamente.',
+    texto: 'Excelente serviço! A equipa foi pontual, cuidou de tudo com muito profissionalismo. Recomendo vivamente.',
     estrelas: 5,
   },
   {
     nome: 'Pedro Santos',
-    texto: 'Mudanca internacional sem stress. Tudo foi tratado com eficiencia e os bens chegaram em perfeitas condicoes.',
+    texto: 'Mudança internacional sem stress. Tudo foi tratado com eficiência e os bens chegaram em perfeitas condições.',
     estrelas: 5,
   },
   {
     nome: 'Maria Costa',
-    texto: 'Servico de armazenamento impecavel. Espaco limpo e seguro, com acesso facil quando precisei.',
+    texto: 'Serviço de armazenamento impecável. Espaço limpo e seguro, com acesso fácil quando precisei.',
     estrelas: 4,
   },
   {
-    nome: 'Joao Ferreira',
-    texto: 'Ja usei 3 vezes e sempre a mesma qualidade. Profissionais de confianca que tratam dos nossos bens como se fossem deles.',
+    nome: 'João Ferreira',
+    texto: 'Já usei 3 vezes e sempre a mesma qualidade. Profissionais de confiança que tratam dos nossos bens como se fossem deles.',
     estrelas: 5,
   },
 ];
@@ -54,29 +54,47 @@ export function TestimonialsSection() {
         <SectionDivider className="mb-16" />
 
         <AnimatedSection>
-          <GlassCard variant="dark" className="p-10 md:p-14 text-center">
+          <GlassCard
+            variant="dark"
+            className="p-10 md:p-14 text-center"
+            style={{ borderColor: 'color-mix(in srgb, var(--brand-accent) 10%, transparent)' }}
+          >
+            {/* Quote icon */}
+            <Quote
+              className="w-10 h-10 mx-auto mb-6"
+              style={{ color: 'var(--brand-accent)', opacity: 0.4 }}
+            />
+
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-6">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={cn(
-                    'w-5 h-5',
-                    i < (current.estrelas ?? 5)
-                      ? 'text-gold fill-gold'
-                      : 'text-cream-muted/30'
-                  )}
+                  className={cn('w-5 h-5')}
+                  style={{
+                    color: i < (current.estrelas ?? 5) ? 'var(--brand-accent)' : 'color-mix(in srgb, var(--brand-on-surface-dark) 30%, transparent)',
+                    fill: i < (current.estrelas ?? 5) ? 'var(--brand-accent)' : 'transparent',
+                  }}
                 />
               ))}
             </div>
 
             {/* Quote */}
-            <p className="text-lg md:text-xl text-cream/80 leading-relaxed mb-8 font-display font-light italic">
+            <p
+              className="text-lg md:text-xl leading-relaxed mb-8 font-display font-light italic"
+              style={{
+                color: 'color-mix(in srgb, var(--brand-on-surface-dark) 80%, transparent)',
+                fontFamily: 'var(--tenant-font-display)',
+              }}
+            >
               &ldquo;{current.texto}&rdquo;
             </p>
 
             {/* Name */}
-            <p className="text-gold font-medium tracking-wide text-sm uppercase">
+            <p
+              className="font-medium tracking-wide text-sm uppercase"
+              style={{ color: 'var(--brand-accent)' }}
+            >
               {current.nome}
             </p>
 
@@ -85,7 +103,13 @@ export function TestimonialsSection() {
               <div className="flex justify-center gap-4 mt-8">
                 <button
                   onClick={prev}
-                  className="p-2 rounded-full border border-gold/30 text-gold hover:bg-gold/10 transition-colors"
+                  className="p-2 rounded-full transition-colors"
+                  style={{
+                    border: `1px solid color-mix(in srgb, var(--brand-accent) 30%, transparent)`,
+                    color: 'var(--brand-accent)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-accent) 10%, transparent)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -94,16 +118,24 @@ export function TestimonialsSection() {
                     <button
                       key={i}
                       onClick={() => setActive(i)}
-                      className={cn(
-                        'w-2 h-2 rounded-full transition-all duration-300',
-                        i === active ? 'bg-gold w-6' : 'bg-cream-muted/30'
-                      )}
+                      className={cn('w-2 h-2 rounded-full transition-all duration-300', i === active && 'w-6')}
+                      style={{
+                        backgroundColor: i === active
+                          ? 'var(--brand-accent)'
+                          : 'color-mix(in srgb, var(--brand-on-surface-dark) 30%, transparent)',
+                      }}
                     />
                   ))}
                 </div>
                 <button
                   onClick={next}
-                  className="p-2 rounded-full border border-gold/30 text-gold hover:bg-gold/10 transition-colors"
+                  className="p-2 rounded-full transition-colors"
+                  style={{
+                    border: `1px solid color-mix(in srgb, var(--brand-accent) 30%, transparent)`,
+                    color: 'var(--brand-accent)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-accent) 10%, transparent)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <ChevronRight size={20} />
                 </button>

@@ -46,14 +46,14 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 className="text-2xl tracking-[0.15em] text-cream font-light"
                 style={{ fontFamily: 'var(--tenant-font-display)' }}
               >
-                {brand.nome?.toUpperCase() || 'MUDANCAS'}
+                {brand.nome?.toUpperCase() || 'MOVEFY'}
               </h1>
             )}
           </div>
 
           {/* Center text */}
           <div className="max-w-md">
-            <div className="w-16 h-px bg-gold mb-8" />
+            <div className="w-16 h-px mb-8" style={{ background: 'var(--brand-accent)' }} />
             <h2
               className="text-4xl lg:text-5xl font-light text-cream leading-tight mb-6"
               style={{ fontFamily: 'var(--tenant-font-display)' }}
@@ -94,7 +94,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 className="text-xl tracking-[0.15em] text-foreground font-light"
                 style={{ fontFamily: 'var(--tenant-font-display)' }}
               >
-                {brand.nome?.toUpperCase() || 'MUDANCAS'}
+                {brand.nome?.toUpperCase() || 'MOVEFY'}
               </h1>
             )}
           </div>

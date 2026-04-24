@@ -90,7 +90,7 @@ export function SuperAdminEmpresasPage() {
 
       <div className="space-y-3">
         {(tenants as any[]).map((tenant: any) => (
-          <Card key={tenant.id} className="bg-[#141B2D] border-gold/10">
+          <Card key={tenant.id} className="bg-night-light border-gold/10">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -154,7 +154,7 @@ export function SuperAdminEmpresasPage() {
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-[#141B2D] border-gold/20 text-cream max-w-lg">
+        <DialogContent className="bg-night-light border-gold/20 text-cream max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-cream">Criar Nova Empresa</DialogTitle>
             <DialogDescription className="text-cream/50">Configure a nova empresa e o seu administrador</DialogDescription>
@@ -162,27 +162,27 @@ export function SuperAdminEmpresasPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-cream/70">Nome da Empresa</Label>
-              <Input value={createForm.nome} onChange={e => setCreateForm({ ...createForm, nome: e.target.value })} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+              <Input value={createForm.nome} onChange={e => setCreateForm({ ...createForm, nome: e.target.value })} className="bg-night border-gold/20 text-cream" />
             </div>
             <div className="space-y-2">
               <Label className="text-cream/70">Subdomínio</Label>
               <div className="flex items-center gap-1">
-                <Input value={createForm.subdomain} onChange={e => setCreateForm({ ...createForm, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} className="bg-[#0A0F1E] border-gold/20 text-cream" placeholder="empresa" />
+                <Input value={createForm.subdomain} onChange={e => setCreateForm({ ...createForm, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} className="bg-night border-gold/20 text-cream" placeholder="empresa" />
                 <span className="text-cream/40 text-sm whitespace-nowrap">.mudancas-logistica.pt</span>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label className="text-cream/70">País</Label>
-                <Input value={createForm.pais} onChange={e => setCreateForm({ ...createForm, pais: e.target.value })} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+                <Input value={createForm.pais} onChange={e => setCreateForm({ ...createForm, pais: e.target.value })} className="bg-night border-gold/20 text-cream" />
               </div>
               <div className="space-y-2">
                 <Label className="text-cream/70">Moeda</Label>
-                <Input value={createForm.moeda} onChange={e => setCreateForm({ ...createForm, moeda: e.target.value })} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+                <Input value={createForm.moeda} onChange={e => setCreateForm({ ...createForm, moeda: e.target.value })} className="bg-night border-gold/20 text-cream" />
               </div>
               <div className="space-y-2">
                 <Label className="text-cream/70">Fuso</Label>
-                <Input value={createForm.fuso} onChange={e => setCreateForm({ ...createForm, fuso: e.target.value })} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+                <Input value={createForm.fuso} onChange={e => setCreateForm({ ...createForm, fuso: e.target.value })} className="bg-night border-gold/20 text-cream" />
               </div>
             </div>
             <div className="border-t border-gold/10 pt-4">
@@ -190,16 +190,16 @@ export function SuperAdminEmpresasPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-cream/70">Nome</Label>
-                  <Input value={createForm.adminNome} onChange={e => setCreateForm({ ...createForm, adminNome: e.target.value })} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+                  <Input value={createForm.adminNome} onChange={e => setCreateForm({ ...createForm, adminNome: e.target.value })} className="bg-night border-gold/20 text-cream" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-cream/70">Email</Label>
-                  <Input type="email" value={createForm.adminEmail} onChange={e => setCreateForm({ ...createForm, adminEmail: e.target.value })} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+                  <Input type="email" value={createForm.adminEmail} onChange={e => setCreateForm({ ...createForm, adminEmail: e.target.value })} className="bg-night border-gold/20 text-cream" />
                 </div>
               </div>
               <div className="space-y-2 mt-3">
                 <Label className="text-cream/70">Password</Label>
-                <Input type="password" value={createForm.adminPassword} onChange={e => setCreateForm({ ...createForm, adminPassword: e.target.value })} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+                <Input type="password" value={createForm.adminPassword} onChange={e => setCreateForm({ ...createForm, adminPassword: e.target.value })} className="bg-night border-gold/20 text-cream" />
               </div>
             </div>
           </div>
@@ -223,7 +223,7 @@ export function SuperAdminEmpresasPage() {
 
       {/* Reset Password Dialog */}
       <Dialog open={showReset} onOpenChange={setShowReset}>
-        <DialogContent className="bg-[#141B2D] border-gold/20 text-cream">
+        <DialogContent className="bg-night-light border-gold/20 text-cream">
           <DialogHeader>
             <DialogTitle className="text-cream flex items-center gap-2">
               <Key className="w-4 h-4" /> Redefinir Password do Admin
@@ -237,7 +237,7 @@ export function SuperAdminEmpresasPage() {
             </div>
             <div className="space-y-2">
               <Label className="text-cream/70">Nova Password</Label>
-              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-night border-gold/20 text-cream" />
             </div>
           </div>
           <DialogFooter>

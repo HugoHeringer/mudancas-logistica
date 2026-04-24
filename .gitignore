@@ -57,3 +57,7 @@ tmp/
 # Prisma
 packages/backend/prisma/migrations/**/*.sql
 !packages/backend/prisma/migrations/.gitkeep
+
+# Claude Code
+.claude/worktrees/
+.claude/settings.local.json

@@ -88,7 +88,7 @@ function SidebarBrand({ brand, expanded }: { brand: any; expanded: boolean }) {
           fontFamily: 'var(--tenant-font-display)',
         }}
       >
-        {brand.nome?.toUpperCase() || 'MOVEFY'}
+        {brand.nome?.toUpperCase() || 'PAINEL MOVEFY'}
       </span>
     );
   }
@@ -178,7 +178,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => { logout(); setMobileOpen(false); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
-                style={{ color: 'var(--ct-terracotta, #C4572A)' }}
+                style={{ color: 'var(--brand-secondary)' }}
               >
                 <LogOut className="h-[18px] w-[18px]" />
                 <span>Terminar Sessão</span>
@@ -310,7 +310,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               title="Terminar Sessão"
               className="p-2 rounded-lg transition-colors"
               style={{ color: 'hsl(var(--muted-foreground))' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ct-terracotta, #C4572A)')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--brand-secondary)')}
               onMouseLeave={(e) => (e.currentTarget.style.color = 'hsl(var(--muted-foreground))')}
             >
               <LogOut className="h-[18px] w-[18px]" />

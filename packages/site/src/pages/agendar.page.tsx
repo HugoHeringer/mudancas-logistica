@@ -17,15 +17,21 @@ export function AgendarPage() {
   };
 
   return (
-    <div className="pt-28 pb-24 bg-sand min-h-screen">
+    <div
+      className="pt-28 pb-24 min-h-screen"
+      style={{ backgroundColor: 'var(--brand-surface)' }}
+    >
       <div className="max-w-4xl mx-auto px-6">
         <AnimatedSection>
           <div className="text-center mb-12">
             <span className="section-label">
-              {urgente ? 'Mudanca Urgente' : 'Agendar Mudanca'}
+              {urgente ? 'Mudança Urgente' : 'Agendar Mudança'}
             </span>
-            <h1 className="section-title">
-              {urgente ? 'Pedir Mudanca Urgente' : 'Agende a sua Mudanca'}
+            <h1
+              className="section-title"
+              style={{ color: 'var(--brand-on-surface)' }}
+            >
+              {urgente ? 'Pedir Mudança Urgente' : 'Agende a sua Mudança'}
             </h1>
           </div>
         </AnimatedSection>
@@ -35,7 +41,13 @@ export function AgendarPage() {
         {/* Step 1 — Calendar */}
         {!selectedDate && (
           <AnimatedSection>
-            <h2 className="font-display text-2xl font-light mb-6 text-center">
+            <h2
+              className="text-2xl font-light mb-6 text-center"
+              style={{
+                color: 'var(--brand-on-surface)',
+                fontFamily: 'var(--tenant-font-display)',
+              }}
+            >
               1. Escolha a data e hora
             </h2>
             <CalendarSelector onSelect={handleDateSelect} />
@@ -45,7 +57,13 @@ export function AgendarPage() {
         {/* Step 2 — Form */}
         {selectedDate && (
           <AnimatedSection>
-            <h2 className="font-display text-2xl font-light mb-6 text-center">
+            <h2
+              className="text-2xl font-light mb-6 text-center"
+              style={{
+                color: 'var(--brand-on-surface)',
+                fontFamily: 'var(--tenant-font-display)',
+              }}
+            >
               2. Preencha os detalhes
             </h2>
             <AgendamentoForm

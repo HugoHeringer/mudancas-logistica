@@ -7,11 +7,10 @@ interface SectionDividerProps {
 export function SectionDivider({ className }: SectionDividerProps) {
   return (
     <div
-      className={cn(
-        'w-20 h-px mx-auto',
-        'bg-gradient-to-r from-transparent via-gold to-transparent',
-        className
-      )}
+      className={cn('w-20 h-px mx-auto', className)}
+      style={{
+        background: 'linear-gradient(to right, transparent, var(--brand-accent), transparent)',
+      }}
     />
   );
 }

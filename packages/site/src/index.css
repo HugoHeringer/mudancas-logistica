@@ -3,13 +3,14 @@
 @tailwind utilities;
 
 /* ============================================================================
-   MUDANCAS-LOGISTICA SITE DESIGN SYSTEM
-   Inspirado no Sirocco (aura.build) - clean, warm, modern
+   MOVEFY SITE DESIGN SYSTEM — Multi-Tenant Dynamic
+   All colors driven by CSS custom properties injected by TenantProvider.
+   Fallback values are the Movefy default palette.
    ============================================================================ */
 
 @layer base {
   :root {
-    /* --- Paleta Sirocco Adaptada --- */
+    /* --- Movefy Default Palette (fallback) --- */
     --sand: #F5EDE0;
     --sand-dark: #E8DCC8;
     --sand-medium: #D9CCBA;
@@ -24,7 +25,7 @@
     --cream: #F0E6D6;
     --cream-muted: rgba(240, 230, 214, 0.6);
 
-    /* --- Tenant Dynamic Variables --- */
+    /* --- Tenant Dynamic Variables (injected by injectBrandCSS) --- */
     --tenant-primary: #1B4D3E;
     --tenant-primary-light: #2A7A64;
     --tenant-secondary: #C4572A;
@@ -35,6 +36,16 @@
     --tenant-text-light: #F0E6D6;
     --tenant-font-display: 'Cormorant Garamond', serif;
     --tenant-font-body: 'Inter', sans-serif;
+
+    /* --- Dynamic semantic tokens (resolve to tenant colors) --- */
+    --brand-primary: var(--tenant-primary);
+    --brand-primary-light: var(--tenant-primary-light);
+    --brand-secondary: var(--tenant-secondary);
+    --brand-accent: var(--tenant-accent);
+    --brand-surface: var(--tenant-bg);
+    --brand-surface-dark: var(--tenant-bg-dark);
+    --brand-on-surface: var(--tenant-text);
+    --brand-on-surface-dark: var(--tenant-text-light);
 
     /* --- shadcn-compatible --- */
     --background: 36 29% 94%;
@@ -173,10 +184,21 @@
   50% { opacity: 0.9; }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 /* ============================================================================
-   UTILITY CLASSES
+   DYNAMIC TENANT-DRIVEN UTILITY CLASSES
    ============================================================================ */
 
+/* Section labels & titles — now use tenant accent color */
 .section-label {
   display: inline-block;
   font-size: 0.72rem;
@@ -184,11 +206,11 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 16px;
-  color: var(--terracotta);
+  color: var(--brand-secondary);
 }
 
 .night-section .section-label {
-  color: var(--gold);
+  color: var(--brand-accent);
 }
 
 .section-title {
@@ -201,16 +223,16 @@
 }
 
 .night-section .section-title {
-  color: var(--cream);
+  color: var(--brand-on-surface-dark);
 }
 
 .night-section {
-  background: var(--night);
-  color: var(--cream);
+  background: var(--brand-surface-dark);
+  color: var(--brand-on-surface-dark);
 }
 
 .night-section p {
-  color: var(--cream-muted);
+  color: color-mix(in srgb, var(--brand-on-surface-dark) 60%, transparent);
 }
 
 /* Parallax hero */
@@ -225,4 +247,177 @@
   .parallax-bg {
     background-attachment: scroll;
   }
+}
+
+/* ============================================================================
+   DYNAMIC BRAND SURFACE CLASSES (replacing hardcoded bg-sand, bg-night etc.)
+   ============================================================================ */
+
+.bg-brand-surface {
+  background-color: var(--brand-surface);
+}
+
+.bg-brand-surface-dark {
+  background-color: var(--brand-surface-dark);
+}
+
+.text-brand-primary {
+  color: var(--brand-primary);
+}
+
+.text-brand-secondary {
+  color: var(--brand-secondary);
+}
+
+.text-brand-accent {
+  color: var(--brand-accent);
+}
+
+.text-brand-on-surface {
+  color: var(--brand-on-surface);
+}
+
+.text-brand-on-surface-dark {
+  color: var(--brand-on-surface-dark);
+}
+
+.border-brand-accent {
+  border-color: var(--brand-accent);
+}
+
+.border-brand-primary {
+  border-color: var(--brand-primary);
+}
+
+/* ============================================================================
+   BUTTON VARIANTS WITH TENANT COLORS
+   ============================================================================ */
+
+.btn-brand-primary {
+  background-color: var(--brand-primary);
+  color: var(--brand-on-surface-dark);
+  transition: all 0.3s ease;
+}
+.btn-brand-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-brand-secondary {
+  background-color: var(--brand-secondary);
+  color: white;
+  transition: all 0.3s ease;
+}
+.btn-brand-secondary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-brand-accent {
+  background: linear-gradient(135deg, var(--brand-accent), var(--brand-secondary));
+  color: white;
+  transition: all 0.3s ease;
+}
+.btn-brand-accent:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-accent) 25%, transparent);
+}
+
+.btn-brand-glass {
+  background: color-mix(in srgb, var(--brand-on-surface-dark) 8%, transparent);
+  backdrop-filter: blur(12px);
+  color: var(--brand-accent);
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 40%, transparent);
+  transition: all 0.3s ease;
+}
+.btn-brand-glass:hover {
+  background: color-mix(in srgb, var(--brand-accent) 15%, transparent);
+  border-color: var(--brand-accent);
+}
+
+/* ============================================================================
+   GLASS CARD VARIANTS WITH TENANT COLORS
+   ============================================================================ */
+
+.glass-brand-light {
+  background: color-mix(in srgb, var(--brand-on-surface) 5%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 10%, transparent);
+  border-radius: 0.75rem;
+  transition: all 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.glass-brand-dark {
+  background: color-mix(in srgb, var(--brand-on-surface-dark) 3%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 10%, transparent);
+  border-radius: 0.75rem;
+  transition: all 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* ============================================================================
+   PROCESS STEPS (Como Funciona)
+   ============================================================================ */
+
+.process-step-line {
+  position: relative;
+}
+.process-step-line::after {
+  content: '';
+  position: absolute;
+  top: 2.5rem;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to right, var(--brand-accent), color-mix(in srgb, var(--brand-accent) 20%, transparent));
+}
+
+/* ============================================================================
+   FAQ ACCORDION
+   ============================================================================ */
+
+.faq-item {
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-accent) 15%, transparent);
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.33, 1, 0.68, 1),
+              padding 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.faq-answer.open {
+  max-height: 300px;
+}
+
+/* ============================================================================
+   WHATSAPP FLOATING BUTTON
+   ============================================================================ */
+
+.whatsapp-float {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 50;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #25D366;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: float 3s ease-in-out infinite;
+}
+.whatsapp-float:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
 }

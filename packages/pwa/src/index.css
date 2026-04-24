@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Sirocco-inspired palette */
+    /* Sirocco-inspired palette — fallback defaults */
     --sand: #F5EDE0;
     --sand-dark: #E8DCC8;
     --sand-medium: #D4C9B5;
@@ -18,8 +18,9 @@
     --cream: #F0E6D6;
     --cream-muted: rgba(240, 230, 214, 0.6);
 
-    /* Tenant dynamic vars (overridden by TenantProvider) */
+    /* Tenant dynamic vars (overridden by TenantProvider/injectBrandCSS) */
     --tenant-primary: #1B4D3E;
+    --tenant-primary-light: #2A7A64;
     --tenant-secondary: #C4572A;
     --tenant-accent: #D4A853;
     --tenant-bg: #F5EDE0;
@@ -28,6 +29,26 @@
     --tenant-text-light: #F0E6D6;
     --tenant-font-display: 'Cormorant Garamond', serif;
     --tenant-font-body: 'Inter', sans-serif;
+
+    /* Semantic brand tokens (resolve to tenant colors) */
+    --brand-primary: var(--tenant-primary);
+    --brand-primary-light: var(--tenant-primary-light);
+    --brand-secondary: var(--tenant-secondary);
+    --brand-accent: var(--tenant-accent);
+    --brand-surface: var(--tenant-bg);
+    --brand-surface-dark: var(--tenant-bg-dark);
+    --brand-on-surface: var(--tenant-text);
+    --brand-on-surface-dark: var(--tenant-text-light);
+
+    /* Sidebar vars (always dark, uses tenant fundoEscuro) */
+    --sidebar-bg: #0A0F1E;
+    --sidebar-bg-elevated: #141B2D;
+    --sidebar-border: rgba(212, 168, 83, 0.10);
+    --sidebar-text: #F0E6D6;
+    --sidebar-text-muted: rgba(240, 230, 214, 0.50);
+    --sidebar-accent: #D4A853;
+    --sidebar-accent-bg: rgba(212, 168, 83, 0.10);
+    --sidebar-accent-text: #D4A853;
 
     /* shadcn-compatible HSL vars */
     --background: 30 29% 93%;

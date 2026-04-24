@@ -25,9 +25,9 @@ export function GlassCard({
       className={cn(
         'rounded-xl backdrop-blur-md border transition-all duration-500 ease-out',
         variant === 'light'
-          ? 'bg-white/50 border-gold/10'
-          : 'bg-white/[0.03] border-gold/10',
-        hover && 'hover:-translate-y-1 hover:shadow-lg hover:shadow-gold/5 hover:border-gold/25',
+          ? 'glass-brand-light'
+          : 'glass-brand-dark',
+        hover && 'hover:-translate-y-1 hover:shadow-lg hover:border-[color-mix(in_srgb,var(--brand-accent)_25%,transparent)]',
         onClick && 'cursor-pointer',
         className
       )}

@@ -21,10 +21,10 @@ export function GradientButton({
   };
 
   const variantClasses = {
-    primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-    accent: 'bg-terracotta text-white hover:bg-terracotta/90',
-    gold: 'bg-gradient-to-r from-gold to-terracotta text-white hover:shadow-lg hover:shadow-gold/20',
-    glass: 'bg-white/[0.08] backdrop-blur-md text-gold-light border border-gold/40 hover:bg-gold/15 hover:border-gold',
+    primary: 'btn-brand-primary',
+    accent: 'btn-brand-accent',
+    gold: 'btn-brand-secondary',
+    glass: 'btn-brand-glass',
   };
 
   return (

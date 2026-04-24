@@ -73,7 +73,6 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
 
   const isWeekend = (day: number) => {
     const d = new Date(currentYear, currentMonth, day);
-    // Block Sundays by default - could check configAgenda.diasFuncionamento if available
     return d.getDay() === 0;
   };
 
@@ -116,20 +115,42 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
     <div className="max-w-2xl mx-auto">
       <GlassCard className="p-6 md:p-8">
         <div className="flex items-center justify-between mb-6">
-          <button onClick={prevMonth} className="p-2 hover:bg-gold/10 rounded-lg transition-colors">
-            <ChevronLeft className="w-5 h-5 text-brown" />
+          <button
+            onClick={prevMonth}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--brand-on-surface)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-accent) 10%, transparent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <ChevronLeft className="w-5 h-5" />
           </button>
-          <h3 className="font-display text-xl font-light">
+          <h3
+            className="text-xl font-light"
+            style={{
+              color: 'var(--brand-on-surface)',
+              fontFamily: 'var(--tenant-font-display)',
+            }}
+          >
             {MESES[currentMonth]} {currentYear}
           </h3>
-          <button onClick={nextMonth} className="p-2 hover:bg-gold/10 rounded-lg transition-colors">
-            <ChevronRight className="w-5 h-5 text-brown" />
+          <button
+            onClick={nextMonth}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--brand-on-surface)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-accent) 10%, transparent)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
         <div className="grid grid-cols-7 gap-1 mb-2">
           {DIAS_SEMANA.map((d) => (
-            <div key={d} className="text-center text-xs font-medium text-brown/50 uppercase tracking-wider py-2">
+            <div
+              key={d}
+              className="text-center text-xs font-medium uppercase tracking-wider py-2"
+              style={{ color: 'color-mix(in srgb, var(--brand-on-surface) 50%, transparent)' }}
+            >
               {d}
             </div>
           ))}
@@ -154,10 +175,17 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
                 }}
                 className={cn(
                   'aspect-square rounded-lg text-sm font-medium transition-all duration-200',
-                  disabled && 'text-brown/20 cursor-not-allowed',
-                  !disabled && !isSelected && 'hover:bg-gold/10 text-brown/70',
-                  isSelected && 'bg-primary text-primary-foreground shadow-md',
                 )}
+                style={{
+                  color: disabled
+                    ? 'color-mix(in srgb, var(--brand-on-surface) 20%, transparent)'
+                    : isSelected
+                      ? 'var(--brand-on-surface-dark)'
+                      : 'color-mix(in srgb, var(--brand-on-surface) 70%, transparent)',
+                  background: isSelected ? 'var(--brand-accent)' : 'transparent',
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  boxShadow: isSelected ? '0 4px 14px color-mix(in srgb, var(--brand-accent) 30%, transparent)' : 'none',
+                }}
               >
                 {day}
               </button>
@@ -167,14 +195,28 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
 
         {selectedDate && !confirmed && (
           <AnimatedSection className="mt-8">
-            <h4 className="font-display text-lg font-light mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-terracotta" />
-              Horarios disponiveis
+            <h4
+              className="text-lg font-light mb-4 flex items-center gap-2"
+              style={{
+                color: 'var(--brand-on-surface)',
+                fontFamily: 'var(--tenant-font-display)',
+              }}
+            >
+              <Clock className="w-5 h-5" style={{ color: 'var(--brand-secondary)' }} />
+              Horários disponíveis
             </h4>
             {loadingSlots ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-brown/50" />
-                <span className="ml-2 text-sm text-brown/50">A carregar horarios...</span>
+                <Loader2
+                  className="w-6 h-6 animate-spin"
+                  style={{ color: 'color-mix(in srgb, var(--brand-on-surface) 50%, transparent)' }}
+                />
+                <span
+                  className="ml-2 text-sm"
+                  style={{ color: 'color-mix(in srgb, var(--brand-on-surface) 50%, transparent)' }}
+                >
+                  A carregar horários...
+                </span>
               </div>
             ) : (
               <>
@@ -184,12 +226,26 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
                       key={slot.hora}
                       disabled={!slot.disponivel}
                       onClick={() => setSelectedHora(slot.hora)}
-                      className={cn(
-                        'py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200',
-                        !slot.disponivel && 'bg-sand-medium/50 text-brown/30 cursor-not-allowed line-through',
-                        slot.disponivel && !selectedHora?.includes(slot.hora) && 'border border-gold/20 text-brown/70 hover:border-gold/50 hover:bg-gold/5',
-                        selectedHora === slot.hora && 'bg-primary text-primary-foreground border border-primary',
-                      )}
+                      className={cn('py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200')}
+                      style={{
+                        color: !slot.disponivel
+                          ? 'color-mix(in srgb, var(--brand-on-surface) 30%, transparent)'
+                          : selectedHora === slot.hora
+                            ? 'var(--brand-on-surface-dark)'
+                            : 'color-mix(in srgb, var(--brand-on-surface) 70%, transparent)',
+                        background: selectedHora === slot.hora
+                          ? 'var(--brand-accent)'
+                          : !slot.disponivel
+                            ? 'color-mix(in srgb, var(--brand-on-surface) 5%, transparent)'
+                            : 'transparent',
+                        border: slot.disponivel
+                          ? selectedHora === slot.hora
+                            ? '1px solid var(--brand-accent)'
+                            : '1px solid color-mix(in srgb, var(--brand-accent) 20%, transparent)'
+                          : '1px solid transparent',
+                        cursor: !slot.disponivel ? 'not-allowed' : 'pointer',
+                        textDecoration: !slot.disponivel ? 'line-through' : 'none',
+                      }}
                     >
                       {slot.hora}
                     </button>
@@ -200,7 +256,11 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
                   <div className="mt-6 space-y-4">
                     <button
                       onClick={handleConfirm}
-                      className="w-full py-3 px-6 bg-primary text-primary-foreground rounded-lg font-medium tracking-wide uppercase text-sm hover:bg-primary/90 transition-all duration-300"
+                      className="w-full py-3 px-6 rounded-lg font-medium tracking-wide uppercase text-sm transition-all duration-300"
+                      style={{
+                        background: 'var(--brand-accent)',
+                        color: 'var(--brand-on-surface-dark)',
+                      }}
                     >
                       Confirmar data e hora
                     </button>
@@ -213,14 +273,26 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
 
         {confirmed && selectedDate && selectedHora && (
           <AnimatedSection className="mt-6">
-            <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div
+              className="flex items-start gap-3 p-4 rounded-lg"
+              style={{
+                background: 'color-mix(in srgb, var(--brand-accent) 5%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--brand-accent) 20%, transparent)',
+              }}
+            >
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--brand-accent)' }} />
               <div>
-                <p className="font-medium text-sm">
-                  {selectedDate} as {selectedHora}
+                <p
+                  className="font-medium text-sm"
+                  style={{ color: 'var(--brand-on-surface)' }}
+                >
+                  {selectedDate} às {selectedHora}
                 </p>
-                <p className="text-xs text-brown/60 mt-1">
-                  Data pendente de confirmacao pelo admin
+                <p
+                  className="text-xs mt-1"
+                  style={{ color: 'color-mix(in srgb, var(--brand-on-surface) 60%, transparent)' }}
+                >
+                  Data pendente de confirmação pelo admin
                 </p>
               </div>
             </div>

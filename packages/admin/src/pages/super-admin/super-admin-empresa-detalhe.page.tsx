@@ -101,7 +101,7 @@ export function SuperAdminEmpresaDetalhePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Info Card */}
-        <Card className="bg-[#141B2D] border-gold/10 lg:col-span-2">
+        <Card className="bg-night-light border-gold/10 lg:col-span-2">
           <CardHeader><CardTitle className="text-cream">Dados da Empresa</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -130,22 +130,22 @@ export function SuperAdminEmpresaDetalhePage() {
 
             {/* Stats */}
             <div className="grid grid-cols-4 gap-3 pt-4 border-t border-gold/10">
-              <div className="text-center p-3 bg-[#0A0F1E] rounded-lg">
+              <div className="text-center p-3 bg-night rounded-lg">
                 <Users className="w-5 h-5 text-gold mx-auto mb-1" />
                 <p className="text-lg text-cream">{tenant._count?.users || 0}</p>
                 <p className="text-xs text-cream/40">Utilizadores</p>
               </div>
-              <div className="text-center p-3 bg-[#0A0F1E] rounded-lg">
+              <div className="text-center p-3 bg-night rounded-lg">
                 <Truck className="w-5 h-5 text-terracotta mx-auto mb-1" />
                 <p className="text-lg text-cream">{tenant._count?.mudancas || 0}</p>
                 <p className="text-xs text-cream/40">Mudanças</p>
               </div>
-              <div className="text-center p-3 bg-[#0A0F1E] rounded-lg">
+              <div className="text-center p-3 bg-night rounded-lg">
                 <Calendar className="w-5 h-5 text-blue-400 mx-auto mb-1" />
                 <p className="text-lg text-cream">{tenant._count?.clientes || 0}</p>
                 <p className="text-xs text-cream/40">Clientes</p>
               </div>
-              <div className="text-center p-3 bg-[#0A0F1E] rounded-lg">
+              <div className="text-center p-3 bg-night rounded-lg">
                 <Wallet className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
                 <p className="text-lg text-cream">{tenant._count?.veiculos || 0}</p>
                 <p className="text-xs text-cream/40">Veículos</p>
@@ -155,7 +155,7 @@ export function SuperAdminEmpresaDetalhePage() {
         </Card>
 
         {/* Actions Card */}
-        <Card className="bg-[#141B2D] border-gold/10">
+        <Card className="bg-night-light border-gold/10">
           <CardHeader><CardTitle className="text-cream">Ações</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {tenant.estado !== 'ativa' && (
@@ -177,7 +177,7 @@ export function SuperAdminEmpresaDetalhePage() {
 
       {/* Setup Progress */}
       {setupProgress && !setupProgress.isComplete && (
-        <Card className="bg-[#141B2D] border-gold/10">
+        <Card className="bg-night-light border-gold/10">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-cream flex items-center gap-2">
@@ -188,7 +188,7 @@ export function SuperAdminEmpresaDetalhePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="w-full bg-[#0A0F1E] rounded-full h-2 mb-4">
+            <div className="w-full bg-night rounded-full h-2 mb-4">
               <div
                 className="bg-gold rounded-full h-2 transition-all duration-500"
                 style={{ width: `${setupProgress.percentage}%` }}
@@ -220,12 +220,12 @@ export function SuperAdminEmpresaDetalhePage() {
       )}
 
       {/* Users list */}
-      <Card className="bg-[#141B2D] border-gold/10">
+      <Card className="bg-night-light border-gold/10">
         <CardHeader><CardTitle className="text-cream">Utilizadores</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-2">
             {(tenant.users || []).map((user: any) => (
-              <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-[#0A0F1E]">
+              <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-night">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center text-gold text-sm">
                     {user.nome?.charAt(0)}
@@ -247,7 +247,7 @@ export function SuperAdminEmpresaDetalhePage() {
 
       {/* Reset Dialog */}
       <Dialog open={showReset} onOpenChange={setShowReset}>
-        <DialogContent className="bg-[#141B2D] border-gold/20 text-cream">
+        <DialogContent className="bg-night-light border-gold/20 text-cream">
           <DialogHeader>
             <DialogTitle className="text-cream">Redefinir Password do Admin</DialogTitle>
             <DialogDescription className="text-cream/50">Defina uma nova password para o administrador desta empresa</DialogDescription>
@@ -259,7 +259,7 @@ export function SuperAdminEmpresaDetalhePage() {
             </div>
             <div className="space-y-2">
               <Label className="text-cream/70">Nova Password</Label>
-              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-night border-gold/20 text-cream" />
             </div>
           </div>
           <DialogFooter>
@@ -273,14 +273,14 @@ export function SuperAdminEmpresaDetalhePage() {
 
       {/* Subdomain Dialog */}
       <Dialog open={showSubdomain} onOpenChange={setShowSubdomain}>
-        <DialogContent className="bg-[#141B2D] border-gold/20 text-cream">
+        <DialogContent className="bg-night-light border-gold/20 text-cream">
           <DialogHeader>
             <DialogTitle className="text-cream">Alterar Subdomínio</DialogTitle>
             <DialogDescription className="text-cream/50">Atenção: isso pode afetar o acesso ao site público da empresa</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             <Label className="text-cream/70">Novo Subdomínio</Label>
-            <Input value={newSubdomain} onChange={e => setNewSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} className="bg-[#0A0F1E] border-gold/20 text-cream" />
+            <Input value={newSubdomain} onChange={e => setNewSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} className="bg-night border-gold/20 text-cream" />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSubdomain(false)} className="border-gold/20 text-cream/70">Cancelar</Button>

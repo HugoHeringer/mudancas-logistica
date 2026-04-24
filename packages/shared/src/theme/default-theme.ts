@@ -22,8 +22,8 @@ export const DEFAULT_FONTES: TenantBrandFontes = {
 };
 
 export const DEFAULT_TENANT_BRAND: TenantBrand = {
-  nome: 'Mudanças & Logística',
-  slogan: 'A sua mudança, sem stress',
+  nome: 'Movefy',
+  slogan: 'Sua mudança, sem stress',
   cores: DEFAULT_CORES,
   fontes: DEFAULT_FONTES,
   contacto: {
