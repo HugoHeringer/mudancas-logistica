@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS#static"
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "staticFiles": {
+      "root": "dist",
+      "location": "SPA"
+    }
+  }
+}

@@ -57,3 +57,21 @@ export interface TenantBrand {
   avaliacoes?: TenantAvaliacoes;
   contacto?: TenantContacto;
 }
+
+export interface ConfigPreco {
+  precoBaseFurgao?: number;
+  precoBaseCaminhao?: number;
+  acrescimo1Ajudante?: number;      // €/hora extra com 1 ajudante
+  acrescimo2Ajudantes?: number;     // €/hora extra com 2 ajudantes
+  // NOTA: acrescimoUrgencia foi movido para ConfigAgenda
+  [key: string]: unknown;
+}
+
+export interface ConfigAgenda {
+  capacidadeMaximaDiaria?: number;   // default: 3 mudanças/dia
+  acrescimoUrgencia?: number;       // % de acréscimo para urgências
+  horarioInicio?: string;           // ex: "08:00"
+  horarioFim?: string;              // ex: "18:00"
+  bloquearDomingos?: boolean;
+  [key: string]: unknown;
+}
