@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Truck,
   Clock,
@@ -12,6 +12,7 @@ import {
   Settings,
   Circle,
   CheckCircle2,
+  BarChart3,
 } from 'lucide-react';
 import { mudancasApi, tenantsApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth.store';
@@ -22,6 +23,7 @@ import { ESTADOS_MUDANCA_CORES } from '../../constants/estados';
 import { CardSkeleton } from '../../components/ui/skeleton';
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -54,24 +56,36 @@ export function DashboardPage() {
       value: dashboard?.hoje.total || 0,
       detail: `${dashboard?.hoje.mudancas?.filter((m: any) => m.estado === 'em_servico').length || 0} em curso`,
       icon: Truck,
+      onClick: () => navigate('/agenda?data=hoje'),
     },
     {
       label: "Pendentes",
       value: dashboard?.pendentes || 0,
       detail: "Aguardando aprovação",
       icon: Clock,
+      onClick: () => navigate('/aprovacoes'),
     },
     {
       label: "Em Curso",
       value: dashboard?.emCurso || 0,
       detail: "Motoristas em serviço",
       icon: AlertCircle,
+      onClick: () => navigate('/mudancas?estado=a_caminho,em_servico'),
     },
     {
       label: "Receita (Mês)",
       value: `€${(dashboard?.mes.receita || 0).toFixed(2)}`,
       detail: `${dashboard?.mes.total || 0} mudanças`,
       icon: Wallet,
+      onClick: () => navigate('/financeiro'),
+    },
+    {
+      label: "Margem (Mês)",
+      value: `${dashboard?.mes.margemPercentual >= 0 ? '+' : ''}${dashboard?.mes.margemPercentual || 0}%`,
+      detail: `€${(dashboard?.mes.margem || 0).toFixed(2)}`,
+      icon: BarChart3,
+      onClick: () => navigate('/financeiro'),
+      highlight: (dashboard?.mes.margemPercentual || 0) >= 0 ? 'positive' : 'negative',
     },
   ];
 
@@ -105,13 +119,14 @@ export function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Stats Grid */}
-      <div className="stagger-up grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="stagger-up grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat, i) => (
           <GlassCard
             key={stat.label}
             hover
-            className="p-5 stagger-child"
+            className="p-5 stagger-child cursor-pointer"
             style={{ animationDelay: `${i * 80}ms` } as React.CSSProperties}
+            onClick={stat.onClick}
           >
             <div className="flex items-start justify-between">
               <div className="space-y-2">
@@ -119,7 +134,11 @@ export function DashboardPage() {
                   {stat.label}
                 </span>
                 <p
-                  className="text-3xl font-light text-foreground"
+                  className={`text-3xl font-light ${
+                    stat.highlight === 'positive' ? 'text-green-600' :
+                    stat.highlight === 'negative' ? 'text-destructive' :
+                    'text-foreground'
+                  }`}
                   style={{ fontFamily: 'var(--tenant-font-display)' }}
                 >
                   {stat.value}

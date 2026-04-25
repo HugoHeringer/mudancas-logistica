@@ -16,6 +16,9 @@
     "db:migrate": "npm run db:migrate --workspace=@mudancas/backend",
     "db:seed": "npm run db:seed --workspace=@mudancas/backend"
   },
+  "config": {
+    "node_options": "--max-old-space-size=4096"
+  },
   "workspaces": [
     "packages/*"
   ],

@@ -168,29 +168,29 @@
 > **Commit:** `feat(dashboard): fix inconsistent data + add clickable KPIs`
 
 ### 4.1 Corrigir query de pendentes
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → função `getDashboard()`:
+- [x] `packages/backend/src/mudanca/mudanca.service.ts` → função `getDashboard()`:
   - Query de pendentes: `where: { tenantId, estado: 'pendente' }` — verificar que usa exactamente `'pendente'` e não outro valor
   - Confirmar que a página de Aprovações usa **exactamente o mesmo filtro**: `estado: 'pendente'`
   - Se divergirem, unificar para usar constante: `import { ESTADOS } from '@mudancas/shared'`
 
 ### 4.2 Corrigir query de mudanças de hoje
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → função `getDashboard()`:
+- [x] `packages/backend/src/mudanca/mudanca.service.ts` → função `getDashboard()`:
   - Query "hoje":
     ```typescript
     const hoje = new Date();
-    const inicioDia = new Date(hoje.setHours(0,0,0,0));
-    const fimDia = new Date(hoje.setHours(23,59,59,999));
+    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999);
     where: { tenantId, dataPretendida: { gte: inicioDia, lte: fimDia } }
     ```
   - Substituir qualquer comparação por string (ex: `toDateString()`) por esta comparação com `DateTime`
 
 ### 4.3 Novos KPIs no dashboard
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → função `getDashboard()` → adicionar ao retorno:
+- [x] `packages/backend/src/mudanca/mudanca.service.ts` → função `getDashboard()` → adicionar ao retorno:
   - `receitaMes`: soma de `receitaRealizada` de mudanças concluídas no mês actual
   - `margemMes`: receita - custos do mês actual
   - `mudancasEmCurso`: count de `estado IN ('a_caminho', 'em_servico')`
   - `motivosPendentes`: lista dos primeiros 5 pendentes com `{ id, cliente, dataPretendida }`
-- [ ] `packages/admin/src/pages/dashboard.page.tsx`:
+- [x] `packages/admin/src/pages/dashboard/dashboard.page.tsx`:
   - Tornar o card "Pendentes" clicável → `navigate('/aprovacoes')`
   - Tornar o card "Hoje" clicável → `navigate('/agenda?data=hoje')`
   - Tornar o card "Em Curso" clicável → `navigate('/mudancas?estado=em_servico,a_caminho')`
@@ -199,7 +199,7 @@
   - **Remover** qualquer dado mockado ou hardcoded
 
 ### 4.4 Dashboard — respeitar perfil do utilizador
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → função `getDashboard()`:
+- [x] `packages/backend/src/mudanca/mudanca.service.ts` → função `getDashboard()`:
   - Receber `userId` e `perfil` do contexto JWT
   - Se perfil for `gerente`: ler `user.permissoes.motoristaIds` e adicionar filtro `motoristaId: { in: motoristaIds }` em todas as queries
   - Se `permissoes.verTodosMotoristas === true` ou `motoristaIds` estiver vazio: não aplicar filtro
@@ -665,7 +665,7 @@
 | 1 | Base de dados: campos em falta | 🔴 CRÍTICO | [x] |
 | 2 | Cálculo financeiro correcto | 🔴 CRÍTICO | [x] |
 | 3 | Autenticação e multi-tenant | 🔴 CRÍTICO | [x] |
-| 4 | Dashboard correcto | 🔴 CRÍTICO | [ ] |
+| 4 | Dashboard correcto | 🔴 CRÍTICO | [x] |
 | 5 | Agenda reformulada | 🔴 CRÍTICO | [ ] |
 | 6 | Formulário público dinâmico | 🟠 ALTO | [ ] |
 | 7 | Clientes: gestão completa | 🟠 ALTO | [ ] |
