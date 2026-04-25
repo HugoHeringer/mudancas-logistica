@@ -10,6 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { PublicService } from './public.service';
 import { CreateMudancaDto } from '../mudanca/dto/create-mudanca.dto';
 import { Public } from '../auth/decorators/public.decorator';
@@ -26,6 +27,7 @@ export class PublicController {
   @Public()
   @Post('mudancas')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ summary: 'Criar nova mudança (público, sem auth)' })
   criarMudanca(@Body() dto: CreateMudancaDto) {
     const tenantId = dto.tenantId;

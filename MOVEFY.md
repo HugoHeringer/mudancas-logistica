@@ -118,8 +118,8 @@
 > **Commit:** `feat(auth): tenant resolution by slug + secure login`
 
 ### 3.1 Middleware de resolução por slug/subdomínio
-- [ ] Criar ficheiro: `packages/backend/src/common/middleware/tenant.middleware.ts`
-- [ ] Implementar lógica:
+- [x] Criar ficheiro: `packages/backend/src/common/middleware/tenant.middleware.ts`
+- [x] Implementar lógica:
   ```typescript
   // 1. Ler header 'host' do request: ex. "silva-mudancas.movefy.pt"
   // 2. Extrair subdomínio: "silva-mudancas"
@@ -128,38 +128,38 @@
   // 5. Se não encontrar → throw NotFoundException('Empresa não encontrada')
   // 6. Adicionar ao request: req['tenantId'] = tenant.id
   ```
-- [ ] Registar o middleware em `app.module.ts` para todas as rotas excepto `/health` e `/super-admin/*`
+- [x] Registar o middleware em `app.module.ts` para todas as rotas excepto `/health` e `/super-admin/*`
 
 ### 3.2 Login PWA — campo de empresa (slug)
-- [ ] `packages/pwa/src/pages/login.page.tsx`:
+- [x] `packages/pwa/src/pages/login.page.tsx`:
   - Adicionar campo `empresa` (type="text", placeholder="ID da sua empresa") **acima** do campo email
   - Campo deve ter texto de ajuda: "O seu gestor fornece este código"
   - Ao fazer login, enviar `{ slug, email, password }` no body
-- [ ] `packages/backend/src/auth/auth.service.ts` → função `login()`:
+- [x] `packages/backend/src/auth/auth.service.ts` → função `login()`:
   - Receber `slug` no DTO
   - Buscar tenant pelo slug: `prisma.tenant.findUnique({ where: { slug } })`
   - Se tenant não existir → `throw UnauthorizedException('Empresa não encontrada')`
   - Validar que `user.tenantId === tenant.id`
   - Retornar `accessToken` com `tenantId` e `slug` no payload JWT
-- [ ] Alternativa (mais elegante, implementar se subdomínio já estiver configurado): se o request vier de `silva.movefy.pt/motorista`, o middleware já injectou o `tenantId` — o login não precisa de campo empresa, usa o `tenantId` do contexto
+- [x] Alternativa (mais elegante, implementar se subdomínio já estiver configurado): se o request vier de `silva.movefy.pt/motorista`, o middleware já injectou o `tenantId` — o login não precisa de campo empresa, usa o `tenantId` do contexto
 
 ### 3.3 Segurança do JWT
-- [ ] `packages/backend/src/auth/jwt.strategy.ts` → função `validate()`:
+- [x] `packages/backend/src/auth/jwt.strategy.ts` → função `validate()`:
   - Verificar que `user.eAtivo === true` — se false, lançar `UnauthorizedException`
   - Verificar que `tenant.eAtivo === true` — se false, lançar `UnauthorizedException('Conta suspensa')`
-- [ ] `packages/backend/src/auth/auth.service.ts` → função `login()`:
+- [x] `packages/backend/src/auth/auth.service.ts` → função `login()`:
   - Verificar `user.eAtivo` antes de emitir token
   - Registar último login: `prisma.user.update({ data: { ultimoLogin: new Date() } })`
   - Adicionar campo `ultimoLogin DateTime?` ao modelo User no schema se não existir
 
 ### 3.4 Rate limiting no login
-- [ ] `packages/backend/src/auth/auth.controller.ts` → endpoint `POST /auth/login`:
+- [x] `packages/backend/src/auth/auth.controller.ts` → endpoint `POST /auth/login`:
   - Adicionar decorator `@Throttle({ default: { limit: 5, ttl: 60000 } })` (5 tentativas por minuto)
-- [ ] Verificar que `ThrottlerModule` está registado em `app.module.ts`. Se não estiver:
+- [x] Verificar que `ThrottlerModule` está registado em `app.module.ts`. Se não estiver:
   ```typescript
   ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }])
   ```
-- [ ] Endpoint `POST /public/mudancas` (formulário público):
+- [x] Endpoint `POST /public/mudancas` (formulário público):
   - Adicionar `@Throttle({ default: { limit: 3, ttl: 60000 } })` (3 submissões por minuto por IP)
 
 ---
@@ -664,7 +664,7 @@
 |---|---|---|---|
 | 1 | Base de dados: campos em falta | 🔴 CRÍTICO | [x] |
 | 2 | Cálculo financeiro correcto | 🔴 CRÍTICO | [x] |
-| 3 | Autenticação e multi-tenant | 🔴 CRÍTICO | [ ] |
+| 3 | Autenticação e multi-tenant | 🔴 CRÍTICO | [x] |
 | 4 | Dashboard correcto | 🔴 CRÍTICO | [ ] |
 | 5 | Agenda reformulada | 🔴 CRÍTICO | [ ] |
 | 6 | Formulário público dinâmico | 🟠 ALTO | [ ] |

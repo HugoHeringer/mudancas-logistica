@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -23,6 +23,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
 import { SuperAdminGuard } from './auth/guards/super-admin.guard';
 import { PublicModule } from './public/public.module';
 import { TestRunnerModule } from './test-runner/test-runner.module';
+import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 
 @Module({
   imports: [
@@ -56,6 +57,10 @@ import { TestRunnerModule } from './test-runner/test-runner.module';
   providers: [
     {
       provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
     {
@@ -68,4 +73,11 @@ import { TestRunnerModule } from './test-runner/test-runner.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantResolveMiddleware)
+      .exclude('api/health', 'api/docs', 'api/swagger', 'api/auth', 'api/super-admin')
+      .forRoutes('*');
+  }
+}

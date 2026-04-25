@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -20,11 +20,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { eAtivo: true, permissoes: true },
+      select: { eAtivo: true, permissoes: true, tenantId: true },
     });
 
     if (!user || !user.eAtivo) {
-      return null;
+      throw new UnauthorizedException('Utilizador inativo');
+    }
+
+    // Check tenant is active
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      select: { eAtivo: true, estado: true },
+    });
+
+    if (!tenant || !tenant.eAtivo) {
+      throw new UnauthorizedException('Conta suspensa');
     }
 
     return {
@@ -32,6 +42,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       tenantId: payload.tenantId,
       perfil: payload.perfil,
+      slug: payload.slug,
       permissoes: user.permissoes || {},
     };
   }

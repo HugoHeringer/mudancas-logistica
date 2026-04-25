@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -12,24 +14,46 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string, tenantId: string) {
-    // Resolve subdomain to tenant UUID if needed
-    let resolvedTenantId = tenantId;
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId);
-    if (!isUuid) {
-      const tenant = await this.prisma.tenant.findFirst({
-        where: { subdomain: tenantId },
+  /**
+   * Resolve a tenant identifier (UUID, subdomain, or slug) to a tenant record.
+   */
+  private async resolveTenant(tenantId: string, slug?: string) {
+    // If it's already a UUID, fetch directly
+    if (UUID_REGEX.test(tenantId)) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
       });
-      if (!tenant) {
-        throw new UnauthorizedException('Credenciais inválidas');
+      if (!tenant || !tenant.eAtivo) {
+        throw new UnauthorizedException('Empresa não encontrada');
       }
-      resolvedTenantId = tenant.id;
+      return tenant;
     }
+
+    // Otherwise resolve by slug or subdomain
+    const tenant = await this.prisma.tenant.findFirst({
+      where: {
+        OR: [
+          ...(slug ? [{ slug }] : []),
+          { subdomain: tenantId },
+        ],
+        eAtivo: true,
+      },
+    });
+
+    if (!tenant) {
+      throw new UnauthorizedException('Empresa não encontrada');
+    }
+
+    return tenant;
+  }
+
+  async validateUser(email: string, password: string, tenantId: string, slug?: string) {
+    const tenant = await this.resolveTenant(tenantId, slug);
 
     const user = await this.prisma.user.findFirst({
       where: {
         email,
-        tenantId: resolvedTenantId,
+        tenantId: tenant.id,
       },
     });
 
@@ -49,26 +73,31 @@ export class AuthService {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...result } = user;
-    return result;
+    return { user: result, tenant };
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.validateUser(
+    const { user, tenant } = await this.validateUser(
       loginDto.email,
       loginDto.password,
       loginDto.tenantId,
+      loginDto.slug,
     );
+
+    const slug = tenant.slug || tenant.subdomain;
 
     const payload = {
       sub: user.id,
       email: user.email,
       tenantId: user.tenantId,
       perfil: user.perfil,
+      slug,
     };
 
+    // Record last login
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { ultimaSessao: new Date() },
+      data: { ultimoLogin: new Date() },
     });
 
     // Se for motorista, buscar o motoristaId
@@ -152,16 +181,16 @@ export class AuthService {
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
-        include: { tenant: { select: { estado: true } } },
+        include: { tenant: { select: { estado: true, eAtivo: true } } },
       });
 
       if (!user || !user.eAtivo) {
         throw new UnauthorizedException('Utilizador inválido');
       }
 
-      // Verificar se tenant ainda está ativo
-      if (user.tenant?.estado !== 'ativa') {
-        throw new UnauthorizedException('Empresa inativa ou suspensa');
+      // Verificar se tenant está ativo
+      if (!user.tenant?.eAtivo || user.tenant?.estado === 'suspensa') {
+        throw new UnauthorizedException('Conta suspensa');
       }
 
       const newPayload = {
@@ -169,6 +198,7 @@ export class AuthService {
         email: user.email,
         tenantId: user.tenantId,
         perfil: user.perfil,
+        slug: payload.slug,
       };
 
       return {

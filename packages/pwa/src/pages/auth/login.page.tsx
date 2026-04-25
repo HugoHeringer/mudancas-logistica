@@ -9,6 +9,7 @@ import { authApi } from '../../lib/api';
 import { useTenantTheme } from '../../theme/TenantProvider';
 
 const loginSchema = z.object({
+  empresa: z.string().min(1, 'Indique o ID da sua empresa'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
@@ -38,29 +39,35 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { empresa: subdomain },
   });
+
+  // Keep form empresa field in sync with auto-detected subdomain
+  useEffect(() => {
+    if (subdomain) {
+      setValue('empresa', subdomain);
+    }
+  }, [subdomain, setValue]);
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     setError('');
 
-    if (!subdomain) {
-      setError('Por favor, indique o subdomain da sua empresa');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const response = await authApi.login(data.email, data.password, subdomain);
+      const response = await authApi.login(data.email, data.password, data.empresa);
       const { user, accessToken, refreshToken } = response.data;
 
       if (user.perfil !== 'motorista') {
         setError('Esta app é exclusiva para motoristas.');
         return;
       }
+
+      // Remember the empresa slug for next login
+      localStorage.setItem('tenantSubdomain', data.empresa);
 
       login(user, accessToken, refreshToken, guardarSessao);
       navigate('/');
@@ -131,6 +138,38 @@ export function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-2">
+            <label
+              htmlFor="empresa"
+              className="text-[10px] font-medium tracking-wider uppercase"
+              style={{ color: 'color-mix(in srgb, var(--brand-on-surface-dark) 50%, transparent)' }}
+            >
+              Empresa
+            </label>
+            <input
+              id="empresa"
+              type="text"
+              placeholder="ID da sua empresa"
+              {...register('empresa')}
+              className="w-full px-4 py-3 bg-transparent text-sm transition-colors outline-none"
+              style={{
+                borderBottom: '1px solid color-mix(in srgb, var(--brand-on-surface-dark) 20%, transparent)',
+                color: 'var(--brand-on-surface-dark)',
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderBottomColor = 'var(--brand-accent)')}
+              onBlur={(e) => (e.currentTarget.style.borderBottomColor = 'color-mix(in srgb, var(--brand-on-surface-dark) 20%, transparent)')}
+            />
+            <p
+              className="text-[9px]"
+              style={{ color: 'color-mix(in srgb, var(--brand-on-surface-dark) 30%, transparent)' }}
+            >
+              O seu gestor fornece este código
+            </p>
+            {errors.empresa && (
+              <p className="text-xs mt-1" style={{ color: 'var(--brand-secondary)' }}>{errors.empresa.message}</p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <label
               htmlFor="email"
