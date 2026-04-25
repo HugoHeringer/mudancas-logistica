@@ -251,14 +251,14 @@
 > **Commit:** `feat(site): dynamic form fields from tenant config`
 
 ### 6.1 Endpoint público de configuração do formulário
-- [ ] `packages/backend/src/public/public.controller.ts`:
+- [x] `packages/backend/src/public/public.controller.ts`:
   - Adicionar endpoint: `GET /public/tenant/:slug/formulario-config`
   - Retornar: lista de campos personalizados activos do tenant, ordenados por `ordem`
   - Campos retornados: `{ id, nome, tipo, obrigatorio, ordem, opcoes }`
   - **Não retornar** dados sensíveis do tenant (apenas configuração do formulário)
 
 ### 6.2 Renderização dinâmica no site
-- [ ] `packages/site/src/components/agendamento-form.tsx`:
+- [x] `packages/site/src/components/agendamento-form.tsx`:
   - No `useEffect` inicial: chamar `publicApi.getFormularioConfig(slug)`
   - Após os campos base (dados pessoais, moradas, veículo, data), renderizar campos dinâmicos:
     ```tsx
@@ -272,7 +272,7 @@
   - Incluir valores destes campos no payload de submissão: `{ ...dadosBase, camposDinamicos: { [campo.id]: valor } }`
 
 ### 6.3 Guardar campos dinâmicos na mudança
-- [ ] `packages/backend/src/public/public.service.ts` → função `criarMudancaPublica()`:
+- [x] `packages/backend/src/public/public.service.ts` → função `criarMudancaPublica()`:
   - Receber `camposDinamicos` no DTO
   - Guardar em `conclusaoDetalhes` (ou campo Json dedicado `dadosFormulario Json?`) na mudança
 
@@ -667,7 +667,7 @@
 | 3 | Autenticação e multi-tenant | 🔴 CRÍTICO | [x] |
 | 4 | Dashboard correcto | 🔴 CRÍTICO | [x] |
 | 5 | Agenda reformulada | 🔴 CRÍTICO | [x] |
-| 6 | Formulário público dinâmico | 🟠 ALTO | [ ] |
+| 6 | Formulário público dinâmico | 🟠 ALTO | [x] |
 | 7 | Clientes: gestão completa | 🟠 ALTO | [ ] |
 | 8 | Motoristas e ajudantes | 🟠 ALTO | [ ] |
 | 9 | Permissões do gerente | 🟠 ALTO | [ ] |

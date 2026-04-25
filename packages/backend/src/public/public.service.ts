@@ -36,6 +36,7 @@ export class PublicService {
         observacoes: dto.observacoes,
         eInternacional: dto.eInternacional,
         documentacao: dto.documentacao,
+        camposPersonalizados: dto.camposPersonalizados as any || undefined,
       },
     });
 
