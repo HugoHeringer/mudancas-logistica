@@ -16,14 +16,8 @@ const MESES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-const DEFAULT_SLOTS = [
-  { hora: '08:00', disponivel: true },
-  { hora: '09:00', disponivel: true },
-  { hora: '10:00', disponivel: true },
-  { hora: '14:00', disponivel: true },
-  { hora: '15:00', disponivel: true },
-  { hora: '16:00', disponivel: true },
-];
+// Default time slots (these are just suggested times, not tied to capacity)
+const SUGGESTED_TIMES = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
 
 export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
   const { brand, tenantId } = useTenantTheme();
@@ -33,27 +27,44 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedHora, setSelectedHora] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
-  const [slots, setSlots] = useState<{ hora: string; disponivel: boolean }[]>(DEFAULT_SLOTS);
-  const [loadingSlots, setLoadingSlots] = useState(false);
 
+  // Availability per day for current month
+  const [availabilityMap, setAvailabilityMap] = useState<Record<string, { disponivel: boolean; capacidadeRestante: number }>>({});
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
+  // Fetch availability for the entire month when month changes
   useEffect(() => {
-    if (selectedDate && tenantId) {
-      setLoadingSlots(true);
-      publicApi.getDisponibilidade(tenantId, selectedDate)
-        .then((res) => {
-          const data = res.data;
-          if (data && data.slots && data.slots.length > 0) {
-            setSlots(data.slots);
-          } else {
-            setSlots(DEFAULT_SLOTS);
-          }
-        })
-        .catch(() => {
-          setSlots(DEFAULT_SLOTS);
-        })
-        .finally(() => setLoadingSlots(false));
+    if (!tenantId) return;
+
+    const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const datesToFetch: string[] = [];
+
+    for (let day = 1; day <= totalDays; day++) {
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      // Only fetch future dates
+      const d = new Date(currentYear, currentMonth, day);
+      if (d >= new Date(new Date().toDateString())) {
+        datesToFetch.push(dateStr);
+      }
     }
-  }, [selectedDate, tenantId]);
+
+    if (datesToFetch.length === 0) return;
+
+    setLoadingAvailability(true);
+    Promise.all(
+      datesToFetch.map((date) =>
+        publicApi.getDisponibilidade(tenantId, date)
+          .then((res) => ({ date, ...res.data }))
+          .catch(() => ({ date, disponivel: false, capacidadeRestante: 0 }))
+      )
+    ).then((results) => {
+      const map: Record<string, { disponivel: boolean; capacidadeRestante: number }> = {};
+      for (const r of results) {
+        map[r.date] = { disponivel: r.disponivel, capacidadeRestante: r.capacidadeRestante ?? 0 };
+      }
+      setAvailabilityMap(map);
+    }).finally(() => setLoadingAvailability(false));
+  }, [currentMonth, currentYear, tenantId]);
 
   const daysInMonth = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -163,31 +174,42 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
             const disabled = isPast(day) || isWeekend(day);
             const dateStr = formatDate(day);
             const isSelected = selectedDate === dateStr;
+            const avail = availabilityMap[dateStr];
+            const isUnavailable = !disabled && avail && !avail.disponivel;
 
             return (
               <button
                 key={dateStr}
-                disabled={disabled}
+                disabled={disabled || isUnavailable}
                 onClick={() => {
                   setSelectedDate(dateStr);
                   setSelectedHora(null);
                   setConfirmed(false);
                 }}
                 className={cn(
-                  'aspect-square rounded-lg text-sm font-medium transition-all duration-200',
+                  'aspect-square rounded-lg text-sm font-medium transition-all duration-200 relative',
+                  isUnavailable && 'opacity-50 cursor-not-allowed',
                 )}
                 style={{
-                  color: disabled
+                  color: disabled || isUnavailable
                     ? 'color-mix(in srgb, var(--brand-on-surface) 20%, transparent)'
                     : isSelected
                       ? 'var(--brand-on-surface-dark)'
                       : 'color-mix(in srgb, var(--brand-on-surface) 70%, transparent)',
                   background: isSelected ? 'var(--brand-accent)' : 'transparent',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  cursor: (disabled || isUnavailable) ? 'not-allowed' : 'pointer',
                   boxShadow: isSelected ? '0 4px 14px color-mix(in srgb, var(--brand-accent) 30%, transparent)' : 'none',
+                  textDecoration: isUnavailable ? 'line-through' : 'none',
                 }}
+                title={avail ? `${avail.capacidadeRestante} vagas restantes` : undefined}
               >
                 {day}
+                {avail && avail.disponivel && avail.capacidadeRestante < avail.capacidadeRestante + 1 && (
+                  <span
+                    className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+                    style={{ background: 'var(--brand-accent)' }}
+                  />
+                )}
               </button>
             );
           })}
@@ -205,7 +227,7 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
               <Clock className="w-5 h-5" style={{ color: 'var(--brand-secondary)' }} />
               Horários disponíveis
             </h4>
-            {loadingSlots ? (
+            {loadingAvailability ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2
                   className="w-6 h-6 animate-spin"
@@ -221,33 +243,25 @@ export function CalendarSelector({ onSelect }: CalendarSelectorProps) {
             ) : (
               <>
                 <div className="grid grid-cols-4 gap-2">
-                  {slots.map((slot) => (
+                  {SUGGESTED_TIMES.map((hora) => (
                     <button
-                      key={slot.hora}
-                      disabled={!slot.disponivel}
-                      onClick={() => setSelectedHora(slot.hora)}
+                      key={hora}
+                      onClick={() => setSelectedHora(hora)}
                       className={cn('py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200')}
                       style={{
-                        color: !slot.disponivel
-                          ? 'color-mix(in srgb, var(--brand-on-surface) 30%, transparent)'
-                          : selectedHora === slot.hora
-                            ? 'var(--brand-on-surface-dark)'
-                            : 'color-mix(in srgb, var(--brand-on-surface) 70%, transparent)',
-                        background: selectedHora === slot.hora
+                        color: selectedHora === hora
+                          ? 'var(--brand-on-surface-dark)'
+                          : 'color-mix(in srgb, var(--brand-on-surface) 70%, transparent)',
+                        background: selectedHora === hora
                           ? 'var(--brand-accent)'
-                          : !slot.disponivel
-                            ? 'color-mix(in srgb, var(--brand-on-surface) 5%, transparent)'
-                            : 'transparent',
-                        border: slot.disponivel
-                          ? selectedHora === slot.hora
-                            ? '1px solid var(--brand-accent)'
-                            : '1px solid color-mix(in srgb, var(--brand-accent) 20%, transparent)'
-                          : '1px solid transparent',
-                        cursor: !slot.disponivel ? 'not-allowed' : 'pointer',
-                        textDecoration: !slot.disponivel ? 'line-through' : 'none',
+                          : 'transparent',
+                        border: selectedHora === hora
+                          ? '1px solid var(--brand-accent)'
+                          : '1px solid color-mix(in srgb, var(--brand-accent) 20%, transparent)',
+                        cursor: 'pointer',
                       }}
                     >
-                      {slot.hora}
+                      {hora}
                     </button>
                   ))}
                 </div>

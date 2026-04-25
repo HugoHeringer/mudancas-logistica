@@ -130,16 +130,13 @@ export const veiculosApi = {
 };
 
 export const agendaApi = {
-  getSlots: (data: string) => api.get(`/agenda/slots/${data}`),
   getBloqueios: (dataInicio?: string, dataFim?: string) =>
     api.get('/agenda/bloqueios', { params: { dataInicio, dataFim } }),
-  getSlotsRange: (dataInicio: string, dataFim: string) =>
-    api.get('/agenda/slots', { params: { dataInicio, dataFim } }),
-  getDisponibilidade: (data: string, horaInicio?: string) =>
-    api.get(`/agenda/disponibilidade/${data}`, { params: { horaInicio } }),
+  getDisponibilidade: (data: string) =>
+    api.get(`/agenda/disponibilidade/${data}`),
   getSemanal: (dataInicio: string) => api.get(`/agenda/semanal/${dataInicio}`),
   getMensal: (ano: number, mes: number) => api.get(`/agenda/mensal/${ano}/${mes}`),
-  criarSlots: (data: string, slots: any[]) => api.post(`/agenda/slots/${data}`, slots),
+  getDiaria: (data: string) => api.get(`/agenda/diaria/${data}`),
   criarBloqueio: (data: any) => api.post('/agenda/bloqueios', data),
   removerBloqueio: (id: string) => api.delete(`/agenda/bloqueios/${id}`),
   getConfig: () => api.get('/agenda/config'),

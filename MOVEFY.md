@@ -210,13 +210,13 @@
 > **Commit:** `feat(agenda): replace slots with daily capacity model`
 
 ### 5.1 Remover sistema de slots manuais
-- [ ] `packages/admin/src/pages/agenda.page.tsx`:
+- [x] `packages/admin/src/pages/agenda.page.tsx`:
   - **Remover** completamente o dialog/botão "Criar Slot"
   - **Remover** qualquer componente `SlotForm` ou similar
   - Manter apenas: calendário mensal, lista de mudanças do dia, botão "Criar Bloqueio"
 
 ### 5.2 Mostrar mudanças aprovadas na agenda
-- [ ] `packages/backend/src/agenda/agenda.service.ts` → função `getMensal(ano, mes, tenantId)`:
+- [x] `packages/backend/src/agenda/agenda.service.ts` → função `getMensal(ano, mes, tenantId)`:
   - Buscar mudanças com `estado IN ('aprovada', 'a_caminho', 'em_servico', 'concluida')` e `dataPretendida` no mês
   - Retornar estrutura:
     ```typescript
@@ -230,17 +230,17 @@
       }>
     }
     ```
-- [ ] `packages/admin/src/pages/agenda.page.tsx`:
+- [x] `packages/admin/src/pages/agenda.page.tsx`:
   - Calendário mensal: colorir dias conforme ocupação — verde (livre), amarelo (parcial), vermelho (cheio), cinzento (bloqueio)
   - Ao clicar num dia: mostrar lista de mudanças desse dia com estado visual
   - Badge de estado por cor: pendente=cinzento, aprovada=azul, a_caminho=laranja, em_servico=verde, concluída=verde claro
 
 ### 5.3 Disponibilidade no site público
-- [ ] `packages/backend/src/public/public.service.ts` → função `getDisponibilidade(data, tenantId)`:
+- [x] `packages/backend/src/public/public.service.ts` → função `getDisponibilidade(data, tenantId)`:
   - Verificar se existe bloqueio para essa data
   - Contar mudanças aprovadas para essa data
   - Retornar `{ disponivel: boolean, capacidadeRestante: number }`
-- [ ] `packages/site/src/components/calendar-selector.tsx`:
+- [x] `packages/site/src/components/calendar-selector.tsx`:
   - **Remover** MOCK_SLOTS hardcoded
   - Chamar `publicApi.getDisponibilidade(data)` para cada dia do mês
   - Dias sem disponibilidade ficam disabled e com classe CSS `opacity-50 cursor-not-allowed`
@@ -666,7 +666,7 @@
 | 2 | Cálculo financeiro correcto | 🔴 CRÍTICO | [x] |
 | 3 | Autenticação e multi-tenant | 🔴 CRÍTICO | [x] |
 | 4 | Dashboard correcto | 🔴 CRÍTICO | [x] |
-| 5 | Agenda reformulada | 🔴 CRÍTICO | [ ] |
+| 5 | Agenda reformulada | 🔴 CRÍTICO | [x] |
 | 6 | Formulário público dinâmico | 🟠 ALTO | [ ] |
 | 7 | Clientes: gestão completa | 🟠 ALTO | [ ] |
 | 8 | Motoristas e ajudantes | 🟠 ALTO | [ ] |

@@ -3,12 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, startOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Ban, Trash2, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Ban, Trash2, AlertTriangle } from 'lucide-react';
 import { agendaApi, motoristasApi } from '../../lib/api';
 import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent } from '../../components/ui/card';
 import { GlassCard } from '../../components/luxury/GlassCard';
 import { PageHeader } from '../../components/ui/page-header';
 import { Button } from '../../components/ui/button';
@@ -33,6 +33,17 @@ import {
 
 type Vista = 'mensal' | 'semanal' | 'diaria';
 
+// Estado badge colors
+const estadoColors: Record<string, string> = {
+  pendente: 'bg-gray-400',
+  aprovada: 'bg-blue-400',
+  a_caminho: 'bg-orange-400',
+  em_servico: 'bg-green-500',
+  concluida: 'bg-green-300',
+  recusada: 'bg-red-400',
+  cancelada: 'bg-gray-500',
+};
+
 export function AgendaPage() {
   const navigate = useNavigate();
   const { podeVer } = usePermissao();
@@ -41,13 +52,6 @@ export function AgendaPage() {
   const [vista, setVista] = useState<Vista>('mensal');
   const [dataAtual, setDataAtual] = useState(new Date());
   const [filtroMotorista, setFiltroMotorista] = useState<string>('todos');
-
-  // Slot creation dialog
-  const [showCriarSlot, setShowCriarSlot] = useState(false);
-  const [slotData, setSlotData] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [slotHoraInicio, setSlotHoraInicio] = useState('08:00');
-  const [slotHoraFim, setSlotHoraFim] = useState('10:00');
-  const [slotCapacidade, setSlotCapacidade] = useState('1');
 
   // Bloqueio creation dialog
   const [showCriarBloqueio, setShowCriarBloqueio] = useState(false);
@@ -86,10 +90,10 @@ export function AgendaPage() {
     enabled: vista === 'semanal',
   });
 
-  const { data: slotsDia } = useQuery({
-    queryKey: ['agenda', 'slots', format(dataAtual, 'yyyy-MM-dd'), filtroMotorista],
+  const { data: agendaDiaria } = useQuery({
+    queryKey: ['agenda', 'diaria', format(dataAtual, 'yyyy-MM-dd'), filtroMotorista],
     queryFn: async () => {
-      const res = await agendaApi.getSlots(format(dataAtual, 'yyyy-MM-dd'));
+      const res = await agendaApi.getDiaria(format(dataAtual, 'yyyy-MM-dd'));
       return res.data;
     },
     enabled: vista === 'diaria',
@@ -108,24 +112,6 @@ export function AgendaPage() {
   });
 
   // Mutations
-  const criarSlotMutation = useMutation({
-    mutationFn: () =>
-      agendaApi.criarSlots(slotData, [{
-        horaInicio: slotHoraInicio,
-        horaFim: slotHoraFim,
-        capacidadeTotal: parseInt(slotCapacidade),
-      }]),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agenda'] });
-      toast({ title: 'Slot criado', description: 'O novo slot foi adicionado à agenda.' });
-      setShowCriarSlot(false);
-      resetSlotForm();
-    },
-    onError: () => {
-      toast({ title: 'Erro', description: 'Não foi possível criar o slot.', variant: 'destructive' });
-    },
-  });
-
   const criarBloqueioMutation = useMutation({
     mutationFn: () =>
       agendaApi.criarBloqueio({
@@ -157,13 +143,6 @@ export function AgendaPage() {
     },
   });
 
-  const resetSlotForm = () => {
-    setSlotData(format(new Date(), 'yyyy-MM-dd'));
-    setSlotHoraInicio('08:00');
-    setSlotHoraFim('10:00');
-    setSlotCapacidade('1');
-  };
-
   const resetBloqueioForm = () => {
     setBloqueioInicio(format(new Date(), 'yyyy-MM-dd'));
     setBloqueioFim(format(new Date(), 'yyyy-MM-dd'));
@@ -180,13 +159,20 @@ export function AgendaPage() {
 
   const goToToday = () => setDataAtual(new Date());
 
-  const mudancas = agendaMensal?.mudancas || agendaSemanal?.mudancas || [];
+  // Get mudancas and dias from the appropriate agenda data
+  const agendaData = vista === 'mensal' ? agendaMensal : vista === 'semanal' ? agendaSemanal : null;
+  const mudancas = agendaData?.mudancas || [];
   const filteredMudancas = filtroMotorista === 'todos'
     ? mudancas
     : mudancas.filter((m: any) => m.motoristaId === filtroMotorista);
 
-  // Get day info from agenda data
-  const agendaDias = agendaMensal?.dias || agendaSemanal?.dias || [];
+  // Get day info from agenda data (capacity model)
+  const agendaDias = agendaData?.dias || [];
+
+  // For daily view, use agendaDiaria
+  const diaMudancas = agendaDiaria?.mudancas || [];
+  const diaCapacidadeOcupada = agendaDiaria?.capacidadeOcupada || 0;
+  const diaCapacidadeTotal = agendaDiaria?.capacidadeTotal || 3;
 
   // Calendar grid for monthly view
   const monthStart = startOfMonth(dataAtual);
@@ -202,20 +188,23 @@ export function AgendaPage() {
 
   const getMudancasForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return filteredMudancas.filter((m: any) => m.dataPretendida === dateStr);
+    return filteredMudancas.filter((m: any) => {
+      const mData = m.dataPretendida ? new Date(m.dataPretendida).toISOString().split('T')[0] : '';
+      return mData === dateStr;
+    });
   };
 
-  // Get slot availability info for a day
-  const getSlotInfoForDay = (date: Date) => {
+  // Get capacity info for a day from the new model
+  const getCapacidadeForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const dayInfo = agendaDias.find((d: any) => d.data === dateStr);
     if (dayInfo) {
-      if (dayInfo.bloqueada) return { status: 'bloqueada' as const, total: dayInfo.total, ocupada: dayInfo.ocupada };
-      if (dayInfo.ocupada >= dayInfo.total && dayInfo.total > 0) return { status: 'completo' as const, total: dayInfo.total, ocupada: dayInfo.ocupada };
-      if (dayInfo.ocupada > 0) return { status: 'parcial' as const, total: dayInfo.total, ocupada: dayInfo.ocupada };
-      if (dayInfo.total > 0) return { status: 'livre' as const, total: dayInfo.total, ocupada: dayInfo.ocupada };
+      if (dayInfo.bloqueada) return { status: 'bloqueada' as const, total: dayInfo.capacidadeTotal, ocupada: dayInfo.capacidadeOcupada };
+      if (dayInfo.capacidadeOcupada >= dayInfo.capacidadeTotal) return { status: 'completo' as const, total: dayInfo.capacidadeTotal, ocupada: dayInfo.capacidadeOcupada };
+      if (dayInfo.capacidadeOcupada > 0) return { status: 'parcial' as const, total: dayInfo.capacidadeTotal, ocupada: dayInfo.capacidadeOcupada };
+      return { status: 'livre' as const, total: dayInfo.capacidadeTotal, ocupada: 0 };
     }
-    return { status: 'sem_slots' as const, total: 0, ocupada: 0 };
+    return { status: 'livre' as const, total: 3, ocupada: 0 };
   };
 
   const getStatusColor = (status: string) => {
@@ -244,18 +233,13 @@ export function AgendaPage() {
     <div className="space-y-6">
       <PageHeader
         title="Agenda"
-        subtitle="Visão calendarizada de todas as mudanças confirmadas"
+        subtitle="Visão calendarizada de todas as mudanças"
         actions={
           <div className="flex items-center gap-2">
             {podeVer('criar') && (
-              <>
-                <Button variant="outline" size="sm" onClick={() => setShowCriarSlot(true)}>
-                  <Plus className="h-4 w-4 mr-1" /> Slot
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowCriarBloqueio(true)}>
-                  <Ban className="h-4 w-4 mr-1" /> Bloqueio
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={() => setShowCriarBloqueio(true)}>
+                <Ban className="h-4 w-4 mr-1" /> Bloqueio
+              </Button>
             )}
             <Button variant="outline" size="sm" onClick={goToToday}>Hoje</Button>
             <Button variant="outline" size="icon" onClick={() => navigateDate('prev')}>
@@ -296,11 +280,16 @@ export function AgendaPage() {
 
       {/* Availability Legend */}
       <div className="flex items-center gap-4 text-xs">
-        <span className="font-medium">Disponibilidade:</span>
+        <span className="font-medium">Capacidade:</span>
         <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-400" /> Livre</div>
         <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-yellow-400" /> Parcial</div>
         <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-400" /> Completo</div>
         <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-muted-foreground" /> Bloqueado</div>
+        <span className="ml-4 font-medium">Estados:</span>
+        <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-400" /> Pendente</div>
+        <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-400" /> Aprovada</div>
+        <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-orange-400" /> A caminho</div>
+        <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-500" /> Em serviço</div>
       </div>
 
       {/* Vista Mensal */}
@@ -316,22 +305,23 @@ export function AgendaPage() {
               const dayMudancas = getMudancasForDay(date);
               const isCurrentMonth = isSameMonth(date, dataAtual);
               const isToday = isSameDay(date, new Date());
-              const slotInfo = getSlotInfoForDay(date);
+              const capInfo = getCapacidadeForDay(date);
               return (
                 <div
                   key={i}
-                  className="min-h-[90px] p-1.5"
+                  className="min-h-[90px] p-1.5 cursor-pointer"
                   style={{
                     background: !isCurrentMonth
                       ? 'var(--surface-container-low)'
                       : isToday
                       ? 'hsl(var(--primary) / 0.06)'
-                      : slotInfo.status === 'bloqueada'
+                      : capInfo.status === 'bloqueada'
                       ? 'hsl(var(--muted) / 0.5)'
                       : 'transparent',
                     borderRight: '1px solid hsl(var(--border))',
                     borderBottom: '1px solid hsl(var(--border))',
                   }}
+                  onClick={() => { setDataAtual(date); setVista('diaria'); }}
                 >
                   <div className="flex items-center gap-1 mb-1">
                     <span
@@ -340,9 +330,8 @@ export function AgendaPage() {
                     >
                       {format(date, 'd')}
                     </span>
-                    {slotInfo.status !== 'sem_slots' && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(slotInfo.status)}`} title={getStatusLabel(slotInfo.status)} />
-                    )}
+                    <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(capInfo.status)}`} title={getStatusLabel(capInfo.status)} />
+                    <span className="text-[9px] text-muted-foreground ml-auto">{capInfo.ocupada}/{capInfo.total}</span>
                   </div>
                   <div className="space-y-0.5">
                     {dayMudancas.slice(0, 3).map((m: any) => (
@@ -350,12 +339,13 @@ export function AgendaPage() {
                         key={m.id}
                         className="text-[10px] px-1 py-0.5 rounded cursor-pointer truncate transition-opacity hover:opacity-70"
                         style={{
-                          background: m.estado === 'aprovada' ? 'hsl(var(--primary) / 0.12)' : m.estado === 'em_servico' ? 'hsl(var(--accent) / 0.12)' : 'hsl(var(--muted))',
+                          background: m.estado === 'aprovada' ? 'hsl(var(--primary) / 0.12)' : m.estado === 'em_servico' ? 'hsl(var(--accent) / 0.12)' : m.estado === 'a_caminho' ? 'rgba(251,146,60,0.12)' : 'hsl(var(--muted))',
                           color: 'hsl(var(--foreground))',
                         }}
-                        onClick={() => navigate(`/mudancas/${m.id}`)}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/mudancas/${m.id}`); }}
                       >
-                        <span style={{ color: 'hsl(var(--primary))', fontWeight: 500 }}>{m.horaPretendida || ''}</span> {m.clienteNome}
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full mr-0.5 ${estadoColors[m.estado] || 'bg-gray-400'}`} />
+                        <span style={{ color: 'hsl(var(--primary))', fontWeight: 500 }}>{m.horaPretendida || ''}</span> {m.clienteNome || m.cliente}
                       </div>
                     ))}
                     {dayMudancas.length > 3 && (
@@ -377,24 +367,25 @@ export function AgendaPage() {
               const weekDay = addDays(startOfWeek(dataAtual, { weekStartsOn: 1 }), i);
               const dayMudancas = getMudancasForDay(weekDay);
               const isToday = isSameDay(weekDay, new Date());
-              const slotInfo = getSlotInfoForDay(weekDay);
+              const capInfo = getCapacidadeForDay(weekDay);
               return (
-                <div key={i} className={`border-r last:border-r-0 ${isToday ? 'bg-primary/10' : ''} ${slotInfo.status === 'bloqueada' ? 'bg-muted' : ''}`}>
+                <div key={i} className={`border-r last:border-r-0 ${isToday ? 'bg-primary/10' : ''} ${capInfo.status === 'bloqueada' ? 'bg-muted' : ''}`}>
                   <div className={`p-2 text-center border-b ${isToday ? 'font-bold text-primary' : ''}`}>
                     <p className="text-xs text-muted-foreground">{format(weekDay, 'EEE', { locale: ptBR })}</p>
                     <p className="text-lg">{format(weekDay, 'd')}</p>
-                    {slotInfo.status !== 'sem_slots' && (
-                      <div className="flex items-center justify-center gap-1 mt-1">
-                        <span className={`w-2 h-2 rounded-full ${getStatusColor(slotInfo.status)}`} />
-                        <span className="text-[10px] text-muted-foreground">{slotInfo.ocupada}/{slotInfo.total}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <span className={`w-2 h-2 rounded-full ${getStatusColor(capInfo.status)}`} />
+                      <span className="text-[10px] text-muted-foreground">{capInfo.ocupada}/{capInfo.total}</span>
+                    </div>
                   </div>
                   <div className="p-1 space-y-1 min-h-[300px]">
                     {dayMudancas.map((m: any) => (
                       <div key={m.id} className="text-xs p-2 rounded border cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/mudancas/${m.id}`)}>
-                        <p className="font-medium">{m.horaPretendida || '—'}</p>
-                        <p className="truncate">{m.clienteNome}</p>
+                        <div className="flex items-center gap-1">
+                          <span className={`w-2 h-2 rounded-full ${estadoColors[m.estado] || 'bg-gray-400'}`} />
+                          <p className="font-medium">{m.horaPretendida || '—'}</p>
+                        </div>
+                        <p className="truncate">{m.clienteNome || m.cliente}</p>
                         <StatusBadge status={m.estado} size="sm" />
                       </div>
                     ))}
@@ -409,49 +400,14 @@ export function AgendaPage() {
       {/* Vista Diária */}
       {vista === 'diaria' && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">{format(dataAtual, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}</h3>
-
-          {/* Slots com indicadores de disponibilidade */}
-          {slotsDia && slotsDia.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">Slots do dia</h4>
-              <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-4">
-                {(slotsDia as any[]).map((slot: any) => {
-                  const isAvailable = !slot.eBloqueado && slot.capacidadeOcupada < slot.capacidadeTotal;
-                  const isFull = slot.capacidadeOcupada >= slot.capacidadeTotal && !slot.eBloqueado;
-                  const isPartial = slot.capacidadeOcupada > 0 && !isFull && !slot.eBloqueado;
-                  return (
-                    <Card
-                      key={slot.id}
-                      className={`${
-                        slot.eBloqueado ? 'border-border bg-muted/50' :
-                        isFull ? 'border-destructive/30 bg-destructive/10' :
-                        isPartial ? 'border-yellow-500/30 bg-yellow-500/10' :
-                        'border-green-500/30 bg-green-500/10'
-                      }`}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{slot.horaInicio} — {slot.horaFim}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {slot.eBloqueado ? 'Bloqueado' : `${slot.capacidadeOcupada}/${slot.capacidadeTotal} ocupados`}
-                            </p>
-                          </div>
-                          <span className={`w-3 h-3 rounded-full ${
-                            slot.eBloqueado ? 'bg-muted-foreground' :
-                            isFull ? 'bg-red-400' :
-                            isPartial ? 'bg-yellow-400' :
-                            'bg-green-400'
-                          }`} />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">{format(dataAtual, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Capacidade:</span>
+              <span className="text-sm font-medium">{diaCapacidadeOcupada}/{diaCapacidadeTotal}</span>
+              <span className={`w-2.5 h-2.5 rounded-full ${getStatusColor(diaCapacidadeOcupada >= diaCapacidadeTotal ? 'completo' : diaCapacidadeOcupada > 0 ? 'parcial' : 'livre')}`} />
             </div>
-          )}
+          </div>
 
           {/* Bloqueios do mês */}
           {bloqueios && (bloqueios as any[]).length > 0 && (
@@ -483,32 +439,29 @@ export function AgendaPage() {
             </div>
           )}
 
-          {getMudancasForDay(dataAtual).length === 0 && (!slotsDia || (slotsDia as any[]).length === 0) ? (
+          {diaMudancas.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
                 <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p>Nenhuma mudança agendada nem slots para este dia.</p>
-                {podeVer('criar') && (
-                  <Button variant="outline" className="mt-4" onClick={() => setShowCriarSlot(true)}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Criar Slot
-                  </Button>
-                )}
+                <p>Nenhuma mudança agendada para este dia.</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
-              {getMudancasForDay(dataAtual).map((m: any) => (
+              {diaMudancas.map((m: any) => (
                 <Card key={m.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/mudancas/${m.id}`)}>
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="text-center min-w-[60px]">
                       <p className="text-lg font-bold">{m.horaPretendida || '—'}</p>
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">{m.clienteNome}</p>
+                      <p className="font-medium">{m.clienteNome || m.clienteNome}</p>
                       <p className="text-sm text-muted-foreground">{m.motorista?.nome || 'Sem motorista'} | {m.tipoServico === 'urgente' ? 'Urgente' : 'Normal'}</p>
                     </div>
-                    <StatusBadge status={m.estado} />
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${estadoColors[m.estado] || 'bg-gray-400'}`} />
+                      <StatusBadge status={m.estado} />
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -516,68 +469,6 @@ export function AgendaPage() {
           )}
         </div>
       )}
-
-      {/* Dialog: Criar Slot */}
-      <Dialog open={showCriarSlot} onOpenChange={setShowCriarSlot}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Criar Slot de Agenda</DialogTitle>
-            <DialogDescription>
-              Adicione um novo slot de disponibilidade à agenda.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Data</Label>
-              <Input
-                type="date"
-                value={slotData}
-                onChange={(e) => setSlotData(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Hora início</Label>
-                <Input
-                  type="time"
-                  value={slotHoraInicio}
-                  onChange={(e) => setSlotHoraInicio(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Hora fim</Label>
-                <Input
-                  type="time"
-                  value={slotHoraFim}
-                  onChange={(e) => setSlotHoraFim(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Capacidade</Label>
-              <Input
-                type="number"
-                min="1"
-                max="10"
-                value={slotCapacidade}
-                onChange={(e) => setSlotCapacidade(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">Número de mudanças que este slot pode acomodar em simultâneo.</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowCriarSlot(false); resetSlotForm(); }}>
-              Cancelar
-            </Button>
-            <Button
-              disabled={!slotData || !slotHoraInicio || !slotHoraFim || criarSlotMutation.isPending}
-              onClick={() => criarSlotMutation.mutate()}
-            >
-              {criarSlotMutation.isPending ? 'A criar...' : 'Criar Slot'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Dialog: Criar Bloqueio */}
       <Dialog open={showCriarBloqueio} onOpenChange={setShowCriarBloqueio}>

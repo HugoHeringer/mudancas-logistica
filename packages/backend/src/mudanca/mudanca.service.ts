@@ -10,7 +10,6 @@ import { EmailService } from '../comunicacao/email.service';
 import { NotificacaoService } from '../notificacao/notificacao.service';
 import { SMS_SERVICE_TOKEN, ISmsService } from '../comunicacao/sms.interface';
 import { ClienteService } from '../cliente/cliente.service';
-import { AgendaService } from '../agenda/agenda.service';
 
 @Injectable()
 export class MudancaService {
@@ -21,7 +20,6 @@ export class MudancaService {
     private notificacaoService: NotificacaoService,
     @Inject(SMS_SERVICE_TOKEN) private smsService: ISmsService,
     private clienteService: ClienteService,
-    private agendaService: AgendaService,
   ) {}
 
   async create(tenantId: string, createMudancaDto: CreateMudancaDto) {
@@ -225,23 +223,6 @@ export class MudancaService {
       await this.prisma.motorista.update({
         where: { id: aprovarMudancaDto.motoristaId },
         data: { estado: 'ocupado' },
-      });
-    }
-
-    // Ocupar slot na agenda
-    const dataMudanca = mudanca.dataPretendida;
-    const slot = await this.prisma.slotAgenda.findFirst({
-      where: {
-        tenantId,
-        data: dataMudanca,
-        horaInicio: mudanca.horaPretendida || '08:00',
-      },
-    });
-
-    if (slot) {
-      await this.prisma.slotAgenda.update({
-        where: { id: slot.id },
-        data: { capacidadeOcupada: { increment: 1 } },
       });
     }
 
@@ -564,16 +545,7 @@ export class MudancaService {
       }
     }
 
-    // Liberar slot na agenda
-    if (mudanca.veiculoId && mudanca.dataPretendida && mudanca.horaPretendida) {
-      try {
-        const dataStr = new Date(mudanca.dataPretendida).toISOString().split('T')[0];
-        await this.agendaService.liberarSlot(tenantId, dataStr, mudanca.horaPretendida);
-      } catch (e) {
-        // Slot pode não existir, ignora erro
-      }
-    }
-
+    // Notificação admin/gerente sobre conclusão
     return updated;
   }
 
@@ -767,6 +739,7 @@ export class MudancaService {
       emCurso,
       concluidasSemFicha,
       estatisticasMes,
+      pendentesList,
     ] = await Promise.all([
       this.prisma.mudanca.findMany({
         where: { ...baseWhere, dataPretendida: { gte: inicioDia, lte: fimDia } },
@@ -796,7 +769,19 @@ export class MudancaService {
         },
         _count: true,
       }),
+      // First 5 pending mudancas for quick view
+      this.prisma.mudanca.findMany({
+        where: { ...baseWhere, estado: 'pendente' },
+        select: { id: true, clienteNome: true, dataPretendida: true },
+        orderBy: { createdAt: 'asc' },
+        take: 5,
+      }),
     ]);
+
+    const receitaTotal = Number(estatisticasMes._sum.receitaRealizada || 0);
+    const custosTotal = Number(estatisticasMes._sum.custosOperacionais || 0);
+    const margemTotal = Number(estatisticasMes._sum.margem || 0);
+    const margemPercentual = receitaTotal > 0 ? (margemTotal / receitaTotal) * 100 : 0;
 
     return {
       hoje: {
@@ -806,12 +791,14 @@ export class MudancaService {
       pendentes,
       emCurso,
       concluidasSemFicha,
+      pendentesList,
       mes: {
         total: estatisticasMes._count,
-        receita: estatisticasMes._sum.receitaRealizada || 0,
-        receitaPrevista: estatisticasMes._sum.receitaPrevista || 0,
-        custos: estatisticasMes._sum.custosOperacionais || 0,
-        margem: estatisticasMes._sum.margem || 0,
+        receita: receitaTotal,
+        receitaPrevista: Number(estatisticasMes._sum.receitaPrevista || 0),
+        custos: custosTotal,
+        margem: margemTotal,
+        margemPercentual: Math.round(margemPercentual * 100) / 100,
       },
     };
   }

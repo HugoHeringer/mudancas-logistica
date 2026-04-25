@@ -1,13 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMudancaDto } from '../mudanca/dto/create-mudanca.dto';
-import { AgendaService } from '../agenda/agenda.service';
 
 @Injectable()
 export class PublicService {
   constructor(
     private prisma: PrismaService,
-    private agendaService: AgendaService,
   ) {}
 
   async criarMudanca(tenantId: string, dto: CreateMudancaDto) {
@@ -40,18 +38,6 @@ export class PublicService {
         documentacao: dto.documentacao,
       },
     });
-
-    // [3.5] Occupy slot when creating mudanca from public site
-    if (dto.dataPretendida && dto.horaPretendida) {
-      try {
-        const dataStr = typeof dto.dataPretendida === 'string'
-          ? dto.dataPretendida.split('T')[0]
-          : new Date(dto.dataPretendida).toISOString().split('T')[0];
-        await this.agendaService.ocuparSlot(tenantId, dataStr, dto.horaPretendida);
-      } catch {
-        // Slot occupation failed (slot may not exist), mudanca still created
-      }
-    }
 
     return mudanca;
   }
@@ -90,32 +76,40 @@ export class PublicService {
       throw new NotFoundException('Empresa não encontrada');
     }
 
-    // Get mudanças for that date to check availability
+    const configAgenda = (tenant.configAgenda as any) || {};
+    const capacidadeMaximaDiaria = configAgenda.capacidadeMaximaDiaria || 3;
+
     const inicioDia = new Date(data + 'T00:00:00.000');
     const fimDia = new Date(data + 'T23:59:59.999');
-    const mudancas = await this.prisma.mudanca.findMany({
+
+    // Verificar bloqueio
+    const bloqueio = await this.prisma.bloqueioAgenda.findFirst({
+      where: {
+        tenantId,
+        dataInicio: { lte: fimDia },
+        dataFim: { gte: inicioDia },
+      },
+    });
+
+    if (bloqueio) {
+      return { data, disponivel: false, capacidadeRestante: 0 };
+    }
+
+    // Contar mudanças aprovadas para essa data
+    const mudancasCount = await this.prisma.mudanca.count({
       where: {
         tenantId,
         dataPretendida: { gte: inicioDia, lte: fimDia },
         estado: { in: ['aprovada', 'a_caminho', 'em_servico'] },
       },
-      select: {
-        id: true,
-        horaPretendida: true,
-        motoristaId: true,
-        veiculoId: true,
-      },
     });
 
-    const motoristasDisponiveis = await this.prisma.motorista.count({
-      where: { tenantId, estado: 'disponivel' },
-    });
+    const capacidadeRestante = Math.max(0, capacidadeMaximaDiaria - mudancasCount);
 
     return {
       data,
-      mudancasAgendadas: mudancas.length,
-      motoristasDisponiveis,
-      disponivel: motoristasDisponiveis > mudancas.length,
+      disponivel: capacidadeRestante > 0,
+      capacidadeRestante,
     };
   }
 

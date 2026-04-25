@@ -25,33 +25,14 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class AgendaController {
   constructor(private readonly agendaService: AgendaService) {}
 
-  @Get('slots/:data')
-  @ApiOperation({ summary: 'Obter slots de uma data específica' })
-  getSlotsByDate(
+  @Get('mensal/:ano/:mes')
+  @ApiOperation({ summary: 'Obter agenda mensal com capacidade diária' })
+  getAgendaMensal(
     @Request() req: TenantRequest,
-    @Param('data') data: string,
+    @Param('ano') ano: number,
+    @Param('mes') mes: number,
   ) {
-    return this.agendaService.getSlotsByDate(getTenantId(req), data);
-  }
-
-  @Get('slots')
-  @ApiOperation({ summary: 'Obter slots de um período' })
-  getSlotsByRange(
-    @Request() req: TenantRequest,
-    @Query('dataInicio') dataInicio: string,
-    @Query('dataFim') dataFim: string,
-  ) {
-    return this.agendaService.getSlotsByRange(getTenantId(req), dataInicio, dataFim);
-  }
-
-  @Get('disponibilidade/:data')
-  @ApiOperation({ summary: 'Verificar disponibilidade de uma data' })
-  getDisponibilidade(
-    @Request() req: TenantRequest,
-    @Param('data') data: string,
-    @Query('horaInicio') horaInicio?: string,
-  ) {
-    return this.agendaService.getDisponibilidade(getTenantId(req), data, horaInicio);
+    return this.agendaService.getAgendaMensal(getTenantId(req), ano, mes);
   }
 
   @Get('semanal/:dataInicio')
@@ -63,24 +44,22 @@ export class AgendaController {
     return this.agendaService.getAgendaSemanal(getTenantId(req), dataInicio);
   }
 
-  @Get('mensal/:ano/:mes')
-  @ApiOperation({ summary: 'Obter agenda mensal' })
-  getAgendaMensal(
-    @Request() req: TenantRequest,
-    @Param('ano') ano: number,
-    @Param('mes') mes: number,
-  ) {
-    return this.agendaService.getAgendaMensal(getTenantId(req), ano, mes);
-  }
-
-  @Post('slots/:data')
-  @ApiOperation({ summary: 'Criar slots para uma data' })
-  criarSlots(
+  @Get('diaria/:data')
+  @ApiOperation({ summary: 'Obter agenda diária com mudanças do dia' })
+  getAgendaDiaria(
     @Request() req: TenantRequest,
     @Param('data') data: string,
-    @Body() slots: any[],
   ) {
-    return this.agendaService.criarSlots(getTenantId(req), data, slots);
+    return this.agendaService.getAgendaDiaria(getTenantId(req), data);
+  }
+
+  @Get('disponibilidade/:data')
+  @ApiOperation({ summary: 'Verificar disponibilidade de uma data' })
+  getDisponibilidade(
+    @Request() req: TenantRequest,
+    @Param('data') data: string,
+  ) {
+    return this.agendaService.getDisponibilidade(getTenantId(req), data);
   }
 
   @Get('bloqueios')
