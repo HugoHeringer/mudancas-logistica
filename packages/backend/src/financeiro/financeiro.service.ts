@@ -43,35 +43,55 @@ export class FinanceiroService {
   }
 
   async getResumo(tenantId: string, dataInicio: string, dataFim: string) {
-    const [receitas, custos] = await Promise.all([
+    // Receita: soma de MovimentoFinanceiro com categoria 'receita_servico'
+    const [receitas, custosEquipa, custosCombustivel, custosAlimentacao] = await Promise.all([
       this.prisma.movimentoFinanceiro.aggregate({
         where: {
           tenantId,
           tipo: 'receita',
-          data: {
-            gte: dataInicio,
-            lte: dataFim,
-          },
+          categoria: 'receita_servico',
+          data: { gte: dataInicio, lte: dataFim },
         },
         _sum: { valor: true },
         _count: true,
       }),
+      // Custo equipa (motorista + ajudantes)
       this.prisma.movimentoFinanceiro.aggregate({
         where: {
           tenantId,
           tipo: 'custo',
-          data: {
-            gte: dataInicio,
-            lte: dataFim,
-          },
+          categoria: 'custo_equipa',
+          data: { gte: dataInicio, lte: dataFim },
         },
         _sum: { valor: true },
-        _count: true,
+      }),
+      // Custo combustível
+      this.prisma.movimentoFinanceiro.aggregate({
+        where: {
+          tenantId,
+          tipo: 'custo',
+          categoria: 'custo_combustivel',
+          data: { gte: dataInicio, lte: dataFim },
+        },
+        _sum: { valor: true },
+      }),
+      // Custo alimentação
+      this.prisma.movimentoFinanceiro.aggregate({
+        where: {
+          tenantId,
+          tipo: 'custo',
+          categoria: 'custo_alimentacao',
+          data: { gte: dataInicio, lte: dataFim },
+        },
+        _sum: { valor: true },
       }),
     ]);
 
     const receitaTotal = Number(receitas._sum.valor) || 0;
-    const custosTotais = Number(custos._sum.valor) || 0;
+    const custosTotais =
+      (Number(custosEquipa._sum.valor) || 0) +
+      (Number(custosCombustivel._sum.valor) || 0) +
+      (Number(custosAlimentacao._sum.valor) || 0);
     const margemTotal = receitaTotal - custosTotais;
     const margemPercentual = receitaTotal > 0 ? (margemTotal / receitaTotal) * 100 : 0;
 
@@ -82,7 +102,11 @@ export class FinanceiroService {
       margemTotal,
       margemPercentual: Math.round(margemPercentual * 100) / 100,
       receitasCount: receitas._count,
-      custosCount: custos._count,
+      breakdown: {
+        custoEquipa: Number(custosEquipa._sum.valor) || 0,
+        custoCombustivel: Number(custosCombustivel._sum.valor) || 0,
+        custoAlimentacao: Number(custosAlimentacao._sum.valor) || 0,
+      },
     };
   }
 
@@ -114,25 +138,23 @@ export class FinanceiroService {
           motoristaId: m.motoristaId,
           motoristaNome: m.motorista?.nome || 'N/A',
           receitaGerada: 0,
+          custoEquipa: 0,
           custosCombustivel: 0,
           custosAlimentacao: 0,
-          custoMotorista: 0,
-          custoAjudantes: 0,
           mudancasCount: 0,
         };
       }
       acc[mid].receitaGerada += Number(m.receitaRealizada || 0);
+      acc[mid].custoEquipa += Number(m.totalPagoMotorista || 0) + Number(m.totalPagoAjudantes || 0);
       acc[mid].custosCombustivel += (m.conclusao as any)?.combustivel?.valor || 0;
       acc[mid].custosAlimentacao += (m.conclusao as any)?.alimentacao?.valor || 0;
-      acc[mid].custoMotorista += Number(m.totalPagoMotorista || 0);
-      acc[mid].custoAjudantes += Number(m.totalPagoAjudantes || 0);
       acc[mid].mudancasCount += 1;
       return acc;
     }, {} as any);
 
     return Object.values(breakdown).map((b: any) => ({
       ...b,
-      margem: b.receitaGerada - b.custosCombustivel - b.custosAlimentacao - b.custoMotorista - b.custoAjudantes,
+      margem: b.receitaGerada - b.custoEquipa - b.custosCombustivel - b.custosAlimentacao,
     }));
   }
 

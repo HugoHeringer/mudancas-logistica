@@ -78,64 +78,39 @@
 > **Commit:** `feat(financeiro): fix revenue calculation with team and urgency`
 
 ### 2.1 Serviço de cálculo de preço (novo ficheiro)
-- [ ] Criar ficheiro: `packages/backend/src/mudancas/preco-calculator.service.ts`
-- [ ] Implementar função `calcularPrecoHora(veiculo, numAjudantes, configPreco)`:
-  ```typescript
-  calcularPrecoHora(precoBaseVeiculo: number, numAjudantes: number, acrescimo1: number, acrescimo2: number): number {
-    if (numAjudantes === 1) return precoBaseVeiculo + acrescimo1;
-    if (numAjudantes >= 2) return precoBaseVeiculo + acrescimo2;
-    return precoBaseVeiculo;
-  }
-  ```
-- [ ] Implementar função `calcularReceitaPrevista(horasEstimadas, precoHora, acrescimoUrgencia, isUrgente)`:
-  ```typescript
-  const multiplicadorUrgencia = isUrgente ? (1 + acrescimoUrgencia / 100) : 1;
-  return horasEstimadas * precoHora * multiplicadorUrgencia;
-  ```
-- [ ] Implementar função `calcularReceitaRealizada(horasCobradas, precoHora, acrescimoUrgencia, isUrgente, totalMateriais)`:
-  ```typescript
-  const multiplicadorUrgencia = isUrgente ? (1 + acrescimoUrgencia / 100) : 1;
-  return (horasCobradas * precoHora * multiplicadorUrgencia) + totalMateriais;
-  ```
-- [ ] Implementar função `calcularCustoEquipa(horasTrabalhadas, valorHoraMotorista, ajudantes: Array<{valorHora: number}>)`:
-  ```typescript
-  const custoMotorista = horasTrabalhadas * valorHoraMotorista;
-  const custoAjudantes = ajudantes.reduce((sum, a) => sum + horasTrabalhadas * a.valorHora, 0);
-  return custoMotorista + custoAjudantes;
-  ```
+- [x] Criar ficheiro: `packages/backend/src/mudanca/preco-calculator.service.ts`
+- [x] Implementar função `calcularPrecoHora(veiculo, numAjudantes, configPreco)`
+- [x] Implementar função `calcularReceitaPrevista(horasEstimadas, precoHora, acrescimoUrgencia, isUrgente)`
+- [x] Implementar função `calcularReceitaRealizada(horasCobradas, precoHora, acrescimoUrgencia, isUrgente, totalMateriais)`
+- [x] Implementar função `calcularCustoEquipa(horasTrabalhadas, valorHoraMotorista, ajudantes)`
 
 ### 2.2 Actualizar mudanca.service.ts — função `aprovar()`
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → função `aprovar()`:
-  - Buscar `configPreco` do tenant
-  - Buscar `configAgenda` para obter `acrescimoUrgencia`
-  - Buscar veículo com `precoHora`
-  - Contar número de ajudantes seleccionados
-  - Calcular `precoHoraFinal` com `PrecoCalculatorService.calcularPrecoHora()`
-  - Calcular `receitaPrevista` com `PrecoCalculatorService.calcularReceitaPrevista()`
-  - **Gravar snapshot**: `valorHoraMotoristaSnapshot = motorista.valorHora`, `valorHoraAjudanteSnapshot = média dos ajudantes`
-  - Gravar `receitaPrevista` no campo do modelo Mudanca
+- [x] Buscar `configPreco` e `configAgenda` do tenant (acrescimoUrgencia vem de ConfigAgenda)
+- [x] Buscar veículo com `precoHora`
+- [x] Contar número de ajudantes seleccionados
+- [x] Calcular `precoHoraFinal` com `PrecoCalculatorService.calcularPrecoHora()`
+- [x] Calcular `receitaPrevista` com `PrecoCalculatorService.calcularReceitaPrevista()`
+- [x] **Gravar snapshot**: `valorHoraMotoristaSnapshot = motorista.valorHora`, `valorHoraAjudanteSnapshot = média dos ajudantes`
+- [x] Gravar `receitaPrevista` no campo do modelo Mudanca
 
 ### 2.3 Actualizar mudanca.service.ts — função `concluir()`
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → função `concluir()`:
-  - Ler `valorHoraMotoristaSnapshot` e `valorHoraAjudanteSnapshot` **já gravados na aprovação** (não buscar valores actuais)
-  - Calcular `receitaRealizada` com `PrecoCalculatorService.calcularReceitaRealizada()`
-  - Calcular `totalPagoMotorista = horasCobradas * valorHoraMotoristaSnapshot`
-  - Calcular `totalPagoAjudantes = numAjudantes * horasCobradas * valorHoraAjudanteSnapshot`
-  - Gravar todos os campos explícitos no modelo Mudanca
-  - Criar MovimentoFinanceiro com `categoria: 'receita_servico'`, `valor: receitaRealizada`
-  - Criar MovimentoFinanceiro com `categoria: 'custo_equipa'`, `valor: totalPagoMotorista + totalPagoAjudantes`
-  - Criar MovimentoFinanceiro com `categoria: 'custo_combustivel'` se `combustivel > 0`
-  - Criar MovimentoFinanceiro com `categoria: 'custo_alimentacao'` se `alimentacao > 0`
-  - Actualizar `motorista.horasTrabalhadasMes += horasCobradas`
-  - Actualizar `motorista.valorRecebidoMes += totalPagoMotorista`
+- [x] Ler `valorHoraMotoristaSnapshot` e `valorHoraAjudanteSnapshot` **já gravados na aprovação** (não buscar valores actuais)
+- [x] Calcular `receitaRealizada` com `PrecoCalculatorService.calcularReceitaRealizada()`
+- [x] Calcular `totalPagoMotorista = horasCobradas * valorHoraMotoristaSnapshot`
+- [x] Calcular `totalPagoAjudantes = numAjudantes * horasCobradas * valorHoraAjudanteSnapshot`
+- [x] Gravar todos os campos explícitos no modelo Mudanca
+- [x] Criar MovimentoFinanceiro com `categoria: 'receita_servico'`, `valor: receitaRealizada`
+- [x] Criar MovimentoFinanceiro com `categoria: 'custo_equipa'`, `valor: totalPagoMotorista + totalPagoAjudantes`
+- [x] Criar MovimentoFinanceiro com `categoria: 'custo_combustivel'` se `combustivel > 0`
+- [x] Criar MovimentoFinanceiro com `categoria: 'custo_alimentacao'` se `alimentacao > 0`
+- [x] Actualizar `motorista.horasTrabalhadasMes += horasCobradas`
+- [x] Actualizar `motorista.valorRecebidoMes += totalPagoMotorista`
 
 ### 2.4 Actualizar financeiro.service.ts
-- [ ] `packages/backend/src/financeiro/financeiro.service.ts` → função `getResumo()`:
-  - Verificar que está a somar `MovimentoFinanceiro` com categoria `receita_servico` para receita
-  - Verificar que está a somar categorias `custo_equipa`, `custo_combustivel`, `custo_alimentacao` para custos
-  - `margem = totalReceita - totalCustos` (não apenas receita - combustivel)
-- [ ] `packages/backend/src/financeiro/financeiro.service.ts` → função `getBreakdownMotorista()`:
-  - Para cada motorista: `margem = receitaGerada - custoEquipa - combustivel - alimentacao`
+- [x] `getResumo()`: somar `MovimentoFinanceiro` com categoria `receita_servico` para receita
+- [x] `getResumo()`: somar categorias `custo_equipa`, `custo_combustivel`, `custo_alimentacao` para custos
+- [x] `getResumo()`: `margem = totalReceita - totalCustos` (com breakdown detalhado)
+- [x] `getBreakdownMotorista()`: `margem = receitaGerada - custoEquipa - combustivel - alimentacao`
 
 ---
 
@@ -688,7 +663,7 @@
 | Bloco | Descrição | Prioridade | Estado |
 |---|---|---|---|
 | 1 | Base de dados: campos em falta | 🔴 CRÍTICO | [x] |
-| 2 | Cálculo financeiro correcto | 🔴 CRÍTICO | [ ] |
+| 2 | Cálculo financeiro correcto | 🔴 CRÍTICO | [x] |
 | 3 | Autenticação e multi-tenant | 🔴 CRÍTICO | [ ] |
 | 4 | Dashboard correcto | 🔴 CRÍTICO | [ ] |
 | 5 | Agenda reformulada | 🔴 CRÍTICO | [ ] |

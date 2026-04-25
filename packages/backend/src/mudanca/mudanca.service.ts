@@ -5,6 +5,7 @@ import { CreateMudancaDto } from './dto/create-mudanca.dto';
 import { UpdateMudancaDto } from './dto/update-mudanca.dto';
 import { AprovarMudancaDto } from './dto/aprovar-mudanca.dto';
 import { ConcluirMudancaDto } from './dto/concluir-mudanca.dto';
+import { PrecoCalculatorService } from './preco-calculator.service';
 import { EmailService } from '../comunicacao/email.service';
 import { NotificacaoService } from '../notificacao/notificacao.service';
 import { SMS_SERVICE_TOKEN, ISmsService } from '../comunicacao/sms.interface';
@@ -15,6 +16,7 @@ import { AgendaService } from '../agenda/agenda.service';
 export class MudancaService {
   constructor(
     private prisma: PrismaService,
+    private precoCalculator: PrecoCalculatorService,
     private emailService: EmailService,
     private notificacaoService: NotificacaoService,
     @Inject(SMS_SERVICE_TOKEN) private smsService: ISmsService,
@@ -160,7 +162,6 @@ export class MudancaService {
       where: { id, tenantId },
       include: { ajudantes: { select: { id: true, nome: true, telefone: true } } },
     });
-    // Verify tenantId ownership of the mudanca (already checked above, so this is safe)
     (mudanca as any).ajudantes = ajudantes?.ajudantes || [];
 
     return mudanca;
@@ -208,18 +209,19 @@ export class MudancaService {
   async aprovar(tenantId: string, id: string, aprovarMudancaDto: AprovarMudancaDto) {
     const mudanca = await this.findOne(tenantId, id);
 
-    // [4.9] Validate configPreco exists before approving
+    // Buscar ConfigPreco e ConfigAgenda do tenant
     const tenantConfig = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { configPreco: true },
+      select: { configPreco: true, configAgenda: true },
     });
     const configPreco = (tenantConfig?.configPreco as any) || {};
+    const configAgenda = (tenantConfig?.configAgenda as any) || {};
     if (!configPreco.precoHora) {
       throw new Error('Configuração de preço (precoHora) não definida para este tenant. Configure antes de aprovar mudanças.');
     }
 
     // Atualizar estado do motorista
-if (aprovarMudancaDto.motoristaId) {
+    if (aprovarMudancaDto.motoristaId) {
       await this.prisma.motorista.update({
         where: { id: aprovarMudancaDto.motoristaId },
         data: { estado: 'ocupado' },
@@ -243,38 +245,66 @@ if (aprovarMudancaDto.motoristaId) {
       });
     }
 
-    // Calcular receita prevista
-    const veiculo = mudanca.veiculoId
-      ? await this.prisma.veiculo.findUnique({ where: { id: mudanca.veiculoId } })
+    // Buscar veículo com precoHora
+    const veiculo = aprovarMudancaDto.veiculoId
+      ? await this.prisma.veiculo.findUnique({ where: { id: aprovarMudancaDto.veiculoId } })
       : null;
     const precoBaseHora = Number(veiculo?.precoHora || configPreco.precoHora || 0);
-    const acrescimo1Ajudante = configPreco.acrescimo1Ajudante || configPreco.motorista1AjudantePrecoDiferenca || 0;
-    const acrescimo2Ajudantes = configPreco.acrescimo2Ajudantes || configPreco.motorista2AjudantesPrecoDiferenca || 0;
-    const acrescimoUrgencia = configPreco.acrescimoUrgencia || 0;
 
-    let precoHoraPrevisto = precoBaseHora;
+    // Contar ajudantes
     const numAjudantes = (aprovarMudancaDto.ajudantesIds || []).length;
-    if (numAjudantes >= 2) {
-      precoHoraPrevisto += acrescimo2Ajudantes;
-    } else if (numAjudantes === 1) {
-      precoHoraPrevisto += acrescimo1Ajudante;
-    }
-    if (mudanca.tipoServico === 'urgente') {
-      precoHoraPrevisto += acrescimoUrgencia;
-    }
-    const receitaPrevista = (aprovarMudancaDto.tempoEstimadoHoras || 4) * precoHoraPrevisto;
 
-const updated = await this.prisma.mudanca.update({
+    // Calcular preço/hora final com PrecoCalculator
+    const precoHoraFinal = this.precoCalculator.calcularPrecoHora(
+      precoBaseHora,
+      numAjudantes,
+      Number(configPreco.acrescimo1Ajudante || 0),
+      Number(configPreco.acrescimo2Ajudantes || 0),
+    );
+
+    // Buscar acrescimoUrgencia de ConfigAgenda (não ConfigPreco)
+    const acrescimoUrgencia = Number(configAgenda.acrescimoUrgencia || 0);
+    const isUrgente = mudanca.tipoServico === 'urgente';
+
+    // Calcular receita prevista com PrecoCalculator
+    const receitaPrevista = this.precoCalculator.calcularReceitaPrevista(
+      aprovarMudancaDto.tempoEstimadoHoras || 4,
+      precoHoraFinal,
+      acrescimoUrgencia,
+      isUrgente,
+    );
+
+    // Gravar snapshots do motorista e ajudantes na aprovação
+    const motorista = aprovarMudancaDto.motoristaId
+      ? await this.prisma.motorista.findUnique({ where: { id: aprovarMudancaDto.motoristaId } })
+      : null;
+    const valorHoraMotoristaSnapshot = Number(motorista?.valorHora || 0);
+
+    let valorHoraAjudanteSnapshot = 0;
+    if (aprovarMudancaDto.ajudantesIds && aprovarMudancaDto.ajudantesIds.length > 0) {
+      const ajudantes = await this.prisma.ajudante.findMany({
+        where: { id: { in: aprovarMudancaDto.ajudantesIds }, tenantId },
+        select: { valorHora: true },
+      });
+      valorHoraAjudanteSnapshot = ajudantes.length > 0
+        ? ajudantes.reduce((sum, a) => sum + Number(a.valorHora || 0), 0) / ajudantes.length
+        : 0;
+    }
+
+    const updated = await this.prisma.mudanca.update({
       where: { id },
       data: {
         estado: 'aprovada',
-        aprovadoPor:aprovarMudancaDto.aprovadoPor,
+        aprovadoPor: aprovarMudancaDto.aprovadoPor,
         aprovadoEm: new Date(),
-        motoristaId:aprovarMudancaDto.motoristaId,
-        veiculoId:aprovarMudancaDto.veiculoId || null,
-        tempoEstimadoHoras:aprovarMudancaDto.tempoEstimadoHoras,
-        observacoesAdmin:aprovarMudancaDto.observacoesAdmin,
+        motoristaId: aprovarMudancaDto.motoristaId,
+        veiculoId: aprovarMudancaDto.veiculoId || null,
+        tempoEstimadoHoras: aprovarMudancaDto.tempoEstimadoHoras,
+        observacoesAdmin: aprovarMudancaDto.observacoesAdmin,
         receitaPrevista,
+        // Snapshots financeiros gravados na aprovação (não na conclusão)
+        valorHoraMotoristaSnapshot,
+        valorHoraAjudanteSnapshot,
       },
     });
 
@@ -350,7 +380,6 @@ const updated = await this.prisma.mudanca.update({
 
     // SMS ao cliente (se tiver telefone)
     if (updated.clienteTelefone) {
-      // Resolve nome da empresa do tenant
       let nomeEmpresa = 'Mudanças';
       try {
         const tenant = await this.prisma.tenant.findUnique({
@@ -385,7 +414,6 @@ const updated = await this.prisma.mudanca.update({
   async emServico(tenantId: string, id: string, userId: string) {
     const mudanca = await this.findOne(tenantId, id);
 
-    // Resolve userId → motorista record
     const motorista = await this.prisma.motorista.findFirst({
       where: { tenantId, userId },
     });
@@ -406,66 +434,73 @@ const updated = await this.prisma.mudanca.update({
   async concluir(tenantId: string, id: string, concluirMudancaDto: ConcluirMudancaDto) {
     const mudanca = await this.findOne(tenantId, id);
 
-    // Buscar veículo e config de preços do tenant
+    // Ler snapshots gravados na aprovação (NÃO buscar valores actuais)
+    const valorHoraMotoristaSnapshot = Number((mudanca as any).valorHoraMotoristaSnapshot || 0);
+    const valorHoraAjudanteSnapshot = Number((mudanca as any).valorHoraAjudanteSnapshot || 0);
+
+    // Buscar ConfigPreco e ConfigAgenda para cálculo de receita
+    const tenantConfig = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { configPreco: true, configAgenda: true },
+    });
+    const configPreco = (tenantConfig?.configPreco as any) || {};
+    const configAgenda = (tenantConfig?.configAgenda as any) || {};
+
+    // Buscar veículo para preço base
     const veiculo = mudanca.veiculoId
       ? await this.prisma.veiculo.findUnique({ where: { id: mudanca.veiculoId } })
       : null;
-
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { configPreco: true },
-    });
-    const configPreco = (tenant?.configPreco as any) || {};
-
-    // --- RECEITA ---
-    // Preço base por hora (veículo) + adicional por ajudante + urgência
     const precoBaseHora = Number(veiculo?.precoHora || configPreco.precoHora || 0);
-    const acrescimo1Ajudante = configPreco.acrescimo1Ajudante || configPreco.motorista1AjudantePrecoDiferenca || 0;
-    const acrescimo2Ajudantes = configPreco.acrescimo2Ajudantes || configPreco.motorista2AjudantesPrecoDiferenca || 0;
-    const acrescimoUrgencia = configPreco.acrescimoUrgencia || 0;
 
-    let precoHora = precoBaseHora;
+    // Contar ajudantes
     const numAjudantes = concluirMudancaDto.ajudantesConfirmados?.length || 0;
-    if (numAjudantes >= 2) {
-      precoHora += acrescimo2Ajudantes;
-    } else if (numAjudantes === 1) {
-      precoHora += acrescimo1Ajudante;
-    }
-    if (mudanca.tipoServico === 'urgente') {
-      precoHora += acrescimoUrgencia;
-    }
+
+    // Calcular preço/hora com PrecoCalculator
+    const precoHoraFinal = this.precoCalculator.calcularPrecoHora(
+      precoBaseHora,
+      numAjudantes,
+      Number(configPreco.acrescimo1Ajudante || 0),
+      Number(configPreco.acrescimo2Ajudantes || 0),
+    );
+
+    // Urgência de ConfigAgenda
+    const acrescimoUrgencia = Number(configAgenda.acrescimoUrgencia || 0);
+    const isUrgente = mudanca.tipoServico === 'urgente';
 
     // Calcular valor total de materiais utilizados
     const materiais = concluirMudancaDto.materiaisUtilizados;
-    const precoMateriais = (configPreco as any) || {};
     const valorMateriais =
-      (materiais?.protecaoFilme || 0) * (precoMateriais.precoProtecaoFilme || 0) +
-      (materiais?.protecaoCartao || 0) * (precoMateriais.precoProtecaoCartao || 0) +
-      (materiais?.caixas || 0) * (precoMateriais.precoCaixas || 0) +
-      (materiais?.fitaCola || 0) * (precoMateriais.precoFitaCola || 0);
+      (materiais?.protecaoFilme || 0) * (configPreco.precoProtecaoFilme || 0) +
+      (materiais?.protecaoCartao || 0) * (configPreco.precoProtecaoCartao || 0) +
+      (materiais?.caixas || 0) * (configPreco.precoCaixas || 0) +
+      (materiais?.fitaCola || 0) * (configPreco.precoFitaCola || 0);
 
-    // Receita = (preço base + ajudantes + urgência) × horas + materiais
-    const receitaRealizada = (concluirMudancaDto.horasCobradas * precoHora) + valorMateriais;
+    // Calcular receita realizada com PrecoCalculator
+    const receitaRealizada = this.precoCalculator.calcularReceitaRealizada(
+      concluirMudancaDto.horasCobradas,
+      precoHoraFinal,
+      acrescimoUrgencia,
+      isUrgente,
+      valorMateriais,
+    );
 
-    // --- CUSTOS: Motorista e Ajudantes (snapshot na data da mudança) ---
-    const motorista = mudanca.motoristaId
-      ? await this.prisma.motorista.findUnique({ where: { id: mudanca.motoristaId } })
-      : null;
-    const valorHoraMotorista = Number(motorista?.valorHora || 0);
+    // --- CUSTOS: usar snapshots da aprovação ---
+    const horasCobradas = concluirMudancaDto.horasCobradas;
     const horasRegistadas = concluirMudancaDto.horasRegistadas || concluirMudancaDto.horasCobradas;
-    const totalPagoMotorista = valorHoraMotorista * horasRegistadas;
 
-    let totalPagoAjudantes = 0;
-    const ajudantesIds = concluirMudancaDto.ajudantesConfirmados || [];
-    if (ajudantesIds.length > 0) {
-      const ajudantes = await this.prisma.ajudante.findMany({
-        where: { id: { in: ajudantesIds }, tenantId },
-        select: { id: true, valorHora: true },
-      });
-      totalPagoAjudantes = ajudantes.reduce((sum, a) => sum + Number(a.valorHora || 0) * horasRegistadas, 0);
-    }
+    const totalPagoMotorista = horasCobradas * valorHoraMotoristaSnapshot;
+    const totalPagoAjudantes = numAjudantes * horasCobradas * valorHoraAjudanteSnapshot;
 
-    // --- CUSTOS OPERACIONAIS (combustível + alimentação + motorista + ajudantes) ---
+    // Custo total da equipa com PrecoCalculator
+    const custoEquipa = this.precoCalculator.calcularCustoEquipa(
+      horasRegistadas,
+      valorHoraMotoristaSnapshot,
+      numAjudantes > 0
+        ? Array(numAjudantes).fill({ valorHora: valorHoraAjudanteSnapshot })
+        : [],
+    );
+
+    // Custos operacionais
     const custosCombustivel = concluirMudancaDto.combustivel?.valor || 0;
     const custosAlimentacao = concluirMudancaDto.alimentacao?.teve
       ? concluirMudancaDto.alimentacao.valor
@@ -480,16 +515,10 @@ const updated = await this.prisma.mudanca.update({
         conclusao: concluirMudancaDto as any,
         concluidoPor: concluirMudancaDto.concluidoPor,
         concluidoEm: new Date(),
-        // Snapshot dos valores na data da mudança
-        valorHoraMotoristaSnapshot: valorHoraMotorista,
-        valorHoraAjudanteSnapshot: ajudantesIds.length > 0
-          ? (await this.prisma.ajudante.findMany({
-              where: { id: { in: ajudantesIds }, tenantId },
-              select: { valorHora: true },
-            })).reduce((sum, a) => sum + Number(a.valorHora || 0), 0) / ajudantesIds.length
-          : 0,
+        // Manter snapshots já gravados na aprovação
         totalPagoMotorista,
         totalPagoAjudantes,
+        horasCobradas,
         // Financeiro calculado
         receitaRealizada,
         custosOperacionais,
@@ -513,25 +542,26 @@ const updated = await this.prisma.mudanca.update({
       mudancaId: updated.id,
     });
 
-    // Criar movimentos financeiros automáticos
+    // Criar movimentos financeiros com categorias correctas
     await this.criarMovimentosFinanceiros(tenantId, updated.id, {
-      receita: receitaRealizada,
-      custos: {
-        combustivel: custosCombustivel,
-        alimentacao: custosAlimentacao,
-        motorista: totalPagoMotorista,
-        ajudantes: totalPagoAjudantes,
-      },
+      receitaServico: receitaRealizada,
+      custoEquipa: totalPagoMotorista + totalPagoAjudantes,
+      custoCombustivel: custosCombustivel,
+      custoAlimentacao: custosAlimentacao,
     });
 
-// Atualizar horas trabalhadas do motorista
-    if (motorista && horasRegistadas > 0) {
-      await this.prisma.motorista.update({
-        where: { id: motorista.id },
-        data: {
-          horasTrabalhadasMes: Number(motorista.horasTrabalhadasMes || 0) + horasRegistadas,
-        },
-      });
+    // Atualizar horas trabalhadas e valor recebido do motorista
+    if (mudanca.motoristaId && horasRegistadas > 0) {
+      const motorista = await this.prisma.motorista.findUnique({ where: { id: mudanca.motoristaId } });
+      if (motorista) {
+        await this.prisma.motorista.update({
+          where: { id: motorista.id },
+          data: {
+            horasTrabalhadasMes: Number(motorista.horasTrabalhadasMes || 0) + horasRegistadas,
+            valorRecebidoMes: Number(motorista.valorRecebidoMes || 0) + totalPagoMotorista,
+          },
+        });
+      }
     }
 
     // Liberar slot na agenda
@@ -551,75 +581,62 @@ const updated = await this.prisma.mudanca.update({
     tenantId: string,
     mudancaId: string,
     dados: {
-      receita: number;
-      custos: {
-        combustivel: number;
-        alimentacao: number;
-        motorista: number;
-        ajudantes: number;
-      };
+      receitaServico: number;
+      custoEquipa: number;
+      custoCombustivel: number;
+      custoAlimentacao: number;
     },
   ) {
     const movimentos: any[] = [];
 
     // Receita do serviço
-    if (dados.receita > 0) {
+    if (dados.receitaServico > 0) {
       movimentos.push({
         tenantId,
         mudancaId,
         tipo: 'receita',
-        categoria: 'servico',
+        categoria: 'receita_servico',
         descricao: 'Receita de mudança',
-        valor: dados.receita,
+        valor: dados.receitaServico,
         data: new Date(),
       });
     }
 
-    // Custos operacionais
-    if (dados.custos.combustivel > 0) {
+    // Custo da equipa (motorista + ajudantes)
+    if (dados.custoEquipa > 0) {
       movimentos.push({
         tenantId,
         mudancaId,
         tipo: 'custo',
-        categoria: 'combustivel',
+        categoria: 'custo_equipa',
+        descricao: 'Custo da equipa (motorista + ajudantes)',
+        valor: dados.custoEquipa,
+        data: new Date(),
+      });
+    }
+
+    // Custo combustível
+    if (dados.custoCombustivel > 0) {
+      movimentos.push({
+        tenantId,
+        mudancaId,
+        tipo: 'custo',
+        categoria: 'custo_combustivel',
         descricao: 'Combustível',
-        valor: dados.custos.combustivel,
+        valor: dados.custoCombustivel,
         data: new Date(),
       });
     }
 
-    if (dados.custos.alimentacao > 0) {
+    // Custo alimentação
+    if (dados.custoAlimentacao > 0) {
       movimentos.push({
         tenantId,
         mudancaId,
         tipo: 'custo',
-        categoria: 'alimentacao',
+        categoria: 'custo_alimentacao',
         descricao: 'Alimentação',
-        valor: dados.custos.alimentacao,
-        data: new Date(),
-      });
-    }
-
-    if (dados.custos.motorista > 0) {
-      movimentos.push({
-        tenantId,
-        mudancaId,
-        tipo: 'custo',
-        categoria: 'pagamento_motorista',
-        descricao: 'Pagamento ao motorista',
-        valor: dados.custos.motorista,
-        data: new Date(),
-      });
-    }
-
-    if (dados.custos.ajudantes > 0) {
-      movimentos.push({
-        tenantId,
-        mudancaId,
-        tipo: 'custo',
-        categoria: 'pagamento_ajudante',
-        descricao: 'Pagamento aos ajudantes',
-        valor: dados.custos.ajudantes,
+        valor: dados.custoAlimentacao,
         data: new Date(),
       });
     }
@@ -680,7 +697,6 @@ const updated = await this.prisma.mudanca.update({
   }
 
   async getMinhas(tenantId: string, userId: string, filters?: any) {
-    // Encontrar o motorista associado a este user
     const motorista = await this.prisma.motorista.findFirst({
       where: { tenantId, userId },
     });
@@ -692,7 +708,6 @@ const updated = await this.prisma.mudanca.update({
     const where: any = { tenantId, motoristaId: motorista.id };
 
     if (filters?.data) {
-      // [2.8] Use date range for single date filter (DateTime field)
       const inicioDia = new Date(filters.data + 'T00:00:00.000');
       const fimDia = new Date(filters.data + 'T23:59:59.999');
       where.dataPretendida = { gte: inicioDia, lte: fimDia };
@@ -721,7 +736,6 @@ const updated = await this.prisma.mudanca.update({
   }
 
   async getDashboard(tenantId: string, userId?: string) {
-    // [2.1] Use date range for "today" comparison instead of raw ISO string
     const hoje = new Date();
     const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999);
@@ -754,14 +768,12 @@ const updated = await this.prisma.mudanca.update({
       concluidasSemFicha,
       estatisticasMes,
     ] = await Promise.all([
-      // [2.1] Use date range for today's mudancas
       this.prisma.mudanca.findMany({
         where: { ...baseWhere, dataPretendida: { gte: inicioDia, lte: fimDia } },
         include: { motorista: true, veiculo: true },
       }),
       this.prisma.mudanca.count({ where: { ...baseWhere, estado: 'pendente' } }),
       this.prisma.mudanca.count({ where: { ...baseWhere, estado: { in: ['a_caminho', 'em_servico', 'ocupado'] } } }),
-      // [2.2] concluidasSemFicha: concluidas WITHOUT ficha (conclusao is null)
       this.prisma.mudanca.count({
         where: {
           ...baseWhere,
@@ -769,7 +781,6 @@ const updated = await this.prisma.mudanca.update({
           conclusao: Prisma.JsonNull,
         },
       }),
-      // [2.3] Add receitaPrevista to aggregate and use proper month start
       this.prisma.mudanca.aggregate({
         where: {
           ...baseWhere,
