@@ -444,6 +444,9 @@ approveMutation.mutate({
               </CardHeader>
               <CardContent className="text-sm space-y-1">
                 <p><span className="font-medium">Telefone:</span> {mudanca.motorista.telefone || '—'}</p>
+                {mudanca.valorHoraMotoristaSnapshot && (
+                  <p><span className="font-medium">Valor/Hora:</span> €{Number(mudanca.valorHoraMotoristaSnapshot).toFixed(2)}</p>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -454,7 +457,24 @@ approveMutation.mutate({
             </Card>
           )}
 
-          {mudanca.ajudantesIds && mudanca.ajudantesIds.length > 0 && (
+          {(mudanca as any).ajudantes && (mudanca as any).ajudantes.length > 0 ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Ajudantes Atribuídos</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2">
+                {(mudanca as any).ajudantes.map((a: any) => (
+                  <div key={a.id} className="flex items-center justify-between py-1 border-b last:border-0">
+                    <div className="flex items-center gap-2">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>{a.nome}</span>
+                    </div>
+                    <span className="text-muted-foreground">{a.telefone || '—'}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : mudanca.ajudantesIds && mudanca.ajudantesIds.length > 0 ? (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Ajudantes Atribuídos</CardTitle>
@@ -463,6 +483,57 @@ approveMutation.mutate({
                 <p className="text-muted-foreground">
                   {mudanca.ajudantesIds.length} ajudante(s) atribuído(s)
                 </p>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {/* Custo da Equipa */}
+          {mudanca.motorista && (estado === 'aprovada' || estado === 'a_caminho' || estado === 'em_servico' || estado === 'concluida') && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Custo da Equipa</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-3">
+                {estado === 'concluida' ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Pago ao Motorista</span>
+                      <span className="font-medium">€{(mudanca.totalPagoMotorista || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Pago aos Ajudantes</span>
+                      <span className="font-medium">€{(mudanca.totalPagoAjudantes || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="border-t pt-2 flex justify-between items-center">
+                      <span className="font-medium">Custo Real Total</span>
+                      <span className="font-bold text-destructive">
+                        €{((mudanca.totalPagoMotorista || 0) + (mudanca.totalPagoAjudantes || 0)).toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Motorista (€{(Number(mudanca.valorHoraMotoristaSnapshot) || 0).toFixed(2)}/h)</span>
+                      <span className="font-medium">€{((Number(mudanca.valorHoraMotoristaSnapshot) || 0) * (mudanca.tempoEstimadoHoras || 0)).toFixed(2)}</span>
+                    </div>
+                    {mudanca.valorHoraAjudanteSnapshot && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Ajudantes ({((mudanca as any).ajudantes?.length || 0)}x €{Number(mudanca.valorHoraAjudanteSnapshot).toFixed(2)}/h)</span>
+                        <span className="font-medium">€{(((mudanca as any).ajudantes?.length || 0) * Number(mudanca.valorHoraAjudanteSnapshot) * (mudanca.tempoEstimadoHoras || 0)).toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="border-t pt-2 flex justify-between items-center">
+                      <span className="font-medium">Custo Estimado</span>
+                      <span className="font-bold text-amber-600">
+                        €{(
+                          ((Number(mudanca.valorHoraMotoristaSnapshot) || 0) * (mudanca.tempoEstimadoHoras || 0)) +
+                          (((mudanca as any).ajudantes?.length || 0) * Number(mudanca.valorHoraAjudanteSnapshot || 0) * (mudanca.tempoEstimadoHoras || 0))
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           )}

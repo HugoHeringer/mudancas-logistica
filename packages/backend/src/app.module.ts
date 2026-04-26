@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -24,6 +25,7 @@ import { SuperAdminGuard } from './auth/guards/super-admin.guard';
 import { PublicModule } from './public/public.module';
 import { TestRunnerModule } from './test-runner/test-runner.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
+import { SchedulerModule } from './common/scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.midd
       ttl: 60000,
       limit: 100,
     }]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     TenantModule,
@@ -53,6 +56,7 @@ import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.midd
     FormularioModule,
     PublicModule,
     TestRunnerModule,
+    SchedulerModule,
   ],
   providers: [
     {

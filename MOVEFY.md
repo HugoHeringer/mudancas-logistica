@@ -319,15 +319,15 @@
 > **Commit:** `feat(equipa): add hourly rate fields + performance tracking`
 
 ### 8.1 Campos de valor/hora nos formulários
-- [ ] `packages/admin/src/pages/motoristas.page.tsx`:
+- [x] `packages/admin/src/pages/motoristas.page.tsx`:
   - Formulário de criação/edição de motorista: adicionar campo `Valor/Hora (€)` (input number, step=0.5, min=0)
   - Mostrar na tabela: coluna "€/hora"
-- [ ] `packages/admin/src/pages/ajudantes.page.tsx` (ou sub-secção):
+- [x] `packages/admin/src/pages/ajudantes.page.tsx` (ou sub-secção):
   - Formulário de criação/edição de ajudante: adicionar campo `Valor/Hora (€)`
   - Mostrar na lista de ajudantes
 
 ### 8.2 Performance mensal automática
-- [ ] `packages/backend/src/motoristas/motoristas.service.ts`:
+- [x] `packages/backend/src/motoristas/motoristas.service.ts`:
   - Criar endpoint `GET /motoristas/:id/performance` com dados:
     ```typescript
     {
@@ -340,7 +340,7 @@
   - Reset mensal: criar cron job `@Cron('0 0 1 * *')` que zera `horasTrabalhadasMes` e `valorRecebidoMes` de todos os motoristas/ajudantes
 
 ### 8.3 Actualizar detalhe da mudança — tab Equipa
-- [ ] `packages/admin/src/pages/mudanca-detalhe.page.tsx` → tab "Motorista/Equipa":
+- [x] `packages/admin/src/pages/mudanca-detalhe.page.tsx` → tab "Motorista/Equipa":
   - Resolver IDs dos ajudantes para nomes: chamar `ajudantesApi.findMany({ ids: mudanca.ajudantesIds })`
   - Mostrar: nome do motorista, nome de cada ajudante, custo estimado da equipa
   - Mostrar custo real (após conclusão): `totalPagoMotorista` + `totalPagoAjudantes`
@@ -669,7 +669,7 @@
 | 5 | Agenda reformulada | 🔴 CRÍTICO | [x] |
 | 6 | Formulário público dinâmico | 🟠 ALTO | [x] |
 | 7 | Clientes: gestão completa | 🟠 ALTO | [x] |
-| 8 | Motoristas e ajudantes | 🟠 ALTO | [ ] |
+| 8 | Motoristas e ajudantes | 🟠 ALTO | [x] |
 | 9 | Permissões do gerente | 🟠 ALTO | [ ] |
 | 10 | Dark mode funcional | 🟠 ALTO | [ ] |
 | 11 | Configurações: limpeza | 🟠 ALTO | [ ] |
