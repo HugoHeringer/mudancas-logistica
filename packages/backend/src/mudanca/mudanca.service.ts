@@ -546,6 +546,15 @@ export class MudancaService {
     }
 
     // Notificação admin/gerente sobre conclusão
+
+    // Recalcular tipo do cliente (novo/recorrente/vip)
+    if (updated.clienteId) {
+      await this.clienteService.recalcularTipoCliente(tenantId, updated.clienteId);
+    } else if (updated.clienteEmail) {
+      // Auto-increment se não tem clienteId (mudança pública)
+      await this.clienteService.incrementMudancasCount(tenantId, updated.clienteEmail);
+    }
+
     return updated;
   }
 

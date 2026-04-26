@@ -48,6 +48,11 @@ export class CreateClienteDto {
   @IsNotEmpty()
   telefone: string;
 
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  nif?: string;
+
   @ApiProperty({ type: [MoradaClienteDto], required: false })
   @IsArray()
   @ValidateNested({ each: true })

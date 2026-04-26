@@ -145,16 +145,40 @@ export class ClienteService {
           telefone: '',
           numeroMudancas: 1,
           eRecorrente: false,
+          tipo: 'novo',
         },
       });
     }
 
+    const newCount = cliente.numeroMudancas + 1;
+    const tipo = newCount < 5 ? 'recorrente' : 'vip';
+
     return this.prisma.cliente.update({
       where: { id: cliente.id },
       data: {
-        numeroMudancas: { increment: 1 },
-        eRecorrente: cliente.numeroMudancas >= 1,
+        numeroMudancas: newCount,
+        eRecorrente: newCount >= 1,
+        tipo,
         ultimaMudanca: new Date(),
+      },
+    });
+  }
+
+  async recalcularTipoCliente(tenantId: string, clienteId: string) {
+    const mudancasConcluidas = await this.prisma.mudanca.count({
+      where: { clienteId, tenantId, estado: 'concluida' },
+    });
+
+    const tipo = mudancasConcluidas === 0 ? 'novo'
+               : mudancasConcluidas < 5 ? 'recorrente'
+               : 'vip';
+
+    await this.prisma.cliente.update({
+      where: { id: clienteId },
+      data: {
+        tipo,
+        eRecorrente: mudancasConcluidas >= 1,
+        numeroMudancas: mudancasConcluidas,
       },
     });
   }

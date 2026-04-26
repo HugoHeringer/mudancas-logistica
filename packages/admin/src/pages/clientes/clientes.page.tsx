@@ -28,8 +28,10 @@ interface Cliente {
   apelido: string;
   email: string;
   telefone: string;
+  nif?: string;
   numeroMudancas: number;
   eRecorrente: boolean;
+  tipo: string;
   ultimaMudanca?: string;
   mudancas?: any[];
 }
@@ -50,6 +52,7 @@ export function ClientesPage() {
   const [formApelido, setFormApelido] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formTelefone, setFormTelefone] = useState('');
+  const [formNif, setFormNif] = useState('');
 
   const { data: clientes, isLoading } = useQuery({
     queryKey: ['clientes'],
@@ -81,7 +84,7 @@ export function ClientesPage() {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({ title: 'Cliente criado com sucesso' });
       setShowCreate(false);
-      setFormNome(''); setFormApelido(''); setFormEmail(''); setFormTelefone('');
+      setFormNome(''); setFormApelido(''); setFormEmail(''); setFormTelefone(''); setFormNif('');
     },
     onError: () => toast({ title: 'Erro ao criar cliente', variant: 'destructive' }),
   });
@@ -110,11 +113,14 @@ export function ClientesPage() {
       cell: ({ row }) => row.original.numeroMudancas || 0,
     },
     {
-      accessorKey: 'eRecorrente',
+      accessorKey: 'tipo',
       header: 'Tipo',
-      cell: ({ row }) => row.original.eRecorrente
-        ? <Badge className="bg-purple-600">Recorrente</Badge>
-        : <Badge variant="outline">Novo</Badge>,
+      cell: ({ row }) => {
+        const tipo = row.original.tipo || (row.original.eRecorrente ? 'recorrente' : 'novo');
+        if (tipo === 'vip') return <Badge className="bg-amber-500">VIP</Badge>;
+        if (tipo === 'recorrente') return <Badge className="bg-purple-600">Recorrente</Badge>;
+        return <Badge variant="outline">Novo</Badge>;
+      },
     },
     {
       accessorKey: 'ultimaMudanca',
@@ -165,8 +171,17 @@ export function ClientesPage() {
                 <CardContent className="pt-4 space-y-1 text-sm">
                   <p><span className="font-medium">Email:</span> {clienteDetalhe.email}</p>
                   <p><span className="font-medium">Telefone:</span> {clienteDetalhe.telefone}</p>
+                  {clienteDetalhe.nif && <p><span className="font-medium">NIF:</span> {clienteDetalhe.nif}</p>}
                   <p><span className="font-medium">Total de mudanças:</span> {clienteDetalhe.numeroMudancas || 0}</p>
-                  <p>{clienteDetalhe.eRecorrente ? <Badge className="bg-purple-600">Recorrente</Badge> : <Badge variant="outline">Novo</Badge>}</p>
+                  <p className="flex items-center gap-2">
+                    <span className="font-medium">Tipo:</span>
+                    {(() => {
+                      const tipo = clienteDetalhe.tipo || (clienteDetalhe.eRecorrente ? 'recorrente' : 'novo');
+                      if (tipo === 'vip') return <Badge className="bg-amber-500">VIP</Badge>;
+                      if (tipo === 'recorrente') return <Badge className="bg-purple-600">Recorrente</Badge>;
+                      return <Badge variant="outline">Novo</Badge>;
+                    })()}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -229,6 +244,10 @@ export function ClientesPage() {
               <Label>Telefone</Label>
               <Input value={formTelefone} onChange={(e) => setFormTelefone(e.target.value)} placeholder="912345678" />
             </div>
+            <div className="space-y-2">
+              <Label>NIF</Label>
+              <Input value={formNif} onChange={(e) => setFormNif(e.target.value)} placeholder="123456789" />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
@@ -236,6 +255,7 @@ export function ClientesPage() {
               disabled={!formNome || !formApelido || !formEmail || !formTelefone || createMutation.isPending}
               onClick={() => createMutation.mutate({
                 nome: formNome, apelido: formApelido, email: formEmail, telefone: formTelefone,
+                nif: formNif || undefined,
               })}
             >
               {createMutation.isPending ? 'A criar...' : 'Criar Cliente'}

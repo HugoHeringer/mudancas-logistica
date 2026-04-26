@@ -282,18 +282,18 @@
 > **Commit:** `feat(clientes): add manual creation + client type progression`
 
 ### 7.1 Criar cliente manualmente
-- [ ] `packages/backend/src/clientes/clientes.controller.ts`:
+- [x] `packages/backend/src/clientes/clientes.controller.ts`:
   - Verificar que existe `POST /clientes` com autenticação e guard de tenant
   - DTO deve incluir: `nome, email, telefone, nif?, morada?`
   - Antes de criar: verificar duplicado por email no mesmo tenant: `prisma.cliente.findFirst({ where: { email, tenantId } })`
   - Se duplicado: lançar `ConflictException('Cliente com este email já existe')`
-- [ ] `packages/admin/src/pages/clientes.page.tsx`:
+- [x] `packages/admin/src/pages/clientes.page.tsx`:
   - Adicionar botão "Novo Cliente" no topo direito da página
   - Ao clicar: abrir Dialog com formulário (nome, email, telefone, NIF, morada)
   - Ao submeter: chamar `clientesApi.create()` e recarregar lista
 
 ### 7.2 Progressão automática de tipo
-- [ ] `packages/backend/src/clientes/clientes.service.ts`:
+- [x] `packages/backend/src/clientes/clientes.service.ts`:
   - Criar função privada `recalcularTipoCliente(clienteId: string)`:
     ```typescript
     const mudancasConcluidas = await prisma.mudanca.count({
@@ -307,9 +307,9 @@
   - Chamar `recalcularTipoCliente()` no final da função `concluirMudanca()`
 
 ### 7.3 Histórico de mudanças no perfil do cliente
-- [ ] `packages/backend/src/clientes/clientes.service.ts` → função `findOne()`:
+- [x] `packages/backend/src/clientes/clientes.service.ts` → função `findOne()`:
   - Incluir `include: { mudancas: { orderBy: { createdAt: 'desc' }, take: 10, select: { id, estado, dataPretendida, receitaRealizada, createdAt } } }`
-- [ ] `packages/admin/src/pages/clientes.page.tsx` ou componente de detalhe:
+- [x] `packages/admin/src/pages/clientes.page.tsx` ou componente de detalhe:
   - Mostrar tabela de histórico de mudanças do cliente
   - Total gasto (soma de `receitaRealizada` das mudanças concluídas)
 
@@ -668,7 +668,7 @@
 | 4 | Dashboard correcto | 🔴 CRÍTICO | [x] |
 | 5 | Agenda reformulada | 🔴 CRÍTICO | [x] |
 | 6 | Formulário público dinâmico | 🟠 ALTO | [x] |
-| 7 | Clientes: gestão completa | 🟠 ALTO | [ ] |
+| 7 | Clientes: gestão completa | 🟠 ALTO | [x] |
 | 8 | Motoristas e ajudantes | 🟠 ALTO | [ ] |
 | 9 | Permissões do gerente | 🟠 ALTO | [ ] |
 | 10 | Dark mode funcional | 🟠 ALTO | [ ] |

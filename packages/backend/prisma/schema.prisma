@@ -84,6 +84,8 @@ model Cliente {
   moradas         Json?
   numeroMudancas  Int      @default(0)
   eRecorrente     Boolean  @default(false)
+  tipo            String   @default("novo") // novo, recorrente, vip
+  nif             String?
   ultimaMudanca   DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
