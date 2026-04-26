@@ -51,7 +51,7 @@ export class FinanceiroController {
     @Query('dataInicio') dataInicio: string,
     @Query('dataFim') dataFim: string,
   ) {
-    return this.financeiroService.getResumo(getTenantId(req), dataInicio, dataFim);
+    return this.financeiroService.getResumo(getTenantId(req), dataInicio, dataFim, req.user);
   }
 
   @Get('breakdown/motoristas')
@@ -61,7 +61,7 @@ export class FinanceiroController {
     @Query('dataInicio') dataInicio: string,
     @Query('dataFim') dataFim: string,
   ) {
-    return this.financeiroService.getBreakdownMotorista(getTenantId(req), dataInicio, dataFim);
+    return this.financeiroService.getBreakdownMotorista(getTenantId(req), dataInicio, dataFim, req.user);
   }
 
   @Get('breakdown/tipo-servico')
@@ -71,7 +71,7 @@ export class FinanceiroController {
     @Query('dataInicio') dataInicio: string,
     @Query('dataFim') dataFim: string,
   ) {
-    return this.financeiroService.getBreakdownTipoServico(getTenantId(req), dataInicio, dataFim);
+    return this.financeiroService.getBreakdownTipoServico(getTenantId(req), dataInicio, dataFim, req.user);
   }
 
   @Get('gastos-detalhados')
@@ -81,7 +81,7 @@ export class FinanceiroController {
     @Query('dataInicio') dataInicio: string,
     @Query('dataFim') dataFim: string,
   ) {
-    return this.financeiroService.getGastosDetalhados(getTenantId(req), dataInicio, dataFim);
+    return this.financeiroService.getGastosDetalhados(getTenantId(req), dataInicio, dataFim, req.user);
   }
 
   @Get('export')

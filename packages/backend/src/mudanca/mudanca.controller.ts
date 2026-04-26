@@ -44,7 +44,7 @@ export class MudancaController {
   @ApiOperation({ summary: 'Listar todas as mudancas (com filtros)' })
   findAll(@Request() req: TenantRequest) {
     const filters = req.query as any;
-    return this.mudancaService.findAll(getTenantId(req), filters, req.user?.id);
+    return this.mudancaService.findAll(getTenantId(req), filters, req.user);
   }
 
   @Get('dashboard')
@@ -68,7 +68,7 @@ export class MudancaController {
     @Query('formato') formato: string,
     @Res() res: any,
   ) {
-    const result = await this.mudancaService.findAll(getTenantId(req), filters, req.user?.id);
+    const result = await this.mudancaService.findAll(getTenantId(req), filters, req.user);
     const mudancas = result.items;
 
     const colunas = [

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMovimentoDto } from './dto/create-movimento.dto';
+import { getMotoristaFilter } from '../common/helpers/get-motorista-filter';
 
 @Injectable()
 export class FinanceiroService {
@@ -42,12 +43,26 @@ export class FinanceiroService {
     });
   }
 
-  async getResumo(tenantId: string, dataInicio: string, dataFim: string) {
+  async getResumo(tenantId: string, dataInicio: string, dataFim: string, user?: any) {
+    const motoristaFilter = getMotoristaFilter(user);
+
+    // Se gerente com restrição, obter IDs das mudanças permitidas para filtrar MovimentoFinanceiro
+    let mudancaIdFilter: Record<string, any> = {};
+    if (Object.keys(motoristaFilter).length > 0) {
+      const mudancasPermitidas = await this.prisma.mudanca.findMany({
+        where: { tenantId, ...motoristaFilter },
+        select: { id: true },
+      });
+      const ids = mudancasPermitidas.map(m => m.id);
+      mudancaIdFilter = { mudancaId: { in: ids } };
+    }
+
     // Receita: soma de MovimentoFinanceiro com categoria 'receita_servico'
     const [receitas, custosEquipa, custosCombustivel, custosAlimentacao] = await Promise.all([
       this.prisma.movimentoFinanceiro.aggregate({
         where: {
           tenantId,
+          ...mudancaIdFilter,
           tipo: 'receita',
           categoria: 'receita_servico',
           data: { gte: dataInicio, lte: dataFim },
@@ -59,6 +74,7 @@ export class FinanceiroService {
       this.prisma.movimentoFinanceiro.aggregate({
         where: {
           tenantId,
+          ...mudancaIdFilter,
           tipo: 'custo',
           categoria: 'custo_equipa',
           data: { gte: dataInicio, lte: dataFim },
@@ -69,6 +85,7 @@ export class FinanceiroService {
       this.prisma.movimentoFinanceiro.aggregate({
         where: {
           tenantId,
+          ...mudancaIdFilter,
           tipo: 'custo',
           categoria: 'custo_combustivel',
           data: { gte: dataInicio, lte: dataFim },
@@ -79,6 +96,7 @@ export class FinanceiroService {
       this.prisma.movimentoFinanceiro.aggregate({
         where: {
           tenantId,
+          ...mudancaIdFilter,
           tipo: 'custo',
           categoria: 'custo_alimentacao',
           data: { gte: dataInicio, lte: dataFim },
@@ -110,10 +128,13 @@ export class FinanceiroService {
     };
   }
 
-  async getBreakdownMotorista(tenantId: string, dataInicio: string, dataFim: string) {
+  async getBreakdownMotorista(tenantId: string, dataInicio: string, dataFim: string, user?: any) {
+    const motoristaFilter = getMotoristaFilter(user);
+
     const mudancas = await this.prisma.mudanca.findMany({
       where: {
         tenantId,
+        ...motoristaFilter,
         estado: 'concluida',
         dataPretendida: {
           gte: dataInicio,
@@ -158,10 +179,13 @@ export class FinanceiroService {
     }));
   }
 
-  async getBreakdownTipoServico(tenantId: string, dataInicio: string, dataFim: string) {
+  async getBreakdownTipoServico(tenantId: string, dataInicio: string, dataFim: string, user?: any) {
+    const motoristaFilter = getMotoristaFilter(user);
+
     const mudancas = await this.prisma.mudanca.findMany({
       where: {
         tenantId,
+        ...motoristaFilter,
         estado: 'concluida',
         dataPretendida: {
           gte: dataInicio,
@@ -189,11 +213,14 @@ export class FinanceiroService {
     return Object.values(breakdown);
   }
 
-  async getGastosDetalhados(tenantId: string, dataInicio: string, dataFim: string) {
+  async getGastosDetalhados(tenantId: string, dataInicio: string, dataFim: string, user?: any) {
+    const motoristaFilter = getMotoristaFilter(user);
+
     const [combustivelRegistos, alimentacaoRegistos, pagamentosMotorista] = await Promise.all([
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
+          ...motoristaFilter,
           estado: 'concluida',
           dataPretendida: {
             gte: dataInicio,
@@ -212,6 +239,7 @@ export class FinanceiroService {
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
+          ...motoristaFilter,
           estado: 'concluida',
           dataPretendida: {
             gte: dataInicio,
@@ -230,6 +258,7 @@ export class FinanceiroService {
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
+          ...motoristaFilter,
           estado: 'concluida',
           dataPretendida: {
             gte: dataInicio,

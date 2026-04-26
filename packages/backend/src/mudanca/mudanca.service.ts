@@ -10,6 +10,7 @@ import { EmailService } from '../comunicacao/email.service';
 import { NotificacaoService } from '../notificacao/notificacao.service';
 import { SMS_SERVICE_TOKEN, ISmsService } from '../comunicacao/sms.interface';
 import { ClienteService } from '../cliente/cliente.service';
+import { getMotoristaFilter } from '../common/helpers/get-motorista-filter';
 
 @Injectable()
 export class MudancaService {
@@ -63,25 +64,8 @@ export class MudancaService {
     return mudanca;
   }
 
-  async findAll(tenantId: string, filters?: any, userId?: string) {
-    let motoristafilter: string[] | null = null;
-    if (userId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { perfil: true, permissoes: true },
-      });
-      if (user?.perfil === 'gerente' && user.permissoes) {
-        const perms = user.permissoes as any;
-        if (perms.motoristasPermitidos && !perms.verTodosMotoristas) {
-          motoristafilter = perms.motoristasPermitidos;
-        }
-      }
-    }
-
-    const where: any = { tenantId };
-    if (motoristafilter) {
-      where.motoristaId = { in: motoristafilter };
-    }
+  async findAll(tenantId: string, filters?: any, user?: any) {
+    const where: any = { tenantId, ...getMotoristaFilter(user) };
 
     if (filters?.estado) {
       where.estado = { in: filters.estado };
@@ -723,24 +707,16 @@ export class MudancaService {
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 
     // Resolve gerente motorista restrictions
-    let motoristaFilter: string[] | null = null;
+    let motoristaFilterWhere: Record<string, any> = {};
     if (userId) {
-      const user = await this.prisma.user.findUnique({
+      const userRecord = await this.prisma.user.findUnique({
         where: { id: userId },
         select: { perfil: true, permissoes: true },
       });
-      if (user?.perfil === 'gerente' && user.permissoes) {
-        const perms = user.permissoes as any;
-        if (perms.motoristasPermitidos && !perms.verTodosMotoristas) {
-          motoristaFilter = perms.motoristasPermitidos;
-        }
-      }
+      motoristaFilterWhere = getMotoristaFilter(userRecord);
     }
 
-    const baseWhere: any = { tenantId };
-    if (motoristaFilter) {
-      baseWhere.motoristaId = { in: motoristaFilter };
-    }
+    const baseWhere: any = { tenantId, ...motoristaFilterWhere };
 
     const [
       mudancasHoje,

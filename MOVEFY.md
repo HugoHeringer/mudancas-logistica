@@ -351,16 +351,16 @@
 > **Commit:** `feat(users): manager motorist restriction`
 
 ### 9.1 UI de selecção de motoristas
-- [ ] `packages/admin/src/pages/utilizadores.page.tsx` (dialog de criação/edição):
+- [x] `packages/admin/src/pages/utilizadores.page.tsx` (dialog de criação/edição):
   - Se perfil seleccionado for `gerente`: mostrar secção "Motoristas visíveis"
   - Lista de checkboxes com todos os motoristas activos do tenant
   - Checkbox "Ver todos os motoristas" que desselecciona os individuais
   - Ao guardar: enviar `permissoes: { motoristaIds: [...ids], verTodosMotoristas: boolean }`
-- [ ] `packages/backend/src/users/users.service.ts` → `update()`:
+- [x] `packages/backend/src/users/users.service.ts` → `update()`:
   - Guardar `permissoes` como JSON no campo `user.permissoes`
 
 ### 9.2 Aplicar restrição nas queries
-- [ ] Criar helper: `packages/backend/src/common/helpers/get-motorista-filter.ts`:
+- [x] Criar helper: `packages/backend/src/common/helpers/get-motorista-filter.ts`:
   ```typescript
   export function getMotoristaFilter(user: UserContext): Prisma.MudancaWhereInput {
     if (user.perfil !== 'gerente') return {};
@@ -369,7 +369,7 @@
     return { motoristaId: { in: motoristaIds } };
   }
   ```
-- [ ] Aplicar este filter em:
+- [x] Aplicar este filter em:
   - `mudancas.service.ts` → `findAll()`, `getDashboard()`
   - `agenda.service.ts` → `getMensal()`, `getSemanal()`, `getDiario()`
   - `financeiro.service.ts` → `getResumo()`, `getBreakdownMotorista()`
@@ -670,7 +670,7 @@
 | 6 | Formulário público dinâmico | 🟠 ALTO | [x] |
 | 7 | Clientes: gestão completa | 🟠 ALTO | [x] |
 | 8 | Motoristas e ajudantes | 🟠 ALTO | [x] |
-| 9 | Permissões do gerente | 🟠 ALTO | [ ] |
+| 9 | Permissões do gerente | 🟠 ALTO | [x] |
 | 10 | Dark mode funcional | 🟠 ALTO | [ ] |
 | 11 | Configurações: limpeza | 🟠 ALTO | [ ] |
 | 12 | Email real (Resend) | 🟠 ALTO | [ ] |

@@ -236,7 +236,7 @@ export function UtilizadoresPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               {key === 'admin' && 'Acesso total ao sistema'}
-              {key === 'gerente' && 'Sem configurações'}
+              {key === 'gerente' && 'Motoristas visíveis configuráveis'}
               {key === 'financeiro' && 'Apenas relatórios e financeiro'}
               {key === 'operacional' && 'Aprovações, agenda, mudanças, clientes'}
               {key === 'motorista' && 'Acesso apenas ao PWA'}

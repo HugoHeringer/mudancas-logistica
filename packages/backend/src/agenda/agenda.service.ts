@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBloqueioDto } from './dto/create-bloqueio.dto';
 import { UpdateConfigAgendaDto } from './dto/update-config-agenda.dto';
+import { getMotoristaFilter } from '../common/helpers/get-motorista-filter';
 
 @Injectable()
 export class AgendaService {
@@ -12,7 +13,7 @@ export class AgendaService {
    * capacidadeMaximaDiaria de ConfigAgenda e contamos mudanças aprovadas.
    */
 
-  async getAgendaMensal(tenantId: string, ano: number, mes: number) {
+  async getAgendaMensal(tenantId: string, ano: number, mes: number, user?: any) {
     const inicio = new Date(ano, mes - 1, 1);
     const fim = new Date(ano, mes, 0, 23, 59, 59);
     const inicioStr = inicio.toISOString();
@@ -21,10 +22,13 @@ export class AgendaService {
     const config = await this.getConfigAgenda(tenantId) as any;
     const capacidadeMaximaDiaria = config.capacidadeMaximaDiaria || 3;
 
+    const motoristaFilter = getMotoristaFilter(user);
+
     const [mudancas, bloqueios] = await Promise.all([
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
+          ...motoristaFilter,
           dataPretendida: { gte: inicioStr, lte: fimStr },
           estado: { in: ['aprovada', 'a_caminho', 'em_servico', 'concluida'] },
         },
@@ -87,7 +91,7 @@ export class AgendaService {
     return { dias: diasMes, mudancas };
   }
 
-  async getAgendaSemanal(tenantId: string, dataInicio: string) {
+  async getAgendaSemanal(tenantId: string, dataInicio: string, user?: any) {
     const inicio = new Date(dataInicio);
     const fim = new Date(inicio);
     fim.setDate(fim.getDate() + 6);
@@ -97,10 +101,13 @@ export class AgendaService {
     const config = await this.getConfigAgenda(tenantId) as any;
     const capacidadeMaximaDiaria = config.capacidadeMaximaDiaria || 3;
 
+    const motoristaFilter = getMotoristaFilter(user);
+
     const [mudancas, bloqueios] = await Promise.all([
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
+          ...motoristaFilter,
           dataPretendida: { gte: inicioStr, lte: fimStr },
           estado: { in: ['aprovada', 'a_caminho', 'em_servico', 'concluida'] },
         },
@@ -163,17 +170,20 @@ export class AgendaService {
     return { dias, mudancas };
   }
 
-  async getAgendaDiaria(tenantId: string, data: string) {
+  async getAgendaDiaria(tenantId: string, data: string, user?: any) {
     const inicioDia = new Date(data + 'T00:00:00.000');
     const fimDia = new Date(data + 'T23:59:59.999');
 
     const config = await this.getConfigAgenda(tenantId) as any;
     const capacidadeMaximaDiaria = config.capacidadeMaximaDiaria || 3;
 
+    const motoristaFilter = getMotoristaFilter(user);
+
     const [mudancas, bloqueios] = await Promise.all([
       this.prisma.mudanca.findMany({
         where: {
           tenantId,
+          ...motoristaFilter,
           dataPretendida: { gte: inicioDia, lte: fimDia },
           estado: { in: ['aprovada', 'a_caminho', 'em_servico', 'concluida', 'pendente'] },
         },

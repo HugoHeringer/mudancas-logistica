@@ -32,7 +32,7 @@ export class AgendaController {
     @Param('ano') ano: number,
     @Param('mes') mes: number,
   ) {
-    return this.agendaService.getAgendaMensal(getTenantId(req), ano, mes);
+    return this.agendaService.getAgendaMensal(getTenantId(req), ano, mes, req.user);
   }
 
   @Get('semanal/:dataInicio')
@@ -41,7 +41,7 @@ export class AgendaController {
     @Request() req: TenantRequest,
     @Param('dataInicio') dataInicio: string,
   ) {
-    return this.agendaService.getAgendaSemanal(getTenantId(req), dataInicio);
+    return this.agendaService.getAgendaSemanal(getTenantId(req), dataInicio, req.user);
   }
 
   @Get('diaria/:data')
@@ -50,7 +50,7 @@ export class AgendaController {
     @Request() req: TenantRequest,
     @Param('data') data: string,
   ) {
-    return this.agendaService.getAgendaDiaria(getTenantId(req), data);
+    return this.agendaService.getAgendaDiaria(getTenantId(req), data, req.user);
   }
 
   @Get('disponibilidade/:data')
