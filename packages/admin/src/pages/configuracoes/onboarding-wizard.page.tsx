@@ -193,7 +193,7 @@ export function OnboardingWizardPage() {
       </div>
 
       {/* Step content */}
-      <div className="bg-card/50 border border-gold/10 rounded-xl p-6">
+      <div className="bg-card/50 border border-border rounded-xl p-6">
         {currentStep === 0 && (
           <div className="space-y-4">
             <h2 className="text-lg font-light text-foreground" style={{ fontFamily: 'var(--tenant-font-display)' }}>

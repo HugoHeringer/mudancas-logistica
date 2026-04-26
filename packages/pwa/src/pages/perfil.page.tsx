@@ -22,7 +22,7 @@ export function PerfilPage() {
   };
 
   return (
-    <div className="min-h-screen bg-sand pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <header className="bg-night text-cream p-4">
         <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Perfil</h1>
       </header>
@@ -30,32 +30,32 @@ export function PerfilPage() {
       <main className="p-4 space-y-4">
         {/* Avatar + Name */}
         <div className="flex flex-col items-center py-4">
-          <div className="bg-gold/15 rounded-full w-20 h-20 flex items-center justify-center mb-3">
-            <User className="h-10 w-10 text-gold" />
+          <div className="bg-primary/15 rounded-full w-20 h-20 flex items-center justify-center mb-3">
+            <User className="h-10 w-10 text-primary" />
           </div>
-          <h2 className="text-xl font-bold text-brown" style={{ fontFamily: 'var(--tenant-font-display)' }}>{user?.nome}</h2>
-          <p className="text-brown-medium/60 text-sm">{user?.email}</p>
+          <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--tenant-font-display)' }}>{user?.nome}</h2>
+          <p className="text-muted-foreground/60 text-sm">{user?.email}</p>
         </div>
 
         {/* Dados pessoais */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Dados Pessoais</CardTitle>
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Dados Pessoais</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-3 text-brown">
-              <Mail className="h-4 w-4 text-gold" />
+            <div className="flex items-center gap-3 text-foreground">
+              <Mail className="h-4 w-4 text-primary" />
               <span className="text-sm">{user?.email}</span>
             </div>
             {motorista?.telefone && (
-              <div className="flex items-center gap-3 text-brown">
-                <Phone className="h-4 w-4 text-gold" />
+              <div className="flex items-center gap-3 text-foreground">
+                <Phone className="h-4 w-4 text-primary" />
                 <span className="text-sm">{motorista.telefone}</span>
               </div>
             )}
             {motorista?.cartaConducao && (
-              <div className="flex items-center gap-3 text-brown">
-                <Truck className="h-4 w-4 text-gold" />
+              <div className="flex items-center gap-3 text-foreground">
+                <Truck className="h-4 w-4 text-primary" />
                 <span className="text-sm">Carta: {motorista.cartaConducao}</span>
               </div>
             )}
@@ -66,11 +66,11 @@ export function PerfilPage() {
         {motorista?.veiculo && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Veículo Atribuído</CardTitle>
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Veículo Atribuído</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm font-medium text-brown">{motorista.veiculo.nome}</p>
-              <p className="text-sm text-brown-medium/60">{motorista.veiculo.matricula} • {motorista.veiculo.metrosCubicos}m³</p>
+              <p className="text-sm font-medium text-foreground">{motorista.veiculo.nome}</p>
+              <p className="text-sm text-muted-foreground/60">{motorista.veiculo.matricula} • {motorista.veiculo.metrosCubicos}m³</p>
             </CardContent>
           </Card>
         )}
@@ -78,10 +78,10 @@ export function PerfilPage() {
         {/* App info */}
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
-            <Info className="h-4 w-4 text-gold" />
+            <Info className="h-4 w-4 text-primary" />
             <div className="flex-1">
-              <p className="text-sm text-brown-medium/60">Versão da app</p>
-              <p className="text-xs text-brown-medium/40">1.0.0</p>
+              <p className="text-sm text-muted-foreground/60">Versão da app</p>
+              <p className="text-xs text-muted-foreground/40">1.0.0</p>
             </div>
           </CardContent>
         </Card>

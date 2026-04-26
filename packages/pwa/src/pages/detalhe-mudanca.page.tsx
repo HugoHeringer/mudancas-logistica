@@ -69,7 +69,7 @@ export function DetalheMudancaPage() {
   };
 
   const renderMorada = (morada: any, label: string) => {
-    if (!morada) return <p className="text-sm text-brown-medium/50">{label} não disponível</p>;
+    if (!morada) return <p className="text-sm text-muted-foreground/50">{label} não disponível</p>;
     const parts = [
       morada.rua,
       morada.numero,
@@ -81,16 +81,16 @@ export function DetalheMudancaPage() {
     const mapsQuery = encodeURIComponent(parts || '');
     return (
       <div className="space-y-1">
-        <p className="text-sm text-brown">{parts || '—'}</p>
+        <p className="text-sm text-foreground">{parts || '—'}</p>
         {morada.elevador !== undefined && (
-          <p className="text-xs text-brown-medium/60">Elevador: {morada.elevador ? 'Sim' : 'Não'}</p>
+          <p className="text-xs text-muted-foreground/60">Elevador: {morada.elevador ? 'Sim' : 'Não'}</p>
         )}
         {mapsQuery && (
           <a
             href={`https://maps.google.com/maps?q=${mapsQuery}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-gold hover:text-terracotta transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:text-terracotta transition-colors"
           >
             <Navigation className="h-3 w-3" /> Abrir no Maps
           </a>
@@ -105,7 +105,7 @@ export function DetalheMudancaPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-sand">
+      <div className="min-h-screen bg-background">
         <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
@@ -115,8 +115,8 @@ export function DetalheMudancaPage() {
           </div>
         </header>
         <div className="p-4 space-y-4">
-          <div className="bg-cream/60 rounded-lg p-4 animate-pulse h-40" />
-          <div className="bg-cream/60 rounded-lg p-4 animate-pulse h-24" />
+          <div className="bg-card/60 rounded-lg p-4 animate-pulse h-40" />
+          <div className="bg-card/60 rounded-lg p-4 animate-pulse h-24" />
         </div>
       </div>
     );
@@ -124,7 +124,7 @@ export function DetalheMudancaPage() {
 
   if (!mudanca) {
     return (
-      <div className="min-h-screen bg-sand">
+      <div className="min-h-screen bg-background">
         <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
@@ -133,13 +133,13 @@ export function DetalheMudancaPage() {
             <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Não encontrado</h1>
           </div>
         </header>
-        <div className="p-4 text-center text-brown-medium/60">Mudança não encontrada.</div>
+        <div className="p-4 text-center text-muted-foreground/60">Mudança não encontrada.</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-sand pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-night text-cream p-4">
         <div className="flex items-center gap-3">
@@ -157,20 +157,20 @@ export function DetalheMudancaPage() {
       {/* Active timer */}
       {(mudanca.estado === 'a_caminho' || mudanca.estado === 'em_servico') && mudanca.iniciadoEm && (
         <div className={`px-4 py-3 border-b flex items-center justify-between ${
-          mudanca.estado === 'em_servico' ? 'bg-terracotta/10 border-terracotta/20' : 'bg-gold/10 border-gold/20'
+          mudanca.estado === 'em_servico' ? 'bg-terracotta/10 border-terracotta/20' : 'bg-primary/10 border-primary/20'
         }`}>
           <div>
-            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">
               {mudanca.estado === 'em_servico' ? 'Em serviço desde' : 'A caminho desde'}
             </p>
-            <p className="text-sm text-brown">
+            <p className="text-sm text-foreground">
               {new Date(mudanca.iniciadoEm).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Tempo em curso</p>
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Tempo em curso</p>
             <p className={`text-2xl font-bold tabular-nums ${
-              mudanca.estado === 'em_servico' ? 'text-terracotta' : 'text-gold'
+              mudanca.estado === 'em_servico' ? 'text-terracotta' : 'text-primary'
             }`} style={{ fontFamily: 'var(--tenant-font-body)' }}>
               {timer.formatted}
             </p>
@@ -180,26 +180,26 @@ export function DetalheMudancaPage() {
 
       {/* Timeline */}
       {currentStep >= 0 && (
-        <div className="bg-cream/80 border-b border-sand-medium px-4 py-3">
+        <div className="bg-card/80 border-b border-border px-4 py-3">
           <div className="flex items-center justify-between">
             {ESTADO_STEPS.map((step, i) => (
               <div key={step} className="flex items-center">
                 <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
-                  i <= currentStep ? 'bg-gold text-night' : 'bg-sand-medium text-brown-medium/40'
+                  i <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground/40'
                 }`}>
                   {i < currentStep ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
                 </div>
                 {i < ESTADO_STEPS.length - 1 && (
-                  <div className={`w-8 h-0.5 mx-0.5 ${i < currentStep ? 'bg-gold' : 'bg-sand-medium'}`} />
+                  <div className={`w-8 h-0.5 mx-0.5 ${i < currentStep ? 'bg-primary' : 'bg-border'}`} />
                 )}
               </div>
             ))}
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-[9px] text-brown-medium/50">Aprovada</span>
-            <span className="text-[9px] text-brown-medium/50">Caminho</span>
-            <span className="text-[9px] text-brown-medium/50">Serviço</span>
-            <span className="text-[9px] text-brown-medium/50">Concluída</span>
+            <span className="text-[9px] text-muted-foreground/50">Aprovada</span>
+            <span className="text-[9px] text-muted-foreground/50">Caminho</span>
+            <span className="text-[9px] text-muted-foreground/50">Serviço</span>
+            <span className="text-[9px] text-muted-foreground/50">Concluída</span>
           </div>
         </div>
       )}
@@ -208,13 +208,13 @@ export function DetalheMudancaPage() {
         {/* Cliente */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Cliente</CardTitle>
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Cliente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <h2 className="font-semibold text-lg text-brown" style={{ fontFamily: 'var(--tenant-font-display)' }}>{mudanca.clienteNome}</h2>
+            <h2 className="font-semibold text-lg text-foreground" style={{ fontFamily: 'var(--tenant-font-display)' }}>{mudanca.clienteNome}</h2>
             <a
               href={`tel:${mudanca.clienteTelefone}`}
-              className="flex items-center gap-2 text-gold hover:text-terracotta transition-colors"
+              className="flex items-center gap-2 text-primary hover:text-terracotta transition-colors"
             >
               <Phone className="h-4 w-4" />
               <span className="text-sm">{mudanca.clienteTelefone}</span>
@@ -225,7 +225,7 @@ export function DetalheMudancaPage() {
         {/* Moradas */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
               <MapPin className="h-3 w-3" /> Recolha
             </CardTitle>
           </CardHeader>
@@ -234,7 +234,7 @@ export function DetalheMudancaPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
               <MapPin className="h-3 w-3" /> Entrega
             </CardTitle>
           </CardHeader>
@@ -244,13 +244,13 @@ export function DetalheMudancaPage() {
         {/* Equipa + Veículo */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Serviço</CardTitle>
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Serviço</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm text-brown">
-            <p><span className="text-brown-medium/60">Equipa:</span> {mudanca.equipa === 'motorista' ? 'Motorista' : mudanca.equipa === 'motorista_1_ajudante' ? 'Motorista + 1 Ajudante' : 'Motorista + 2 Ajudantes'}</p>
-            {mudanca.veiculo && <p><span className="text-brown-medium/60">Veículo:</span> {mudanca.veiculo.nome} ({mudanca.veiculo.metrosCubicos}m³)</p>}
-            {mudanca.tempoEstimadoHoras && <p><span className="text-brown-medium/60">Tempo est.:</span> {mudanca.tempoEstimadoHoras}h</p>}
-            {mudanca.observacoesAdmin && <p><span className="text-brown-medium/60">Notas admin:</span> {mudanca.observacoesAdmin}</p>}
+          <CardContent className="space-y-1 text-sm text-foreground">
+            <p><span className="text-muted-foreground/60">Equipa:</span> {mudanca.equipa === 'motorista' ? 'Motorista' : mudanca.equipa === 'motorista_1_ajudante' ? 'Motorista + 1 Ajudante' : 'Motorista + 2 Ajudantes'}</p>
+            {mudanca.veiculo && <p><span className="text-muted-foreground/60">Veículo:</span> {mudanca.veiculo.nome} ({mudanca.veiculo.metrosCubicos}m³)</p>}
+            {mudanca.tempoEstimadoHoras && <p><span className="text-muted-foreground/60">Tempo est.:</span> {mudanca.tempoEstimadoHoras}h</p>}
+            {mudanca.observacoesAdmin && <p><span className="text-muted-foreground/60">Notas admin:</span> {mudanca.observacoesAdmin}</p>}
           </CardContent>
         </Card>
 
@@ -258,12 +258,12 @@ export function DetalheMudancaPage() {
         {mudanca.materiais && Object.values(mudanca.materiais).some((v: any) => v > 0) && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
                 <Package className="h-3 w-3" /> Materiais
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-2 text-sm text-brown">
+              <div className="grid grid-cols-2 gap-2 text-sm text-foreground">
                 {mudanca.materiais.protecaoFilme > 0 && <p>Proteção Filme: {mudanca.materiais.protecaoFilme}</p>}
                 {mudanca.materiais.protecaoCartao > 0 && <p>Proteção Cartão: {mudanca.materiais.protecaoCartao}</p>}
                 {mudanca.materiais.caixas > 0 && <p>Caixas: {mudanca.materiais.caixas}</p>}
@@ -277,10 +277,10 @@ export function DetalheMudancaPage() {
         {mudanca.observacoes && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Observações</CardTitle>
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Observações</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-brown">{mudanca.observacoes}</p>
+              <p className="text-sm text-foreground">{mudanca.observacoes}</p>
             </CardContent>
           </Card>
         )}
@@ -289,26 +289,26 @@ export function DetalheMudancaPage() {
         {mudanca.estado === 'concluida' && mudanca.conclusao && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3 text-terracotta" /> Ficha de Conclusão
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm space-y-1 text-brown">
-              <p><span className="text-brown-medium/60">Horas registadas:</span> {mudanca.conclusao.horasRegistadas}h</p>
-              <p><span className="text-brown-medium/60">Horas cobradas:</span> {mudanca.conclusao.horasCobradas}h</p>
-              {mudanca.conclusao.combustivel && <p><span className="text-brown-medium/60">Combustível:</span> €{mudanca.conclusao.combustivel.valor} ({mudanca.conclusao.combustivel.litros}L)</p>}
-              {mudanca.conclusao.alimentacao?.teve && <p><span className="text-brown-medium/60">Alimentação:</span> €{mudanca.conclusao.alimentacao.valor}</p>}
-              {mudanca.conclusao.observacoes && <p><span className="text-brown-medium/60">Obs:</span> {mudanca.conclusao.observacoes}</p>}
+            <CardContent className="text-sm space-y-1 text-foreground">
+              <p><span className="text-muted-foreground/60">Horas registadas:</span> {mudanca.conclusao.horasRegistadas}h</p>
+              <p><span className="text-muted-foreground/60">Horas cobradas:</span> {mudanca.conclusao.horasCobradas}h</p>
+              {mudanca.conclusao.combustivel && <p><span className="text-muted-foreground/60">Combustível:</span> €{mudanca.conclusao.combustivel.valor} ({mudanca.conclusao.combustivel.litros}L)</p>}
+              {mudanca.conclusao.alimentacao?.teve && <p><span className="text-muted-foreground/60">Alimentação:</span> €{mudanca.conclusao.alimentacao.valor}</p>}
+              {mudanca.conclusao.observacoes && <p><span className="text-muted-foreground/60">Obs:</span> {mudanca.conclusao.observacoes}</p>}
             </CardContent>
           </Card>
         )}
       </main>
 
       {/* Action buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-cream/95 backdrop-blur-sm border-t border-sand-medium p-4 space-y-2 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border p-4 space-y-2 z-50">
         {mudanca.estado === 'aprovada' && !showPrevisao && (
           <Button
-            className="w-full h-12 text-base bg-gold hover:bg-gold-light text-night"
+            className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={() => setShowPrevisao(true)}
           >
             <Truck className="h-5 w-5 mr-2" />
@@ -317,7 +317,7 @@ export function DetalheMudancaPage() {
         )}
         {mudanca.estado === 'aprovada' && showPrevisao && (
           <div className="space-y-3">
-            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 text-center">Previsão de chegada</p>
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 text-center">Previsão de chegada</p>
             <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
               {previsaoOptions.map((min) => (
                 <button
@@ -326,32 +326,32 @@ export function DetalheMudancaPage() {
                   onClick={() => setPrevisaoMin(min)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                     previsaoMin === min
-                      ? 'bg-gold text-night shadow-md'
-                      : 'bg-sand-dark text-brown-medium hover:bg-sand-medium/50'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/50'
                   }`}
                 >
                   {formatPrevisao(min)}
                 </button>
               ))}
             </div>
-            <div className="bg-cream/80 rounded-lg p-3 text-center">
-              <p className="text-sm text-brown">
-                <span className="text-brown-medium/60">Destino:</span> {mudanca.moradaRecolha?.localidade || 'Morada de recolha'}
+            <div className="bg-card/80 rounded-lg p-3 text-center">
+              <p className="text-sm text-foreground">
+                <span className="text-muted-foreground/60">Destino:</span> {mudanca.moradaRecolha?.localidade || 'Morada de recolha'}
               </p>
-              <p className="text-sm text-brown">
-                <span className="text-brown-medium/60">Previsão:</span> <strong>{formatPrevisao(previsaoMin)}</strong>
+              <p className="text-sm text-foreground">
+                <span className="text-muted-foreground/60">Previsão:</span> <strong>{formatPrevisao(previsaoMin)}</strong>
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="flex-1 h-10 border-gold/30 text-brown hover:bg-gold/10"
+                className="flex-1 h-10 border-primary/30 text-foreground hover:bg-primary/10"
                 onClick={() => setShowPrevisao(false)}
               >
                 Voltar
               </Button>
               <Button
-                className="flex-1 h-10 bg-gold hover:bg-gold-light text-night"
+                className="flex-1 h-10 bg-primary hover:bg-primary/90 text-primary-foreground"
                 onClick={handleIniciar}
                 disabled={iniciarMutation.isPending}
               >
@@ -383,7 +383,7 @@ export function DetalheMudancaPage() {
           href={`tel:${mudanca.clienteTelefone}`}
           className="block"
         >
-          <Button variant="outline" className="w-full h-10 border-gold/30 text-brown hover:bg-gold/10">
+          <Button variant="outline" className="w-full h-10 border-primary/30 text-foreground hover:bg-primary/10">
             <Phone className="h-4 w-4 mr-2" /> Contactar Cliente
           </Button>
         </a>

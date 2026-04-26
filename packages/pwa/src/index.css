@@ -79,7 +79,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-sand text-brown;
+    @apply bg-background text-foreground;
     font-family: var(--tenant-font-body);
     touch-action: manipulation;
     -webkit-font-smoothing: antialiased;
@@ -116,7 +116,7 @@
 
 /* Section label utility */
 .section-label {
-  @apply text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60;
+  @apply text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60;
 }
 
 /* Safe area for bottom nav */

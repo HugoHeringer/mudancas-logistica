@@ -198,7 +198,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             <Package className="w-8 h-8 text-primary" />
           </div>
           <h2 className="font-display text-3xl font-light mb-4">Pedido recebido!</h2>
-          <p className="text-brown/60">
+          <p className="text-muted-foreground">
             O seu pedido de mudanca foi submetido com sucesso. Entraremos em contacto brevemente para confirmar os detalhes.
           </p>
         </AnimatedSection>
@@ -223,7 +223,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             value={value}
             onChange={(e) => handleCampoChange(campo.id, e.target.value)}
             placeholder={campo.nome}
-            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50"
           />
         );
       case 'numero':
@@ -233,7 +233,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             value={value}
             onChange={(e) => handleCampoChange(campo.id, Number(e.target.value))}
             placeholder={campo.nome}
-            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50"
           />
         );
       case 'checkbox':
@@ -274,7 +274,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
           <select
             value={value || ''}
             onChange={(e) => handleCampoChange(campo.id, e.target.value)}
-            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50"
           >
             <option value="">{`Selecionar ${campo.nome}`}</option>
             {(campo.opcoes || []).map((op: string) => (
@@ -288,7 +288,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             value={value}
             onChange={(e) => handleCampoChange(campo.id, e.target.value)}
             placeholder={campo.nome}
-            className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50"
+            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50"
           />
         );
     }
@@ -310,7 +310,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
           <AlertTriangle className="w-5 h-5 text-terracotta shrink-0" />
           <div>
             <p className="font-medium text-sm text-terracotta">Mudanca Urgente</p>
-            <p className="text-xs text-brown/60">Tarifas diferenciadas aplicam-se a pedidos urgentes</p>
+            <p className="text-xs text-muted-foreground">Tarifas diferenciadas aplicam-se a pedidos urgentes</p>
           </div>
         </div>
       )}
@@ -327,7 +327,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                 ? 'bg-primary text-primary-foreground'
                 : step > s.num
                   ? 'bg-primary/10 text-primary'
-                  : 'bg-sand-dark text-brown/40'
+                  : 'bg-muted text-muted-foreground/60'
             )}
           >
             <s.icon className="w-4 h-4" />
@@ -347,42 +347,42 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium tracking-wide uppercase text-brown/50 mb-1.5 block">Nome</label>
+                <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground mb-1.5 block">Nome</label>
                 <input
                   {...register('nome')}
-                  className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
                   placeholder="Nome"
                 />
                 {errors.nome && <p className="text-xs text-terracotta mt-1">{errors.nome.message}</p>}
               </div>
 
               <div>
-                <label className="text-xs font-medium tracking-wide uppercase text-brown/50 mb-1.5 block">Apelido</label>
+                <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground mb-1.5 block">Apelido</label>
                 <input
                   {...register('apelido')}
-                  className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
                   placeholder="Apelido"
                 />
                 {errors.apelido && <p className="text-xs text-terracotta mt-1">{errors.apelido.message}</p>}
               </div>
 
               <div>
-                <label className="text-xs font-medium tracking-wide uppercase text-brown/50 mb-1.5 block">Email</label>
+                <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground mb-1.5 block">Email</label>
                 <input
                   {...register('email')}
                   type="email"
-                  className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
                   placeholder="email@exemplo.com"
                 />
                 {errors.email && <p className="text-xs text-terracotta mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="text-xs font-medium tracking-wide uppercase text-brown/50 mb-1.5 block">Telefone</label>
+                <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground mb-1.5 block">Telefone</label>
                 <input
                   {...register('telefone')}
                   type="tel"
-                  className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
                   placeholder="912345678"
                 />
                 {errors.telefone && <p className="text-xs text-terracotta mt-1">{errors.telefone.message}</p>}
@@ -406,7 +406,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
               Moradas
             </h3>
 
-            <div className="flex items-center gap-3 mb-6 p-3 bg-sand-dark/50 rounded-lg">
+            <div className="flex items-center gap-3 mb-6 p-3 bg-muted/50 rounded-lg">
               <Globe className="w-5 h-5 text-primary" />
               <label className="text-sm font-medium">Mudanca Internacional</label>
               <input type="checkbox" {...register('internacional')} className="ml-auto" />
@@ -416,18 +416,18 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
               <h4 className="text-sm font-medium tracking-wide uppercase text-terracotta mb-4">Morada de Recolha</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <input {...register('recRua')} placeholder="Rua" className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                  <input {...register('recRua')} placeholder="Rua" className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
                 </div>
-                <input {...register('recNumero')} placeholder="Numero" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
-                <input {...register('recCodPostal')} placeholder="Codigo Postal" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
-                <input {...register('recLocalidade')} placeholder="Localidade" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
-                <input {...register('recAndar')} placeholder="Andar (opcional)" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('recNumero')} placeholder="Numero" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('recCodPostal')} placeholder="Codigo Postal" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('recLocalidade')} placeholder="Localidade" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('recAndar')} placeholder="Andar (opcional)" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
                 <div className="flex items-center gap-2">
                   <input type="checkbox" {...register('recElevador')} className="rounded" />
                   <label className="text-sm">Elevador</label>
                 </div>
                 {internacional && (
-                  <input {...register('recPais')} placeholder="Pais" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                  <input {...register('recPais')} placeholder="Pais" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
                 )}
               </div>
             </div>
@@ -436,24 +436,24 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
               <h4 className="text-sm font-medium tracking-wide uppercase text-terracotta mb-4">Morada de Entrega</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <input {...register('entRua')} placeholder="Rua" className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                  <input {...register('entRua')} placeholder="Rua" className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
                 </div>
-                <input {...register('entNumero')} placeholder="Numero" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
-                <input {...register('entCodPostal')} placeholder="Codigo Postal" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
-                <input {...register('entLocalidade')} placeholder="Localidade" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
-                <input {...register('entAndar')} placeholder="Andar (opcional)" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('entNumero')} placeholder="Numero" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('entCodPostal')} placeholder="Codigo Postal" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('entLocalidade')} placeholder="Localidade" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                <input {...register('entAndar')} placeholder="Andar (opcional)" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
                 <div className="flex items-center gap-2">
                   <input type="checkbox" {...register('entElevador')} className="rounded" />
                   <label className="text-sm">Elevador</label>
                 </div>
                 {internacional && (
-                  <input {...register('entPais')} placeholder="Pais" className="px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50" />
+                  <input {...register('entPais')} placeholder="Pais" className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50" />
                 )}
               </div>
             </div>
 
             <div className="flex justify-between mt-6">
-              <button type="button" onClick={() => setStep(1)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
+              <button type="button" onClick={() => setStep(1)} className="px-6 py-2.5 border border-border text-muted-foreground rounded-lg text-sm font-medium">
                 Anterior
               </button>
               <button type="button" onClick={() => goNext(3)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
@@ -477,7 +477,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                 {veiculos.map((v: any) => (
                   <label key={v.id} className={cn(
                     'flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all',
-                    selectedVeiculoId === v.id ? 'border-primary bg-primary/5' : 'border-gold/20 hover:border-gold/40'
+                    selectedVeiculoId === v.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
                   )}>
                     <input
                       type="radio"
@@ -492,18 +492,18 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                     )}
                     <div className="flex-1">
                       <p className="font-medium text-sm">{v.nome}</p>
-                      <p className="text-xs text-brown/60">{v.marca} {v.modelo}</p>
+                      <p className="text-xs text-muted-foreground">{v.marca} {v.modelo}</p>
                     </div>
                     <p className="text-sm font-medium text-primary">{v.precoHora}€/h</p>
                   </label>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-brown/60">Nenhum veiculo disponivel</p>
+              <p className="text-sm text-muted-foreground">Nenhum veiculo disponivel</p>
             )}
 
             <div className="flex justify-between mt-6">
-              <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
+              <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 border border-border text-muted-foreground rounded-lg text-sm font-medium">
                 Anterior
               </button>
               <button type="button" onClick={() => goNext(4)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
@@ -524,7 +524,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
 
             <div className="space-y-4">
               {MATERIAIS.map((m) => (
-                <div key={m.key} className="flex items-center justify-between p-3 bg-sand-dark/30 rounded-lg">
+                <div key={m.key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-3">
                     <span className="text-sm">{m.label}</span>
                   </div>
@@ -534,26 +534,26 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                       min="0"
                       step="1"
                       {...register(m.key as any, { valueAsNumber: true })}
-                      className="w-16 px-2 py-1 bg-sand-dark/50 border border-gold/10 rounded text-sm text-center focus:outline-none focus:border-primary/50"
+                      className="w-16 px-2 py-1 bg-muted/50 border border-border rounded text-sm text-center focus:outline-none focus:border-primary/50"
                     />
-                    <span className="text-sm text-brown/60">un x {m.unitPrice}€</span>
+                    <span className="text-sm text-muted-foreground">un x {m.unitPrice}€</span>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="mt-6">
-              <label className="text-xs font-medium tracking-wide uppercase text-brown/50 mb-1.5 block">Observacoes</label>
+              <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground mb-1.5 block">Observacoes</label>
               <textarea
                 {...register('observacoes')}
-                className="w-full px-4 py-2.5 bg-sand-dark/50 border border-gold/10 rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50 transition-colors"
                 rows={3}
                 placeholder="Informacoes adicionais..."
               />
             </div>
 
             <div className="flex justify-between mt-6">
-              <button type="button" onClick={() => setStep(3)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
+              <button type="button" onClick={() => setStep(3)} className="px-6 py-2.5 border border-border text-muted-foreground rounded-lg text-sm font-medium">
                 Anterior
               </button>
               {hasCustomFields ? (
@@ -581,7 +581,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             <div className="space-y-4">
               {camposPersonalizados.map((campo: any) => (
                 <div key={campo.id}>
-                  <label className="text-xs font-medium tracking-wide uppercase text-brown/50 mb-1.5 block">
+                  <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground mb-1.5 block">
                     {campo.nome}
                     {campo.obrigatorio && <span className="text-terracotta"> *</span>}
                   </label>
@@ -591,7 +591,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             </div>
 
             <div className="flex justify-between mt-6">
-              <button type="button" onClick={() => setStep(4)} className="px-6 py-2.5 border border-gold/20 text-brown/60 rounded-lg text-sm font-medium">
+              <button type="button" onClick={() => setStep(4)} className="px-6 py-2.5 border border-border text-muted-foreground rounded-lg text-sm font-medium">
                 Anterior
               </button>
               <GradientButton type="submit" disabled={submitting}>

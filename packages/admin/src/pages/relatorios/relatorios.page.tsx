@@ -438,7 +438,7 @@ export function RelatoriosPage() {
                   <p className="text-sm text-muted-foreground/60">{gastos.combustivel?.porMudanca?.length || 0} registos</p>
                 </div>
                 <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 border border-primary/15">
-                  <Fuel className="h-[18px] w-[18px] text-gold" />
+                  <Fuel className="h-[18px] w-[18px] text-primary" />
                 </div>
               </div>
             </GlassCard>
@@ -452,7 +452,7 @@ export function RelatoriosPage() {
                   <p className="text-sm text-muted-foreground/60">{gastos.alimentacao?.porMudanca?.length || 0} registos</p>
                 </div>
                 <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 border border-primary/15">
-                  <Utensils className="h-[18px] w-[18px] text-gold" />
+                  <Utensils className="h-[18px] w-[18px] text-primary" />
                 </div>
               </div>
             </GlassCard>
@@ -464,7 +464,7 @@ export function RelatoriosPage() {
               {/* Combustivel detail */}
               <div>
                 <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                  <Fuel className="h-4 w-4 text-gold" /> Combustível por Mudança
+                  <Fuel className="h-4 w-4 text-primary" /> Combustível por Mudança
                 </h4>
                 <div className="space-y-2">
                   {(gastos.combustivel?.porMudanca || []).map((c: any) => (
@@ -485,7 +485,7 @@ export function RelatoriosPage() {
               {/* Alimentacao detail */}
               <div>
                 <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                  <Utensils className="h-4 w-4 text-gold" /> Alimentação por Mudança
+                  <Utensils className="h-4 w-4 text-primary" /> Alimentação por Mudança
                 </h4>
                 <div className="space-y-2">
                   {(gastos.alimentacao?.porMudanca || []).map((a: any) => (

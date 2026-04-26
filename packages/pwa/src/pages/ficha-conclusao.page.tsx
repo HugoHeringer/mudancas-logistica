@@ -137,7 +137,7 @@ export function FichaConclusaoPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-sand">
+      <div className="min-h-screen bg-background">
         <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
@@ -147,7 +147,7 @@ export function FichaConclusaoPage() {
           </div>
         </header>
         <div className="p-4 space-y-4">
-          <div className="bg-cream/60 rounded-lg p-4 animate-pulse h-60" />
+          <div className="bg-card/60 rounded-lg p-4 animate-pulse h-60" />
         </div>
       </div>
     );
@@ -155,7 +155,7 @@ export function FichaConclusaoPage() {
 
   if (!mudanca || mudanca.estado !== 'em_servico') {
     return (
-      <div className="min-h-screen bg-sand">
+      <div className="min-h-screen bg-background">
         <header className="bg-night text-cream p-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
@@ -164,10 +164,10 @@ export function FichaConclusaoPage() {
             <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>Ficha de Conclusão</h1>
           </div>
         </header>
-        <div className="p-4 text-center text-brown-medium/60 mt-8">
+        <div className="p-4 text-center text-muted-foreground/60 mt-8">
           <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-40" />
-          <p className="font-medium text-brown">Mudança não disponível para conclusão</p>
-          <Button variant="outline" className="mt-4 border-gold/30 text-brown hover:bg-gold/10" onClick={() => navigate(-1)}>Voltar</Button>
+          <p className="font-medium text-foreground">Mudança não disponível para conclusão</p>
+          <Button variant="outline" className="mt-4 border-primary/30 text-foreground hover:bg-primary/10" onClick={() => navigate(-1)}>Voltar</Button>
         </div>
       </div>
     );
@@ -176,7 +176,7 @@ export function FichaConclusaoPage() {
   const tempoEstimado = mudanca.tempoEstimadoHoras || 0;
 
   return (
-    <div className="min-h-screen bg-sand pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <header className="bg-night text-cream p-4 sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-cream/60 hover:text-cream">
@@ -201,7 +201,7 @@ export function FichaConclusaoPage() {
           {/* Horas */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Tempo</CardTitle>
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Tempo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
@@ -213,7 +213,7 @@ export function FichaConclusaoPage() {
                   {...register('horasRegistadas')}
                 />
                 {tempoEstimado > 0 && (
-                  <p className="text-xs text-brown-medium/40">Tempo estimado: {tempoEstimado}h</p>
+                  <p className="text-xs text-muted-foreground/40">Tempo estimado: {tempoEstimado}h</p>
                 )}
                 {errors.horasRegistadas && (
                   <p className="text-xs text-terracotta">{errors.horasRegistadas.message}</p>
@@ -238,7 +238,7 @@ export function FichaConclusaoPage() {
           {mudanca.ajudantes && mudanca.ajudantes.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+                <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
                   <Users className="h-3 w-3" /> Ajudantes Confirmados
                 </CardTitle>
               </CardHeader>
@@ -257,11 +257,11 @@ export function FichaConclusaoPage() {
                           [ajudante.id]: e.target.checked,
                         }))
                       }
-                      className="h-4 w-4 rounded border-sand-medium text-gold focus:ring-gold"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                     />
-                    <span className="text-sm text-brown">{ajudante.nome}</span>
+                    <span className="text-sm text-foreground">{ajudante.nome}</span>
                     {ajudante.telefone && (
-                      <span className="text-xs text-brown-medium/40 ml-auto">{ajudante.telefone}</span>
+                      <span className="text-xs text-muted-foreground/40 ml-auto">{ajudante.telefone}</span>
                     )}
                   </label>
                 ))}
@@ -272,7 +272,7 @@ export function FichaConclusaoPage() {
           {/* Combustível */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
                 <Fuel className="h-3 w-3" /> Combustível
               </CardTitle>
             </CardHeader>
@@ -305,7 +305,7 @@ export function FichaConclusaoPage() {
           {/* Alimentação */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
                 <UtensilsCrossed className="h-3 w-3" /> Alimentação
               </CardTitle>
             </CardHeader>
@@ -323,11 +323,11 @@ export function FichaConclusaoPage() {
                     } as any);
                   }}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    alimentacaoTeve ? 'bg-gold' : 'bg-sand-medium'
+                    alimentacaoTeve ? 'bg-primary' : 'bg-muted'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-cream transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
                       alimentacaoTeve ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
@@ -352,7 +352,7 @@ export function FichaConclusaoPage() {
           {/* Materiais */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60 flex items-center gap-1">
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60 flex items-center gap-1">
                 <Package className="h-3 w-3" /> Materiais Utilizados
               </CardTitle>
             </CardHeader>
@@ -381,7 +381,7 @@ export function FichaConclusaoPage() {
           {/* Observações */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-brown-medium/60">Observações</CardTitle>
+              <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Observações</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
