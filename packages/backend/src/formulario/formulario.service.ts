@@ -95,7 +95,7 @@ export class FormularioService {
       { nome: 'Telefone', tipo: 'texto', obrigatorio: true, ordem: 3, eBase: true },
       { nome: 'Morada de Recolha', tipo: 'texto', obrigatorio: true, ordem: 4, eBase: true },
       { nome: 'Morada de Entrega', tipo: 'texto', obrigatorio: true, ordem: 5, eBase: true },
-      { nome: 'Data Pretendida', tipo: 'texto', obrigatorio: true, ordem: 6, eBase: true },
+      { nome: 'Data Pretendida', tipo: 'data', obrigatorio: true, ordem: 6, eBase: true },
       { nome: 'Observações', tipo: 'texto', obrigatorio: false, ordem: 7, eBase: true },
     ];
 

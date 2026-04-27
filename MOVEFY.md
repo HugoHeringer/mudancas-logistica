@@ -416,7 +416,7 @@
 > **Commit:** `feat(config): fix pricing model + remove duplicate fields`
 
 ### 11.1 Tab Preços — reestruturar
-- [ ] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Preços":
+- [x] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Preços":
   - **Remover** campo `acrescimoUrgencia` desta tab (existe apenas na tab "Urgência")
   - **Adicionar** campo "Acréscimo com 1 Ajudante (€/hora)" — input number
   - **Adicionar** campo "Acréscimo com 2 Ajudantes (€/hora)" — input number
@@ -424,24 +424,24 @@
   - Ao guardar: `configPrecoApi.update({ acrescimo1Ajudante, acrescimo2Ajudantes })`
 
 ### 11.2 Tab Urgência
-- [ ] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Urgência":
+- [x] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Urgência":
   - Manter apenas aqui o campo `acrescimoUrgencia (%)`
   - **Adicionar** campo "Veículo de urgência" — select com veículos do tenant
   - **Adicionar** preview: "Mudança urgente de 3h com furgão = X€ × 1.30 = Y€"
 
 ### 11.3 Tab Formulário — corrigir preview
-- [ ] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Formulário":
+- [x] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Formulário":
   - Campo Select: o preview deve mostrar apenas "Seleccionar" (sem "+ Opção 1")
   - Campo Checkbox: ao marcar tipo "checkbox" com opções, mostrar área para inserir as opções (uma por linha ou array de inputs)
   - Campo "data pretendida": mostrar como date picker no preview, não como texto
 
 ### 11.4 Tab Marca — upload de logo funcional
-- [ ] `packages/backend/src/upload/upload.service.ts`:
+- [x] `packages/backend/src/upload/upload.service.ts`:
   - Criar endpoint `POST /upload/logo` com multer (aceitar jpg/png/svg/webp, max 2MB)
   - Guardar ficheiro em `./uploads/logos/{tenantId}/logo.{ext}` (local para dev)
   - Actualizar `configMarca.logoUrl` no tenant
   - Para produção: guardar em S3 (configurar via `STORAGE_PROVIDER=s3` em env)
-- [ ] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Marca":
+- [x] `packages/admin/src/pages/configuracoes.page.tsx` → tab "Marca":
   - Componente de upload com dropzone (arrastar ou clicar)
   - Preview do logo após upload
   - Botão "Remover logo"

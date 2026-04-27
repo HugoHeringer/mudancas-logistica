@@ -238,6 +238,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
         );
       case 'checkbox':
         if (campo.opcoes?.length > 0) {
+
           return (
             <div className="space-y-2">
               {campo.opcoes.map((op: string) => (
@@ -269,6 +270,15 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             className="rounded"
           />
         );
+      case 'data':
+        return (
+          <input
+            type="date"
+            value={value || ''}
+            onChange={(e) => handleCampoChange(campo.id, e.target.value)}
+            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50"
+          />
+        );
       case 'selector':
         return (
           <select
@@ -276,7 +286,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             onChange={(e) => handleCampoChange(campo.id, e.target.value)}
             className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:border-primary/50"
           >
-            <option value="">{`Selecionar ${campo.nome}`}</option>
+            <option value="">Selecionar</option>
             {(campo.opcoes || []).map((op: string) => (
               <option key={op} value={op}>{op}</option>
             ))}

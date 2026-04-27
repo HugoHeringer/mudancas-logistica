@@ -338,6 +338,7 @@ function FormularioBuilder() {
                 <Label className="text-sm">{campo.nome} {campo.obrigatorio && <span className="text-red-500">*</span>}</Label>
                 {campo.tipo === 'texto' && <Input placeholder={campo.nome} />}
                 {campo.tipo === 'numero' && <Input type="number" placeholder={campo.nome} />}
+                {campo.tipo === 'data' && <Input type="date" />}
                 {campo.tipo === 'checkbox' && (
                   campo.opcoes?.length > 0 ? (
                     <div className="space-y-1">
@@ -355,7 +356,7 @@ function FormularioBuilder() {
                 )}
                 {campo.tipo === 'selector' && (
                   <Select>
-                    <SelectTrigger><SelectValue placeholder={`Selecionar ${campo.nome}`} /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={`Selecionar`} /></SelectTrigger>
                     <SelectContent>
                       {campo.opcoes?.map((op: string) => (
                         <SelectItem key={op} value={op}>{op}</SelectItem>
@@ -423,6 +424,7 @@ function FormularioBuilder() {
                 <SelectContent>
                   <SelectItem value="texto">Texto Livre</SelectItem>
                   <SelectItem value="numero">Número</SelectItem>
+                  <SelectItem value="data">Data</SelectItem>
                   <SelectItem value="checkbox">Checkbox</SelectItem>
                   <SelectItem value="selector">Selector</SelectItem>
                 </SelectContent>
@@ -844,11 +846,15 @@ export function ConfiguracoesPage() {
                 </p>
               </div>
               <div className="p-3 rounded-lg border bg-muted/30">
-                <p className="text-sm font-medium">Indicação no Site Público</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Quando a urgência estiver configurada, o site público mostrará automaticamente um banner
-                  "Urgente" com a indicação de tarifas diferenciadas no formulário de agendamento.
+                <p className="text-sm font-medium mb-1">Cálculo de Urgência</p>
+                <p className="text-xs text-muted-foreground">
+                  Preço urgente = Preço/hora × (1 + {precos?.acrescimoUrgencia || 0}%)
                 </p>
+                <div className="mt-2 text-xs space-y-1">
+                  <p><strong>Preço base:</strong> {precos?.precoHora || 0}€/h</p>
+                  <p><strong>Preço urgente:</strong> {((precos?.precoHora || 0) * (1 + (precos?.acrescimoUrgencia || 0) / 100)).toFixed(2)}€/h</p>
+                  <p className="text-muted-foreground">Ex: 3h urgente = {(3 * (precos?.precoHora || 0) * (1 + (precos?.acrescimoUrgencia || 0) / 100)).toFixed(2)}€</p>
+                </div>
               </div>
               <Button onClick={() => updateTenantMutation.mutate({ configPreco: precos })} disabled={updateTenantMutation.isPending}>
                 {updateTenantMutation.isPending ? 'A guardar...' : 'Guardar Urgência'}
