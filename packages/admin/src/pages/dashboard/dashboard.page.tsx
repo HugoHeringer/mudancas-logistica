@@ -242,7 +242,7 @@ export function DashboardPage() {
                       </p>
                     </div>
                     <Badge
-                      className={`text-[10px] tracking-wider uppercase text-white border-none ${ESTADOS_MUDANCA_CORES[mudanca.estado] || 'bg-gray-500'}`}
+                      className={`text-[10px] tracking-wider uppercase text-white border-none ${ESTADOS_MUDANCA_CORES[mudanca.estado] || 'bg-muted-foreground'}`}
                     >
                       {mudanca.estado}
                     </Badge>

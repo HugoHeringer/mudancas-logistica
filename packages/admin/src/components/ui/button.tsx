@@ -15,7 +15,7 @@ const buttonVariants = cva(
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
         accent: 'bg-terracotta text-cream hover:bg-terracotta/90',
-        gold: 'bg-gold text-night hover:bg-gold/90',
+        gold: 'bg-primary text-primary-foreground hover:bg-primary/90',
         glass: 'bg-card/80 backdrop-blur-md border border-border text-foreground hover:bg-card hover:border-primary/25',
         luxury: 'bg-card/40 backdrop-blur-md border border-border text-card-foreground hover:bg-card/60 hover:border-primary/25',
       },

@@ -380,7 +380,7 @@
 > **Commit:** `fix(theme): migrate hardcoded colors to semantic CSS vars`
 
 ### 10.1 Mapeamento de classes a substituir (global em todos os frontends)
-- [ ] Substituições obrigatórias (busca global nos ficheiros `.tsx` e `.css`):
+- [x] Substituições obrigatórias (busca global nos ficheiros `.tsx` e `.css`):
   | Antes (hardcoded) | Depois (semântica) |
   |---|---|
   | `bg-sand` | `bg-background` |
@@ -395,20 +395,20 @@
   > **Excepção**: a sidebar usa `bg-night` intencionalmente (sempre escura)
 
 ### 10.2 TenantProvider — aplicar classe dark no HTML
-- [ ] `packages/admin/src/providers/tenant-provider.tsx`:
+- [x] `packages/admin/src/providers/tenant-provider.tsx`:
   - Verificar que ao mudar `themePreference` → `document.documentElement.classList.toggle('dark', isDark)`
   - Onde `isDark = themePreference === 'dark' || (themePreference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)`
   - Persistir preferência: `localStorage.setItem('movefy-theme', themePreference)`
   - No mount: ler `localStorage.getItem('movefy-theme')` e aplicar imediatamente para evitar flash
 
 ### 10.3 Componentes críticos a corrigir
-- [ ] `packages/admin/src/components/glass-card.tsx` → substituir `text-brown`, `bg-gold/10`, `border-gold/15` por vars semânticas
-- [ ] `packages/admin/src/components/top-bar.tsx` → substituir `bg-sand/80` por `bg-background/80`
-- [ ] `packages/admin/src/pages/financeiro.page.tsx` → substituir `bg-white`, `bg-gray-50` por `bg-card`, `bg-muted`
-- [ ] `packages/admin/src/pages/agenda.page.tsx` → mesmo processo
-- [ ] `packages/admin/src/pages/aprovacoes.page.tsx` → mesmo processo
-- [ ] `packages/admin/src/pages/configuracoes.page.tsx` → mesmo processo
-- [ ] `packages/pwa/src/` → substituir `bg-night`, `text-cream` hardcoded por CSS vars do TenantProvider
+- [x] `packages/admin/src/components/glass-card.tsx` → substituir `text-brown`, `bg-gold/10`, `border-gold/15` por vars semânticas
+- [x] `packages/admin/src/components/top-bar.tsx` → substituir `bg-sand/80` por `bg-background/80`
+- [x] `packages/admin/src/pages/financeiro.page.tsx` → substituir `bg-white`, `bg-gray-50` por `bg-card`, `bg-muted`
+- [x] `packages/admin/src/pages/agenda.page.tsx` → mesmo processo
+- [x] `packages/admin/src/pages/aprovacoes.page.tsx` → mesmo processo
+- [x] `packages/admin/src/pages/configuracoes.page.tsx` → mesmo processo
+- [x] `packages/pwa/src/` → substituir `bg-night`, `text-cream` hardcoded por CSS vars do TenantProvider
 
 ---
 

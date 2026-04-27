@@ -157,7 +157,7 @@ export function AjudantesPage() {
       accessorKey: 'disponivel',
       header: 'Disponível',
       cell: ({ row }) => (
-        <Badge className={row.original.disponivel ? 'bg-green-600' : 'bg-gray-500'}>
+        <Badge className={row.original.disponivel ? 'bg-green-600' : 'bg-muted-foreground'}>
           {row.original.disponivel ? 'Sim' : 'Não'}
         </Badge>
       ),

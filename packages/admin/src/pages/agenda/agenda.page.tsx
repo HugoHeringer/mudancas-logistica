@@ -35,13 +35,13 @@ type Vista = 'mensal' | 'semanal' | 'diaria';
 
 // Estado badge colors
 const estadoColors: Record<string, string> = {
-  pendente: 'bg-gray-400',
+  pendente: 'bg-amber-400',
   aprovada: 'bg-blue-400',
   a_caminho: 'bg-orange-400',
   em_servico: 'bg-green-500',
   concluida: 'bg-green-300',
   recusada: 'bg-red-400',
-  cancelada: 'bg-gray-500',
+  cancelada: 'bg-muted-foreground',
 };
 
 export function AgendaPage() {

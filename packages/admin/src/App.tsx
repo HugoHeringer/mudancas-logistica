@@ -38,8 +38,8 @@ import { useSuperAdminStore } from './stores/super-admin.store';
 function PageLoader() {
   return (
     <div className="flex items-center justify-center h-64">
-      <div className="flex items-center gap-3 text-brown-medium">
-        <div className="w-5 h-5 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         <span className="text-sm tracking-wide">A carregar...</span>
       </div>
     </div>

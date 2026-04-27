@@ -5,7 +5,7 @@ export const ESTADOS_MUDANCA_CORES: Record<string, string> = {
   em_servico: 'bg-cyan-500',
   concluida: 'bg-emerald-500',
   recusada: 'bg-red-500',
-  cancelada: 'bg-gray-500',
+  cancelada: 'bg-muted-foreground',
 };
 
 export const ESTADOS_MOTORISTA_CORES: Record<string, string> = {
