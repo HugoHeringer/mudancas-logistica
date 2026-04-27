@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMudancaDto } from '../mudanca/dto/create-mudanca.dto';
+import { EmailService } from '../comunicacao/email.service';
 
 @Injectable()
 export class PublicService {
   constructor(
     private prisma: PrismaService,
+    private emailService: EmailService,
   ) {}
 
   async criarMudanca(tenantId: string, dto: CreateMudancaDto) {
@@ -39,6 +41,15 @@ export class PublicService {
         camposPersonalizados: dto.camposPersonalizados as any || undefined,
       },
     });
+
+    // Email de confirmação ao cliente
+    if (mudanca.clienteEmail) {
+      this.emailService.send(tenantId, mudanca.clienteEmail, 'confirmacao_rececao', {
+        nomeCliente: mudanca.clienteNome || 'Cliente',
+        dataPretendida: mudanca.dataPretendida,
+        horaPretendida: mudanca.horaPretendida || '08:00',
+      }, mudanca.id);
+    }
 
     return mudanca;
   }
