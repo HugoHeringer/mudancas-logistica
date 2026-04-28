@@ -27,7 +27,7 @@ export class SuperAdminGuard implements CanActivate {
       user.isSuperAdmin === true ||
       user.perfil === 'super_admin' ||
       user.email?.endsWith('@mudancas-logistica.pt') ||
-      user.email?.endsWith('@plataforma.pt');
+      user.email?.endsWith('@movefy.pt');
 
     if (!isSuperAdminUser) {
       throw new ForbiddenException('Acesso restrito ao Movefy Console');

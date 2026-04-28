@@ -68,6 +68,8 @@ export function MudancaDetalhePage() {
   const [ajudantesSelecionados, setAjudantesSelecionados] = useState<string[]>([]);
   const [tempoEstimado, setTempoEstimado] = useState('2');
   const [observacoesAdmin, setObservacoesAdmin] = useState('');
+  const [showRecusar, setShowRecusar] = useState(false);
+  const [motivoRecusa, setMotivoRecusa] = useState('');
 
   const { data: mudanca, isLoading } = useQuery({
     queryKey: ['mudancas', id],
@@ -126,7 +128,6 @@ export function MudancaDetalhePage() {
       queryClient.invalidateQueries({ queryKey: ['mudancas'] });
       toast({ title: 'Mudança aprovada', description: 'A agenda foi atualizada e o motorista notificado.' });
       setShowAprovar(false);
-      navigate('/aprovacoes');
     },
     onError: () => {
       toast({ title: 'Erro', description: 'Não foi possível aprovar a mudança.', variant: 'destructive' });
@@ -160,6 +161,20 @@ approveMutation.mutate({
     },
     onError: () => {
       toast({ title: 'Erro', description: 'Não foi possível cancelar a mudança.', variant: 'destructive' });
+    },
+  });
+
+  const recusarMutation = useMutation({
+    mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
+      mudancasApi.refuse(id, motivo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mudancas'] });
+      toast({ title: 'Mudança recusada', description: 'O cliente será notificado.' });
+      setShowRecusar(false);
+      setMotivoRecusa('');
+    },
+    onError: () => {
+      toast({ title: 'Erro', description: 'Não foi possível recusar a mudança.', variant: 'destructive' });
     },
   });
 
@@ -250,7 +265,7 @@ approveMutation.mutate({
           {canRefuse && (
             <Button
               variant="destructive"
-              onClick={() => navigate('/aprovacoes')}
+              onClick={() => setShowRecusar(true)}
             >
               <XCircle className="h-4 w-4 mr-1" />
               Recusar
@@ -955,6 +970,50 @@ approveMutation.mutate({
               onClick={handleApprove}
             >
               {approveMutation.isPending ? 'A aprovar...' : 'Confirmar Aprovação'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Recusar dialog */}
+      <Dialog open={showRecusar} onOpenChange={setShowRecusar}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recusar Solicitação</DialogTitle>
+            <DialogDescription>
+              O cliente será notificado por email com o motivo da recusa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+              <p className="text-sm text-destructive">
+                Esta ação não pode ser desfeita. O cliente será notificado imediatamente.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Motivo da recusa</Label>
+              <Textarea
+                value={motivoRecusa}
+                onChange={(e) => setMotivoRecusa(e.target.value)}
+                placeholder="Explique o motivo da recusa ao cliente..."
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowRecusar(false); setMotivoRecusa(''); }}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!motivoRecusa.trim() || recusarMutation.isPending}
+              onClick={() => {
+                if (!motivoRecusa.trim()) return;
+                recusarMutation.mutate({ id: mudanca!.id, motivo: motivoRecusa });
+              }}
+            >
+              {recusarMutation.isPending ? 'A recusar...' : 'Confirmar Recusa'}
             </Button>
           </DialogFooter>
         </DialogContent>
