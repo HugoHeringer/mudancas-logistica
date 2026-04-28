@@ -53,11 +53,6 @@ export class MateriaisDto {
 export class CreateMudancaDto {
   @ApiProperty()
   @IsString()
-  @IsOptional()
-  tenantId?: string;
-
-  @ApiProperty()
-  @IsString()
   @IsNotEmpty()
   clienteNome: string;
 

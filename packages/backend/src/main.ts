@@ -7,11 +7,17 @@ import { AllExceptionsFilter } from './all-exceptions.filter';
 import { DecimalTransformInterceptor } from './prisma/decimal-transform.interceptor';
 import * as express from 'express';
 import * as path from 'path';
+import * as helmet from 'helmet';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger: ['log', 'error', 'warn', 'debug'] });
 
   const configService = app.get(ConfigService);
+
+  // Security & performance middleware
+  app.use(helmet());
+  app.use(compression());
 
   // Global exception filter for debug logging
   app.useGlobalFilters(new AllExceptionsFilter());

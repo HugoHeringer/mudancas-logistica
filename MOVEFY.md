@@ -452,9 +452,9 @@
 > **Commit:** `feat(email): integrate Resend for transactional emails`
 
 ### 12.1 Configuração do provedor (Resend)
-- [ ] Instalar: `npm install resend --workspace=packages/backend`
-- [ ] `packages/backend/.env.example`: adicionar `RESEND_API_KEY=re_xxxx`
-- [ ] Criar `packages/backend/src/email/email.service.ts`:
+- [x] Instalar: `npm install resend --workspace=packages/backend`
+- [x] `packages/backend/.env.example`: adicionar `RESEND_API_KEY=re_xxxx`
+- [x] Criar `packages/backend/src/email/email.service.ts`:
   ```typescript
   async send(to: string, subject: string, html: string): Promise<void> {
     await resend.emails.send({ from: 'noreply@movefy.pt', to, subject, html });
@@ -463,26 +463,26 @@
   - Wrapper com try/catch — falha de email não deve quebrar o fluxo principal
 
 ### 12.2 Gatilhos de email obrigatórios
-- [ ] `packages/backend/src/public/public.service.ts` → `criarMudancaPublica()`:
+- [x] `packages/backend/src/public/public.service.ts` → `criarMudancaPublica()`:
   - Após criar mudança: `emailService.send(cliente.email, 'Recebemos o seu pedido', template('solicitacao_recebida', vars))`
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → `aprovar()`:
+- [x] `packages/backend/src/mudancas/mudancas.service.ts` → `aprovar()`:
   - Após aprovar: enviar email ao cliente com data, hora, motorista
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → `recusar()`:
+- [x] `packages/backend/src/mudancas/mudancas.service.ts` → `recusar()`:
   - Após recusar: enviar email ao cliente com motivo
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → `iniciarDeslocamento()`:
+- [x] `packages/backend/src/mudancas/mudancas.service.ts` → `iniciarDeslocamento()`:
   - Após actualizar estado: enviar email "O motorista está a caminho + previsão de chegada"
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → `concluir()`:
+- [x] `packages/backend/src/mudancas/mudancas.service.ts` → `concluir()`:
   - Após concluir: enviar email ao cliente com resumo e total cobrado
 
 ### 12.3 Templates HTML
-- [ ] Criar `packages/backend/src/email/templates/`:
+- [x] Criar `packages/backend/src/email/templates/`:
   - `solicitacao_recebida.html` — confirmação de recepção do pedido
   - `mudanca_aprovada.html` — data, hora, motorista, veículo
   - `mudanca_recusada.html` — motivo da recusa
   - `motorista_a_caminho.html` — nome do motorista + previsão
   - `mudanca_concluida.html` — resumo + total
-- [ ] Todos os templates devem usar variáveis `{{nomeCliente}}`, `{{nomeEmpresa}}`, `{{logoUrl}}`, `{{corPrincipal}}`
-- [ ] Função de renderização: `renderTemplate(templateName, vars)` → substituir `{{key}}` por `vars[key]`
+- [x] Todos os templates devem usar variáveis `{{nomeCliente}}`, `{{nomeEmpresa}}`, `{{logoUrl}}`, `{{corPrincipal}}`
+- [x] Função de renderização: `renderTemplate(templateName, vars)` → substituir `{{key}}` por `vars[key]`
 
 ---
 
@@ -490,7 +490,7 @@
 > **Commit:** `feat(site): SEO meta tags + conversion optimisation`
 
 ### 13.1 Meta tags dinâmicas por tenant
-- [ ] `packages/site/src/app/layout.tsx` (ou equivalente Next.js):
+- [x] `packages/site/src/app/layout.tsx` (ou equivalente Next.js):
   - `<title>{brand.nome} — Mudanças em {brand.cidade} | Serviços de Transporte</title>`
   - `<meta name="description" content="Empresa de mudanças {brand.nome} em {brand.cidade}. Serviços locais, nacionais e internacionais. Peça orçamento grátis." />`
   - `<meta property="og:title" content="{brand.nome}" />`
@@ -498,7 +498,7 @@
   - `<meta name="robots" content="index, follow" />`
 
 ### 13.2 Schema.org LocalBusiness
-- [ ] `packages/site/src/app/layout.tsx`:
+- [x] `packages/site/src/app/layout.tsx`:
   - Adicionar script JSON-LD:
     ```html
     <script type="application/ld+json">{
@@ -521,11 +521,11 @@
   - Step 4 (veículo/equipa): veículo seleccionado obrigatório
 
 ### 13.4 Consentimento RGPD no formulário
-- [ ] `packages/site/src/components/agendamento-form.tsx` → último step antes de submeter:
+- [x] `packages/site/src/components/agendamento-form.tsx` → último step antes de submeter:
   - Adicionar checkbox obrigatório: "Aceito o tratamento dos meus dados pessoais para processamento deste pedido. [Política de Privacidade]"
   - Checkbox opcional: "Aceito receber comunicações futuras desta empresa"
   - Enviar no payload: `{ consentimentoDados: true, consentimentoMarketing: boolean, timestampConsentimento: Date.now() }`
-- [ ] `packages/backend/src/public/public.service.ts`:
+- [x] `packages/backend/src/public/public.service.ts`:
   - Se `consentimentoDados !== true`: lançar `BadRequestException('Consentimento obrigatório')`
   - Guardar `consentimentoDados`, `consentimentoMarketing`, `timestampConsentimento` na mudança
 
@@ -535,21 +535,21 @@
 > **Commit:** `feat(console): rebrand superadmin to Movefy Console`
 
 ### 14.1 Rebranding visual
-- [ ] `packages/superadmin/src/` (ou onde estiver o superadmin):
+- [x] `packages/superadmin/src/` (ou onde estiver o superadmin):
   - Substituir todas as ocorrências de "Super-Admin", "superadmin", "SuperAdmin" nos textos visíveis por "Movefy Console"
   - Sidebar header: logo da Movefy (placeholder se não existir: texto "MOVEFY CONSOLE")
   - Tema: manter dark (night) — é intencional para distinguir do admin dos clientes
 
 ### 14.2 Rota e acesso
-- [ ] URL de acesso: deve ser `console.movefy.pt` (configurar no middleware de tenant para não tratar "console" como slug de empresa)
-- [ ] Login do console: credenciais separadas (tabela `SuperAdminUser` ou campo `isSuperAdmin` no User com `tenantId = null`)
-- [ ] `packages/backend/src/super-admin/super-admin.guard.ts`:
+- [x] URL de acesso: deve ser `console.movefy.pt` (configurar no middleware de tenant para não tratar "console" como slug de empresa)
+- [x] Login do console: credenciais separadas (tabela `SuperAdminUser` ou campo `isSuperAdmin` no User com `tenantId = null`)
+- [x] `packages/backend/src/super-admin/super-admin.guard.ts`:
   - Verificar `user.isSuperAdmin === true` (não apenas `tenantId === 'super-admin'` hardcoded)
 
 ### 14.3 Lista de empresas melhorada
-- [ ] `packages/backend/src/super-admin/super-admin.service.ts` → `getTenants()`:
+- [x] `packages/backend/src/super-admin/super-admin.service.ts` → `getTenants()`:
   - Retornar para cada tenant: `{ id, nome, slug, plano, eAtivo, totalMudancas, totalUtilizadores, createdAt, trialExpiraEm }`
-- [ ] UI da lista de tenants:
+- [x] UI da lista de tenants:
   - Mostrar badge de plano (Starter/Pro/Enterprise/Trial)
   - Mostrar badge de estado (Activo/Suspenso/Trial a expirar)
   - Botão "Suspender" / "Reactivar"
@@ -561,19 +561,19 @@
 > **Commit:** `feat(notificacoes): in-app notification center`
 
 ### 15.1 Backend
-- [ ] Verificar que modelo `Notificacao` existe no Prisma: `{ id, tenantId, userId, tipo, mensagem, lida, link, createdAt }`
-- [ ] `packages/backend/src/notificacoes/notificacoes.service.ts`:
+- [x] Verificar que modelo `Notificacao` existe no Prisma: `{ id, tenantId, userId, tipo, mensagem, lida, link, createdAt }`
+- [x] `packages/backend/src/notificacoes/notificacoes.service.ts`:
   - `criarNotificacao(tenantId, userId, tipo, mensagem, link)` — chamado por outros services
   - `marcarLida(id, userId)` — só o próprio utilizador pode marcar como lida
   - `listar(userId, tenantId)` → retornar últimas 20 não lidas + 10 lidas
 
 ### 15.2 Criar notificações nos eventos principais
-- [ ] `mudancas.service.ts` → `criarMudancaPublica()`: notificação para todos os utilizadores `operacional` e `admin`
-- [ ] `mudancas.service.ts` → `iniciarDeslocamento()`: notificação para `admin` e `gerente`
-- [ ] `mudancas.service.ts` → `concluir()`: notificação para `admin`, `gerente`, `financeiro`
+- [x] `mudancas.service.ts` → `criarMudancaPublica()`: notificação para todos os utilizadores `operacional` e `admin`
+- [x] `mudancas.service.ts` → `iniciarDeslocamento()`: notificação para `admin` e `gerente`
+- [x] `mudancas.service.ts` → `concluir()`: notificação para `admin`, `gerente`, `financeiro`
 
 ### 15.3 UI do sino de notificações
-- [ ] `packages/admin/src/components/top-bar.tsx`:
+- [x] `packages/admin/src/components/top-bar.tsx`:
   - Sino com badge de contagem de não lidas
   - Dropdown com lista de notificações (ícone + mensagem + tempo relativo + link)
   - Polling a cada 30 segundos: `useInterval(() => refetch(), 30000)`
@@ -585,14 +585,14 @@
 > **Commit:** `refactor: remove unused or polluting features`
 
 ### 16.1 Remover
-- [ ] `packages/admin/src/pages/agenda.page.tsx` → **remover** botão e dialog "Criar Slot" (substituído pelo modelo de capacidade)
-- [ ] `packages/admin/src/pages/configuracoes.page.tsx` → **remover** campo `acrescimoUrgencia` duplicado da tab "Preços"
-- [ ] Qualquer referência a `plataforma.pt` no código → substituir por `movefy.pt`
-- [ ] Qualquer texto "Mudanças e Logística" hardcoded → substituir por `brand.nome || 'Movefy'`
-- [ ] `packages/backend/src/` → remover endpoints não utilizados (verificar com `grep -r "// TODO: remove"`)
+- [x] `packages/admin/src/pages/agenda.page.tsx` → **remover** botão e dialog "Criar Slot" (substituído pelo modelo de capacidade)
+- [x] `packages/admin/src/pages/configuracoes.page.tsx` → **remover** campo `acrescimoUrgencia` duplicado da tab "Preços"
+- [x] Qualquer referência a `plataforma.pt` no código → substituir por `movefy.pt`
+- [x] Qualquer texto "Mudanças e Logística" hardcoded → substituir por `brand.nome || 'Movefy'`
+- [x] `packages/backend/src/` → remover endpoints não utilizados (verificar com `grep -r "// TODO: remove"`)
 
 ### 16.2 Simplificar
-- [ ] `packages/admin/src/pages/mudanca-detalhe.page.tsx` → botões "Aprovar" e "Recusar":
+- [x] `packages/admin/src/pages/mudanca-detalhe.page.tsx` → botões "Aprovar" e "Recusar":
   - **Remover** redirect para `/aprovacoes`
   - **Substituir** por dialog inline directamente na página de detalhe
 
@@ -602,18 +602,18 @@
 > **Commit:** `chore: security hardening + code quality`
 
 ### 17.1 Segurança
-- [ ] `packages/backend/src/main.ts`:
+- [x] `packages/backend/src/main.ts`:
   - Verificar que `helmet()` está activo: `app.use(helmet())`
   - Verificar que `cors` está configurado com origens explícitas (não `*`):
     ```typescript
     app.enableCors({ origin: ['https://*.movefy.pt', 'http://localhost:3000', 'http://localhost:5173'] })
     ```
   - Verificar que `compression()` está activo para performance
-- [ ] Todos os endpoints que recebem `tenantId` do body: **remover** — o `tenantId` deve vir APENAS do JWT/contexto, nunca do cliente
-- [ ] `packages/backend/src/prisma/prisma.service.ts`: verificar que não existe logging de queries em produção (`NODE_ENV !== 'development'`)
+- [x] Todos os endpoints que recebem `tenantId` do body: **remover** — o `tenantId` deve vir APENAS do JWT/contexto, nunca do cliente
+- [x] `packages/backend/src/prisma/prisma.service.ts`: verificar que não existe logging de queries em produção (`NODE_ENV !== 'development'`)
 
 ### 17.2 Variáveis de ambiente
-- [ ] `packages/backend/.env.example` — verificar que contém todas as vars necessárias:
+- [x] `packages/backend/.env.example` — verificar que contém todas as vars necessárias:
   ```
   DATABASE_URL=
   JWT_SECRET=
@@ -625,14 +625,14 @@
   AWS_SECRET_ACCESS_KEY=
   FRONTEND_URLS=http://localhost:5173,http://localhost:3000
   ```
-- [ ] Verificar que `.gitignore` inclui `.env`, `.env.local`, `.env.production`
+- [x] Verificar que `.gitignore` inclui `.env`, `.env.local`, `.env.production`
 
 ### 17.3 Performance básica
-- [ ] `packages/admin/src/` → verificar que `React.lazy()` está a ser usado nas rotas principais (code splitting)
-- [ ] `packages/backend/src/mudancas/mudancas.service.ts` → `findAll()`:
+- [x] `packages/admin/src/` → verificar que `React.lazy()` está a ser usado nas rotas principais (code splitting)
+- [x] `packages/backend/src/mudancas/mudancas.service.ts` → `findAll()`:
   - Verificar que paginação existe: `take: limit, skip: offset`
   - Default: `limit = 20`
-- [ ] Prisma: verificar índices nas colunas mais consultadas:
+- [x] Prisma: verificar índices nas colunas mais consultadas:
   ```prisma
   @@index([tenantId, estado])        // Mudanca
   @@index([tenantId, dataPretendida]) // Mudanca
@@ -678,7 +678,7 @@
 | 14 | Movefy Console | 🟡 MÉDIO | [ ] |
 | 15 | Notificações in-app | 🟡 MÉDIO | [ ] |
 | 16 | Remoção de lixo | 🟡 MÉDIO | [ ] |
-| 17 | Qualidade e segurança | 🟢 BAIXO | [ ] |
+| 17 | Qualidade e segurança | 🟢 BAIXO | [x] |
 | 18 | Site movefy.pt | 🟢 BAIXO | [ ] |
 
 ---
