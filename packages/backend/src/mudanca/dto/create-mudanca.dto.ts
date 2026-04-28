@@ -139,4 +139,19 @@ export class CreateMudancaDto {
   @IsObject()
   @IsOptional()
   camposPersonalizados?: Record<string, any>;
+
+  @ApiProperty({ default: false })
+  @IsBoolean()
+  @IsOptional()
+  consentimentoDados?: boolean;
+
+  @ApiProperty({ default: false })
+  @IsBoolean()
+  @IsOptional()
+  consentimentoMarketing?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  timestampConsentimento?: string;
 }

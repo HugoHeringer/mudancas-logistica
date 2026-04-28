@@ -72,6 +72,9 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
   const [veiculos, setVeiculos] = useState<any[]>([]);
   const [camposPersonalizados, setCamposPersonalizados] = useState<any[]>([]);
   const [valoresCampos, setValoresCampos] = useState<Record<string, any>>({});
+  const [consentimentoDados, setConsentimentoDados] = useState(false);
+  const [consentimentoMarketing, setConsentimentoMarketing] = useState(false);
+  const [veiculoError, setVeiculoError] = useState(false);
 
   useEffect(() => {
     if (tenantId) {
@@ -123,12 +126,23 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
       const valid = await trigger(fields);
       if (!valid) return;
     }
+    // Step 3: veiculo obrigatorio
+    if (step === 3 && veiculos.length > 0 && !selectedVeiculoId) {
+      setVeiculoError(true);
+      return;
+    }
+    setVeiculoError(false);
     setStep(nextStep);
   };
 
   const onSubmit = async (data: FormData) => {
     if (!tenantId) {
       console.error('Tenant ID nao disponivel');
+      return;
+    }
+
+    if (!consentimentoDados) {
+      setSubmitError('Deve aceitar o tratamento de dados pessoais para submeter o pedido.');
       return;
     }
 
@@ -179,6 +193,9 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
         eInternacional: data.internacional || false,
         tenantId,
         camposPersonalizados: Object.keys(valoresCampos).length > 0 ? valoresCampos : undefined,
+        consentimentoDados: true,
+        consentimentoMarketing,
+        timestampConsentimento: new Date().toISOString(),
       });
       setSubmitted(true);
     } catch (err: any) {
@@ -511,6 +528,9 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             ) : (
               <p className="text-sm text-muted-foreground">Nenhum veiculo disponivel</p>
             )}
+            {veiculoError && (
+              <p className="text-xs text-terracotta mt-2">Seleccione um veiculo para continuar</p>
+            )}
 
             <div className="flex justify-between mt-6">
               <button type="button" onClick={() => setStep(2)} className="px-6 py-2.5 border border-border text-muted-foreground rounded-lg text-sm font-medium">
@@ -571,9 +591,36 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                   Proximo
                 </button>
               ) : (
-                <GradientButton type="submit" disabled={submitting}>
-                  {submitting ? 'A submeter...' : 'Submeter Pedido'}
-                </GradientButton>
+                <>
+                  <div className="space-y-3 mr-4 flex-1">
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={consentimentoDados}
+                        onChange={(e) => setConsentimentoDados(e.target.checked)}
+                        className="rounded mt-0.5"
+                        required
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        Aceito o tratamento dos meus dados pessoais para processamento deste pedido. <a href="#" className="underline">Política de Privacidade</a> *
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={consentimentoMarketing}
+                        onChange={(e) => setConsentimentoMarketing(e.target.checked)}
+                        className="rounded mt-0.5"
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        Aceito receber comunicações futuras desta empresa
+                      </span>
+                    </label>
+                  </div>
+                  <GradientButton type="submit" disabled={submitting}>
+                    {submitting ? 'A submeter...' : 'Submeter Pedido'}
+                  </GradientButton>
+                </>
               )}
             </div>
           </GlassCard>
@@ -598,6 +645,32 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                   {renderCampoField(campo)}
                 </div>
               ))}
+            </div>
+
+            <div className="space-y-3 mt-6">
+              <label className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={consentimentoDados}
+                  onChange={(e) => setConsentimentoDados(e.target.checked)}
+                  className="rounded mt-0.5"
+                  required
+                />
+                <span className="text-xs text-muted-foreground">
+                  Aceito o tratamento dos meus dados pessoais para processamento deste pedido. <a href="#" className="underline">Política de Privacidade</a> *
+                </span>
+              </label>
+              <label className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={consentimentoMarketing}
+                  onChange={(e) => setConsentimentoMarketing(e.target.checked)}
+                  className="rounded mt-0.5"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Aceito receber comunicações futuras desta empresa
+                </span>
+              </label>
             </div>
 
             <div className="flex justify-between mt-6">

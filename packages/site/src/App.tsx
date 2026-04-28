@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import { TenantProvider } from './theme/TenantProvider';
 import { SiteLayout } from './layouts/site.layout';
 import { HomePage } from './pages/home.page';
@@ -17,16 +18,18 @@ const queryClient = new QueryClient({
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TenantProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<SiteLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/agendar" element={<AgendarPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </TenantProvider>
+      <HelmetProvider>
+        <TenantProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<SiteLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/agendar" element={<AgendarPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </TenantProvider>
+      </HelmetProvider>
     </QueryClientProvider>
   );
 }

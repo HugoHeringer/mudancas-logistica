@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMudancaDto } from '../mudanca/dto/create-mudanca.dto';
 import { EmailService } from '../comunicacao/email.service';
@@ -20,6 +20,10 @@ export class PublicService {
       throw new NotFoundException('Empresa não encontrada');
     }
 
+    if (!dto.consentimentoDados) {
+      throw new BadRequestException('Consentimento de tratamento de dados é obrigatório');
+    }
+
     const mudanca = await this.prisma.mudanca.create({
       data: {
         tenantId,
@@ -39,6 +43,9 @@ export class PublicService {
         eInternacional: dto.eInternacional,
         documentacao: dto.documentacao,
         camposPersonalizados: dto.camposPersonalizados as any || undefined,
+        consentimentoDados: dto.consentimentoDados ?? false,
+        consentimentoMarketing: dto.consentimentoMarketing ?? false,
+        timestampConsentimento: dto.timestampConsentimento ? new Date(dto.timestampConsentimento) : new Date(),
       },
     });
 

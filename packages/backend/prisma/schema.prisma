@@ -124,6 +124,11 @@ model Mudanca {
   documentacao  String?
   camposPersonalizados Json?   @default("{}")
 
+  // RGPD Consent
+  consentimentoDados      Boolean  @default(false)
+  consentimentoMarketing  Boolean  @default(false)
+  timestampConsentimento  DateTime?
+
   // Aprovação
   aprovadoPor   String?  @map("aprovadoPor")
   aprovadoEm    DateTime?
