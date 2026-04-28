@@ -32,7 +32,7 @@ export function LoginPage({ onLogin }: { onLogin: (accessToken: string, refreshT
       <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
         <div className="flex items-center justify-center gap-3 mb-8">
           <Shield className="h-8 w-8 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Super-Admin</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Movefy Console</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -43,7 +43,7 @@ function AppLayout({ onLogout }: { onLogout: () => void }) {
       <header className="bg-gray-900 text-white">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold">Super-Admin</h1>
+            <h1 className="text-xl font-bold">MOVEFY CONSOLE</h1>
             <p className="text-gray-400 text-sm">Gestão da Plataforma SaaS</p>
           </div>
           <button

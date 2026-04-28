@@ -97,8 +97,8 @@ export function DetalheTenantPage() {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Motoristas</p>
-              <p className="text-2xl font-bold">{tenant._count?.motoristas || 0}</p>
+              <p className="text-sm text-gray-500">Utilizadores</p>
+              <p className="text-2xl font-bold">{tenant._count?.users || 0}</p>
             </div>
             <Building className="h-8 w-8 text-purple-600" />
           </div>
@@ -106,8 +106,8 @@ export function DetalheTenantPage() {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Veículos</p>
-              <p className="text-2xl font-bold">{tenant._count?.veiculos || 0}</p>
+              <p className="text-sm text-gray-500">Plano</p>
+              <p className="text-2xl font-bold capitalize">{tenant.plano || 'trial'}</p>
             </div>
             <Settings className="h-8 w-8 text-orange-600" />
           </div>
@@ -118,25 +118,43 @@ export function DetalheTenantPage() {
         <h3 className="font-semibold text-lg">Informações</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-gray-500">Subdomínio</p>
-            <p className="font-medium">{tenant.subdomain}.plataforma.pt</p>
+            <p className="text-sm text-gray-500">Subdom&iacute;nio</p>
+            <p className="font-medium">{tenant.subdomain}.movefy.pt</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Estado</p>
-            <span className={`px-2 py-1 rounded-full text-xs ${
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               tenant.estado === 'ativa' ? 'bg-green-100 text-green-800' :
               tenant.estado === 'em_setup' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-red-100 text-red-800'
+              tenant.estado === 'suspensa' ? 'bg-red-100 text-red-800' :
+              'bg-gray-200 text-gray-600'
             }`}>
-              {tenant.estado}
+              {tenant.estado === 'ativa' ? 'Activo' :
+               tenant.estado === 'em_setup' ? 'Em Setup' :
+               tenant.estado === 'suspensa' ? 'Suspenso' :
+               tenant.estado}
             </span>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Data de Criação</p>
-            <p className="font-medium">{tenant.dataCriacao ? new Date(tenant.dataCriacao).toLocaleDateString('pt-PT') : '—'}</p>
+            <p className="text-sm text-gray-500">Plano</p>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              { trial: 'bg-gray-100 text-gray-700', starter: 'bg-blue-100 text-blue-800', pro: 'bg-purple-100 text-purple-800', enterprise: 'bg-amber-100 text-amber-800' }[tenant.plano] || 'bg-gray-100 text-gray-700'
+            }`}>
+              {{ trial: 'Trial', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' }[tenant.plano] || tenant.plano}
+            </span>
+          </div>
+          {tenant.trialExpiraEm && (
+            <div>
+              <p className="text-sm text-gray-500">Trial Expira</p>
+              <p className="font-medium">{new Date(tenant.trialExpiraEm).toLocaleDateString('pt-PT')}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-sm text-gray-500">Data de Cria&ccedil;&atilde;o</p>
+            <p className="font-medium">{tenant.createdAt ? new Date(tenant.createdAt).toLocaleDateString('pt-PT') : '—'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Último Acesso</p>
+            <p className="text-sm text-gray-500">&Uacute;ltimo Acesso</p>
             <p className="font-medium">{tenant.dataUltimoAcesso ? new Date(tenant.dataUltimoAcesso).toLocaleDateString('pt-PT') : '—'}</p>
           </div>
         </div>

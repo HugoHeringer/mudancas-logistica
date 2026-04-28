@@ -10,14 +10,21 @@ export class SuperAdminService {
   async getAllTenants() {
     return this.prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        subdomain: true,
+        slug: true,
+        estado: true,
+        plano: true,
+        eAtivo: true,
+        trialExpiraEm: true,
+        configMarca: true,
+        createdAt: true,
         _count: {
           select: {
             users: true,
             mudancas: true,
             clientes: true,
-            motoristas: true,
-            veiculos: true,
           },
         },
       },

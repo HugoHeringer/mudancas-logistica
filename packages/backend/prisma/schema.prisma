@@ -60,6 +60,7 @@ model User {
   perfil        String   // admin, gerente, financeiro, operacional, motorista
   permissoes    Json?    // { motoristasPermitidos: ['id1', 'id2'], verTodosMotoristas: true }
   eAtivo        Boolean  @default(true)
+  isSuperAdmin  Boolean  @default(false)
   ultimoLogin   DateTime?
   ultimaSessao  DateTime?
   createdAt     DateTime @default(now())

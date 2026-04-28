@@ -82,7 +82,7 @@ export function CriarTenantPage() {
               onChange={(e) => setForm({ ...form, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
               required
             />
-            <span className="flex items-center px-3 bg-gray-100 border border-l-0 rounded-r-md text-gray-500">.plataforma.pt</span>
+            <span className="flex items-center px-3 bg-gray-100 border border-l-0 rounded-r-md text-gray-500">.movefy.pt</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">

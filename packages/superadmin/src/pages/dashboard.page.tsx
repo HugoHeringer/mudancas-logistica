@@ -1,9 +1,39 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Building, Plus, Users, Truck, Loader2, AlertCircle } from 'lucide-react';
+import { Building, Plus, Users, Truck, Loader2, Ban, CheckCircle, Eye } from 'lucide-react';
 import { superAdminApi } from '../lib/api';
 
+const planoColors: Record<string, string> = {
+  trial: 'bg-gray-100 text-gray-700',
+  starter: 'bg-blue-100 text-blue-800',
+  pro: 'bg-purple-100 text-purple-800',
+  enterprise: 'bg-amber-100 text-amber-800',
+};
+
+const planoLabels: Record<string, string> = {
+  trial: 'Trial',
+  starter: 'Starter',
+  pro: 'Pro',
+  enterprise: 'Enterprise',
+};
+
+const estadoColors: Record<string, string> = {
+  ativa: 'bg-green-100 text-green-800',
+  em_setup: 'bg-yellow-100 text-yellow-800',
+  suspensa: 'bg-red-100 text-red-800',
+  cancelada: 'bg-gray-200 text-gray-600',
+};
+
+const estadoLabels: Record<string, string> = {
+  ativa: 'Activo',
+  em_setup: 'Em Setup',
+  suspensa: 'Suspenso',
+  cancelada: 'Cancelado',
+};
+
 export function DashboardPage() {
+  const queryClient = useQueryClient();
+
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['superadmin', 'stats'],
     queryFn: () => superAdminApi.getStats().then((r) => r.data),
@@ -12,6 +42,12 @@ export function DashboardPage() {
   const { data: tenants, isLoading: tenantsLoading } = useQuery({
     queryKey: ['superadmin', 'tenants'],
     queryFn: () => superAdminApi.getTenants().then((r) => r.data),
+  });
+
+  const estadoMutation = useMutation({
+    mutationFn: ({ id, estado }: { id: string; estado: string }) =>
+      superAdminApi.updateTenantEstado(id, estado),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['superadmin', 'tenants'] }),
   });
 
   if (statsLoading || tenantsLoading) {
@@ -25,7 +61,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Tenants</h2>
+        <h2 className="text-2xl font-bold">Empresas</h2>
         <Link to="/criar" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           <Plus className="h-5 w-5" />
           Novo Tenant
@@ -54,7 +90,7 @@ export function DashboardPage() {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Mudanças</p>
+              <p className="text-sm text-gray-500">Total Mudan&ccedil;as</p>
               <p className="text-2xl font-bold">{stats?.totalMudancas || 0}</p>
             </div>
             <Truck className="h-8 w-8 text-purple-600" />
@@ -76,39 +112,72 @@ export function DashboardPage() {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left p-4 font-medium text-gray-500">Empresa</th>
-              <th className="text-left p-4 font-medium text-gray-500">Subdomínio</th>
+              <th className="text-left p-4 font-medium text-gray-500">Dom&iacute;nio</th>
+              <th className="text-left p-4 font-medium text-gray-500">Plano</th>
               <th className="text-left p-4 font-medium text-gray-500">Estado</th>
-              <th className="text-left p-4 font-medium text-gray-500">Mudanças</th>
-              <th className="text-left p-4 font-medium text-gray-500">Clientes</th>
-              <th className="text-right p-4 font-medium text-gray-500">Ações</th>
+              <th className="text-left p-4 font-medium text-gray-500">Mudan&ccedil;as</th>
+              <th className="text-left p-4 font-medium text-gray-500">Utilizadores</th>
+              <th className="text-right p-4 font-medium text-gray-500">A&ccedil;&otilde;es</th>
             </tr>
           </thead>
           <tbody>
             {tenants?.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-gray-500">Nenhum tenant encontrado</td>
+                <td colSpan={7} className="p-8 text-center text-gray-500">Nenhum tenant encontrado</td>
               </tr>
             ) : (
-              tenants?.map((t: any) => (
-                <tr key={t.id} className="border-b hover:bg-gray-50">
-                  <td className="p-4 font-medium">{(t.configMarca as any)?.nome || t.subdomain}</td>
-                  <td className="p-4 text-gray-600">{t.subdomain}.plataforma.pt</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      t.estado === 'ativa' ? 'bg-green-100 text-green-800' :
-                      t.estado === 'em_setup' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {t.estado}
-                    </span>
-                  </td>
-                  <td className="p-4">{t._count?.mudancas || 0}</td>
-                  <td className="p-4">{t._count?.clientes || 0}</td>
-                  <td className="text-right p-4">
-                    <Link to={`/tenant/${t.id}`} className="text-blue-600 hover:underline">Ver detalhes</Link>
-                  </td>
-                </tr>
-              ))
+              tenants?.map((t: any) => {
+                const isSuspended = t.estado === 'suspensa';
+                return (
+                  <tr key={t.id} className="border-b hover:bg-gray-50">
+                    <td className="p-4 font-medium">{(t.configMarca as any)?.nome || t.subdomain}</td>
+                    <td className="p-4 text-gray-600">{t.subdomain}.movefy.pt</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${planoColors[t.plano] || planoColors.trial}`}>
+                        {planoLabels[t.plano] || t.plano}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${estadoColors[t.estado] || 'bg-gray-100 text-gray-600'}`}>
+                        {estadoLabels[t.estado] || t.estado}
+                      </span>
+                    </td>
+                    <td className="p-4">{t._count?.mudancas || 0}</td>
+                    <td className="p-4">{t._count?.users || 0}</td>
+                    <td className="text-right p-4">
+                      <div className="flex items-center justify-end gap-2">
+                        {isSuspended ? (
+                          <button
+                            onClick={() => estadoMutation.mutate({ id: t.id, estado: 'ativa' })}
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100"
+                            title="Reactivar"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Reactivar
+                          </button>
+                        ) : t.estado === 'ativa' ? (
+                          <button
+                            onClick={() => estadoMutation.mutate({ id: t.id, estado: 'suspensa' })}
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100"
+                            title="Suspender"
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                            Suspender
+                          </button>
+                        ) : null}
+                        <Link
+                          to={`/tenant/${t.id}`}
+                          className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
+                          title="Ver detalhes"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Detalhes
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

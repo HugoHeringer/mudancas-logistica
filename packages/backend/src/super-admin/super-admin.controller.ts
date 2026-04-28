@@ -22,7 +22,7 @@ export class SuperAdminController {
   constructor(private readonly superAdminService: SuperAdminService) {}
 
   @Get('tenants')
-  @ApiOperation({ summary: 'Listar todos os tenants (Super-Admin)' })
+  @ApiOperation({ summary: 'Listar todos os tenants (Movefy Console)' })
   getAllTenants() {
     return this.superAdminService.getAllTenants();
   }
@@ -35,7 +35,7 @@ export class SuperAdminController {
 
   @Post('tenants')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Criar novo tenant com admin (Super-Admin)' })
+  @ApiOperation({ summary: 'Criar novo tenant com admin (Movefy Console)' })
   createTenantWithAdmin(@Body() body: CreateTenantDto & {
     adminNome: string;
     adminEmail: string;

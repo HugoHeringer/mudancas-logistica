@@ -22,15 +22,15 @@ export class SuperAdminGuard implements CanActivate {
       throw new ForbiddenException('Autenticação necessária');
     }
 
-    // Super-admin users are identified by a specific email domain or a flag
-    // For now, users with perfil 'super_admin' or email ending with @platform.pt
+    // Super-admin users are identified by isSuperAdmin flag on User model
     const isSuperAdminUser =
+      user.isSuperAdmin === true ||
       user.perfil === 'super_admin' ||
       user.email?.endsWith('@mudancas-logistica.pt') ||
       user.email?.endsWith('@plataforma.pt');
 
     if (!isSuperAdminUser) {
-      throw new ForbiddenException('Acesso restrito ao Super-Admin');
+      throw new ForbiddenException('Acesso restrito ao Movefy Console');
     }
 
     return true;
