@@ -7,7 +7,7 @@ import { AllExceptionsFilter } from './all-exceptions.filter';
 import { DecimalTransformInterceptor } from './prisma/decimal-transform.interceptor';
 import * as express from 'express';
 import * as path from 'path';
-import * as helmet from 'helmet';
+import helmet from 'helmet';
 import * as compression from 'compression';
 
 async function bootstrap() {

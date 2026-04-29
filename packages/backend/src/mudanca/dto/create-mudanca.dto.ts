@@ -149,4 +149,9 @@ export class CreateMudancaDto {
   @IsString()
   @IsOptional()
   timestampConsentimento?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
 }
