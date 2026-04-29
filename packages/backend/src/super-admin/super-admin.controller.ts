@@ -8,11 +8,15 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  IsString,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { IsEmail, IsNotEmpty, MinLength, Matches } from 'class-validator';
 import { SuperAdminService } from './super-admin.service';
 import { CreateTenantDto } from '../tenant/dto/create-tenant.dto';
 import { IsSuperAdmin } from '../auth/decorators/super-admin.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('super-admin')
 @Controller('super-admin')
@@ -67,5 +71,25 @@ export class SuperAdminController {
   @ApiOperation({ summary: 'Remover tenant' })
   deleteTenant(@Param('id') id: string) {
     return this.superAdminService.deleteTenant(id);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Controlador público — sem guard de super-admin nem JWT
+// ─────────────────────────────────────────────────────────────
+@ApiTags('public-trial')
+@Controller('super-admin/trial')
+export class TrialController {
+  constructor(private readonly superAdminService: SuperAdminService) {}
+
+  @Post()
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
+  @ApiOperation({ summary: 'Criar conta trial pública (site movefy.pt)' })
+  criarTrial(
+    @Body() body: { nomeEmpresa: string; email: string; telefone: string },
+  ) {
+    return this.superAdminService.criarTrial(body);
   }
 }

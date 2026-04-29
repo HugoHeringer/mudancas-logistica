@@ -1,0 +1,279 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================
+   DESIGN TOKENS
+============================= */
+:root {
+  --color-primary: #1A1A2E;
+  --color-accent: #E8B84B;
+  --color-accent-dark: #C9962A;
+  --color-bg: #F9F7F3;
+  --color-text: #1A1A2E;
+  --color-muted: #6B7280;
+  --color-card: #FFFFFF;
+  --color-border: #E5E7EB;
+  --font-inter: 'Inter', system-ui, sans-serif;
+  --font-outfit: 'Outfit', system-ui, sans-serif;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-glow: 0 0 40px rgba(232,184,75,0.25);
+}
+
+/* =============================
+   BASE
+============================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-inter);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =============================
+   UTILITÁRIOS GLOBAIS
+============================= */
+.section-padding {
+  @apply py-20 md:py-28 px-4;
+}
+
+.container-lg {
+  @apply max-w-6xl mx-auto w-full;
+}
+
+.container-md {
+  @apply max-w-4xl mx-auto w-full;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4A4A8E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-accent {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #F5D88A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* =============================
+   TIPOGRAFIA
+============================= */
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-outfit);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.display-xl {
+  @apply text-5xl md:text-6xl lg:text-7xl font-bold;
+  font-family: var(--font-outfit);
+}
+
+.display-lg {
+  @apply text-4xl md:text-5xl font-bold;
+  font-family: var(--font-outfit);
+}
+
+.display-md {
+  @apply text-3xl md:text-4xl font-bold;
+  font-family: var(--font-outfit);
+}
+
+/* =============================
+   BOTÕES
+============================= */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 cursor-pointer;
+  font-family: var(--font-inter);
+}
+
+.btn-primary {
+  @apply btn bg-accent text-primary px-6 py-3 text-base;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  box-shadow: 0 2px 12px rgba(232,184,75,0.35);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-accent-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(232,184,75,0.45);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-outline {
+  @apply btn border-2 px-6 py-3 text-base;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: transparent;
+}
+
+.btn-outline:hover {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-ghost {
+  @apply btn px-4 py-2 text-sm;
+  color: var(--color-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--color-primary);
+  background-color: rgba(26,26,46,0.06);
+}
+
+/* =============================
+   CARDS
+============================= */
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.card-featured {
+  @apply card;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-md);
+}
+
+/* =============================
+   INPUTS
+============================= */
+.input {
+  @apply w-full px-4 py-3 rounded-xl border text-base outline-none transition-all duration-200;
+  border-color: var(--color-border);
+  background-color: var(--color-card);
+  color: var(--color-text);
+  font-family: var(--font-inter);
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(232,184,75,0.2);
+}
+
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+.label {
+  @apply block text-sm font-medium mb-1;
+  color: var(--color-text);
+  font-family: var(--font-inter);
+}
+
+/* =============================
+   BADGES
+============================= */
+.badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.badge-accent {
+  @apply badge;
+  background-color: rgba(232,184,75,0.15);
+  color: var(--color-accent-dark);
+}
+
+.badge-primary {
+  @apply badge;
+  background-color: rgba(26,26,46,0.08);
+  color: var(--color-primary);
+}
+
+.badge-green {
+  @apply badge;
+  background-color: rgba(16,185,129,0.12);
+  color: #065F46;
+}
+
+/* =============================
+   SECÇÕES
+============================= */
+.section-tag {
+  @apply text-xs font-bold uppercase tracking-widest;
+  color: var(--color-accent);
+}
+
+/* =============================
+   ANIMAÇÕES
+============================= */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.7s ease-out forwards;
+}
+
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-400 { animation-delay: 400ms; }
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* =============================
+   DIVIDER
+============================= */
+.divider {
+  @apply w-16 h-1 rounded-full mx-auto mb-4;
+  background: linear-gradient(90deg, var(--color-accent), transparent);
+}
+
+/* =============================
+   SCROLLBAR
+============================= */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }

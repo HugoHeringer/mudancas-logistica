@@ -643,18 +643,64 @@
 
 ## BLOCO 18 — SITE MOVEFY.PT (INSTITUCIONAL) 🟢
 > **Commit:** `feat(movefy-site): landing page for B2B sales`
-> **Nota:** Criar como package separado `packages/movefy-site` com Next.js
+> **Nota:** Criado como package separado `packages/movefy-site` com Next.js 15 (App Router)
 
-- [ ] Criar `packages/movefy-site/` com Next.js + Tailwind
-- [ ] Secções obrigatórias:
-  - Hero: "Gerencie toda a sua empresa de mudanças" + CTA "Começar grátis 30 dias"
-  - Features: cards com as 4 funcionalidades principais (Admin, Site, PWA, Financeiro)
-  - Preços: tabela Starter / Pro / Enterprise com toggle mensal/anual
-  - Testemunhos: 3 empresas clientes (placeholder por agora)
-  - FAQ: 5 perguntas mais comuns
-  - Footer: links, redes sociais, política de privacidade
-- [ ] Formulário de trial: `{ nomeEmpresa, email, telefone }` → chama `POST /super-admin/trial`
-- [ ] SEO: title "Movefy — Software de Gestão para Empresas de Mudanças | Portugal"
+### 18.1 Setup do package
+- [x] Criar o projecto Next.js com TypeScript, Tailwind, App Router
+- [x] `packages/movefy-site/package.json` → campo `name`: `"@mudancas/movefy-site"`
+- [x] Workspace configurado no `package.json` raiz
+- [x] `packages/movefy-site/.env.local` com `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_SITE_URL`
+- [x] `packages/movefy-site/.env.example` → espelhar as mesmas variáveis sem valores
+
+### 18.2 Design system do site institucional
+- [x] Criar `packages/movefy-site/app/globals.css` com paleta, tipografia e utilitários globais
+- [x] Criar `packages/movefy-site/lib/fonts.ts` com Inter e Outfit via `next/font`
+
+### 18.3 Layout raiz e SEO global
+- [x] `packages/movefy-site/app/layout.tsx` com font vars, metadata completa e JSON-LD SoftwareApplication
+
+### 18.4 Navbar
+- [x] Criar `packages/movefy-site/components/navbar.tsx` — sticky, hamburger, CTAs, scroll suave
+
+### 18.5 Secção Hero
+- [x] Criar `packages/movefy-site/components/sections/hero.tsx` — headline, CTAs, mockup inline, video modal, social proof, animações
+
+### 18.6 Secção Features (4 módulos)
+- [x] Criar `packages/movefy-site/components/sections/features.tsx` — 4 cards com ícones, grid 2x2, hover
+
+### 18.7 Secção Como Funciona (3 passos)
+- [x] Criar `packages/movefy-site/components/sections/como-funciona.tsx` — 3 passos com conectores, mobile vertical
+
+### 18.8 Secção Preços
+- [x] Criar `packages/movefy-site/components/sections/precos.tsx` — 3 planos, toggle mensal/anual, featured card, nota legal
+
+### 18.9 Secção Testemunhos
+- [x] Criar `packages/movefy-site/components/sections/testemunhos.tsx` — 3 cards, estrelas, stats bar
+
+### 18.10 Secção FAQ
+- [x] Criar `packages/movefy-site/components/sections/faq.tsx` — 6 perguntas, accordion, JSON-LD FAQPage
+
+### 18.11 Secção Trial (formulário de registo)
+- [x] Criar `packages/movefy-site/components/sections/trial-form.tsx` — Zod validation, submit para API, loading/success/error states
+
+### 18.12 Footer
+- [x] Criar `packages/movefy-site/components/footer.tsx` — 4 colunas, social, legal, fundo escuro
+
+### 18.13 Páginas legais (placeholder)
+- [x] Criar `packages/movefy-site/app/(legal)/termos/page.tsx` com metadata própria
+- [x] Criar `packages/movefy-site/app/(legal)/privacidade/page.tsx` com metadata própria e conteúdo RGPD
+
+### 18.14 Backend — endpoint de trial
+- [x] `packages/backend/src/super-admin/super-admin.controller.ts` — `POST /super-admin/trial` público com rate limiting
+- [x] `packages/backend/src/super-admin/super-admin.service.ts` — `criarTrial()` com slug, tenant, admin, welcome email
+
+### 18.15 SEO adicional
+- [x] `packages/movefy-site/app/sitemap.ts` com todas as páginas
+- [x] `packages/movefy-site/app/robots.ts` com allow/disallow e sitemap
+
+### 18.16 Scripts de desenvolvimento
+- [x] Scripts `dev:movefy-site` e `build:movefy-site` no `package.json` raiz
+- [x] Porta `3002` configurada no `packages/movefy-site/package.json`
 
 ---
 
@@ -679,7 +725,7 @@
 | 15 | Notificações in-app | 🟡 MÉDIO | [ ] |
 | 16 | Remoção de lixo | 🟡 MÉDIO | [ ] |
 | 17 | Qualidade e segurança | 🟢 BAIXO | [x] |
-| 18 | Site movefy.pt | 🟢 BAIXO | [ ] |
+| 18 | Site movefy.pt | 🟢 BAIXO | [x] |
 
 ---
 

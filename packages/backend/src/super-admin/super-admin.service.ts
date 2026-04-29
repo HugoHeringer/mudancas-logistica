@@ -1,11 +1,21 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { CreateTenantDto } from '../tenant/dto/create-tenant.dto';
+import { Resend } from 'resend';
 
 @Injectable()
 export class SuperAdminService {
-  constructor(private prisma: PrismaService) {}
+  private resend: Resend;
+
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    const key = this.configService.get<string>('RESEND_API_KEY');
+    this.resend = key ? new Resend(key) : (null as any);
+  }
 
   async getAllTenants() {
     return this.prisma.tenant.findMany({
@@ -191,5 +201,114 @@ export class SuperAdminService {
         data: { ...template, tenantId },
       });
     }
+  }
+
+  // ──────────────────────────────────────────
+  // TRIAL: Registo público do site movefy.pt
+  // ──────────────────────────────────────────
+  async criarTrial(dto: { nomeEmpresa: string; email: string; telefone: string }) {
+    // 1. Verificar email duplicado
+    const emailExiste = await this.prisma.user.findFirst({
+      where: { email: dto.email },
+    });
+    if (emailExiste) {
+      throw new ConflictException('Já existe uma conta com este email. Aceda em console.movefy.pt.');
+    }
+
+    // 2. Gerar slug único a partir do nome da empresa
+    let baseSlug = dto.nomeEmpresa
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // remover acentos
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 40);
+
+    let slug = baseSlug;
+    let suffix = 1;
+    while (await this.prisma.tenant.findFirst({ where: { slug } })) {
+      slug = `${baseSlug}-${suffix++}`;
+    }
+
+    // 3. Criar tenant em modo trial
+    const trialExpiraEm = new Date();
+    trialExpiraEm.setDate(trialExpiraEm.getDate() + 30);
+
+    const tenant = await this.prisma.tenant.create({
+      data: {
+        subdomain: slug,
+        slug,
+        plano: 'trial',
+        estado: 'em_setup',
+        eAtivo: true,
+        trialExpiraEm,
+        configMarca: { nome: dto.nomeEmpresa, email: dto.email, telefone: dto.telefone },
+        configPreco: {},
+        configAgenda: {},
+      },
+    });
+
+    // 4. Criar utilizador admin com password temporária
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const tempPassword = Array.from({ length: 10 }, () =>
+      chars[Math.floor(Math.random() * chars.length)]
+    ).join('');
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    const adminUser = await this.prisma.user.create({
+      data: {
+        tenantId: tenant.id,
+        nome: dto.nomeEmpresa,
+        email: dto.email,
+        passwordHash,
+        perfil: 'admin',
+        eAtivo: true,
+      },
+    });
+
+    await this.prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { adminUserId: adminUser.id },
+    });
+
+    // 5. Inicializar templates de email
+    await this.initializeEmailTemplates(tenant.id);
+
+    // 6. Enviar email de boas-vindas (fire-and-forget)
+    this._sendTrialWelcomeEmail(dto.email, dto.nomeEmpresa, slug, tempPassword).catch(() => {});
+
+    return {
+      slug,
+      mensagem: 'Trial criado com sucesso. Verifique o seu email para activar a conta.',
+    };
+  }
+
+  private async _sendTrialWelcomeEmail(
+    email: string,
+    nomeEmpresa: string,
+    slug: string,
+    password: string,
+  ) {
+    if (!this.resend) return;
+    const fromEmail = this.configService.get<string>('EMAIL_FROM', 'noreply@movefy.pt');
+    await this.resend.emails.send({
+      from: fromEmail,
+      to: [email],
+      subject: `Bem-vindo ao Movefy — As suas credenciais de acesso`,
+      html: `
+        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
+          <h1 style="color:#1A1A2E;font-size:24px;margin-bottom:8px">Bem-vindo ao Movefy! 🎉</h1>
+          <p style="color:#6B7280;margin-bottom:24px">A conta da <strong>${nomeEmpresa}</strong> foi criada. Aqui estão os seus dados de acesso:</p>
+          <div style="background:#F9F7F3;border-radius:12px;padding:20px;margin-bottom:24px">
+            <p style="margin:0 0 8px"><strong>URL do painel:</strong> <a href="https://${slug}.movefy.pt/admin">https://${slug}.movefy.pt/admin</a></p>
+            <p style="margin:0 0 8px"><strong>Email:</strong> ${email}</p>
+            <p style="margin:0"><strong>Password temporária:</strong> <code style="background:#E5E7EB;padding:2px 8px;border-radius:4px">${password}</code></p>
+          </div>
+          <p style="color:#6B7280;font-size:14px">Por segurança, altere a password após o primeiro login. O seu trial termina em 30 dias.</p>
+          <p style="color:#6B7280;font-size:14px">Qualquer dúvida, responda a este email — estamos cá para ajudar.</p>
+          <p style="margin-top:32px;color:#9CA3AF;font-size:12px">Movefy · <a href="https://movefy.pt" style="color:#E8B84B">movefy.pt</a></p>
+        </div>
+      `,
+    });
   }
 }
