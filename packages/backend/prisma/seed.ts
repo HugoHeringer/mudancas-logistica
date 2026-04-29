@@ -309,32 +309,61 @@ async function main() {
     update: {},
     create: {
       subdomain: 'superadmin',
+      slug: 'superadmin',
       estado: 'ativa',
-      configMarca: { nome: 'Plataforma Mudanças & Logística' },
+      configMarca: { nome: 'Movefy Platform' },
     },
   });
 
-  const superAdminPasswordHash = await bcrypt.hash('super123', 10);
+  const superAdminPasswordHash = await bcrypt.hash('Hugo.123456', 10);
   await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: platformTenant.id, email: 'super@mudancas-logistica.pt' } },
-    update: {},
+    where: { tenantId_email: { tenantId: platformTenant.id, email: 'hugo@movefy.pt' } },
+    update: {
+      isSuperAdmin: true,
+      perfil: 'admin',
+      passwordHash: superAdminPasswordHash,
+    },
     create: {
       tenantId: platformTenant.id,
-      nome: 'Super Administrador',
-      email: 'super@mudancas-logistica.pt',
+      nome: 'Hugo',
+      email: 'hugo@movefy.pt',
       passwordHash: superAdminPasswordHash,
-      perfil: 'super_admin',
+      perfil: 'admin',
       eAtivo: true,
+      isSuperAdmin: true,
     },
   });
 
-  console.log(`  ✓ Super-Admin: super@mudancas-logistica.pt / super123`);
+  console.log(`  ✓ Super-Admin: hugo@movefy.pt / Hugo.123456`);
+
+  // 9. Create second Super-Admin (Breno)
+  const brenoPasswordHash = await bcrypt.hash('Breno.123', 10);
+  await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: platformTenant.id, email: 'breno@movefy.pt' } },
+    update: {
+      isSuperAdmin: true,
+      perfil: 'admin',
+      passwordHash: brenoPasswordHash,
+    },
+    create: {
+      tenantId: platformTenant.id,
+      nome: 'Breno',
+      email: 'breno@movefy.pt',
+      passwordHash: brenoPasswordHash,
+      perfil: 'admin',
+      eAtivo: true,
+      isSuperAdmin: true,
+    },
+  });
+
+  console.log(`  ✓ Super-Admin: breno@movefy.pt / Breno.123`);
 
   console.log('\n✅ Seed complete!');
   console.log('\n📋 Credenciais de teste:');
   console.log('  Admin:       admin@demo.pt / admin123');
   console.log('  Motorista:   motorista@demo.pt / motorista123');
-  console.log('  Super-Admin: super@mudancas-logistica.pt / super123');
+  console.log('  Super-Admin: hugo@movefy.pt / Hugo.123456');
+  console.log('  Super-Admin: breno@movefy.pt / Breno.123');
   console.log(`  Tenant ID:   ${tenant.id}`);
 }
 

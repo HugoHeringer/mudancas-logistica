@@ -48,6 +48,35 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string, tenantId: string, slug?: string) {
+    // Super-admin path: bypass tenant resolution
+    if (tenantId === 'superadmin') {
+      const user = await this.prisma.user.findFirst({
+        where: {
+          email,
+          isSuperAdmin: true,
+        },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Credenciais inválidas');
+      }
+
+      if (!user.eAtivo) {
+        throw new UnauthorizedException('Utilizador inativo');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Credenciais inválidas');
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash, ...result } = user;
+      // Return a pseudo-tenant for super-admin
+      const pseudoTenant = { id: user.tenantId || 'superadmin', slug: 'superadmin', subdomain: 'superadmin', eAtivo: true, estado: 'ativa' };
+      return { user: result, tenant: pseudoTenant };
+    }
+
     const tenant = await this.resolveTenant(tenantId, slug);
 
     const user = await this.prisma.user.findFirst({
@@ -91,6 +120,7 @@ export class AuthService {
       email: user.email,
       tenantId: user.tenantId,
       perfil: user.perfil,
+      isSuperAdmin: (user as any).isSuperAdmin === true,
       slug,
     };
 

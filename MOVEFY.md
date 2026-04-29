@@ -653,7 +653,9 @@
 - [x] `packages/movefy-site/.env.example` → espelhar as mesmas variáveis sem valores
 
 ### 18.2 Design system do site institucional
-- [x] Criar `packages/movefy-site/app/globals.css` com paleta, tipografia e utilitários globais
+- [x] Criar `packages/movefy-site/app/globals.css` co
+
+m paleta, tipografia e utilitários globais
 - [x] Criar `packages/movefy-site/lib/fonts.ts` com Inter e Outfit via `next/font`
 
 ### 18.3 Layout raiz e SEO global

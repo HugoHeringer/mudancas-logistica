@@ -64,3 +64,9 @@ packages/backend/prisma/migrations/**/*.sql
 
 # Uploads (runtime)
 packages/backend/uploads/
+
+# Compiled JS from TS sources (never commit these)
+packages/*/src/**/*.js
+packages/movefy-site/app/**/*.js
+packages/movefy-site/components/**/*.js
+packages/movefy-site/lib/**/*.js
