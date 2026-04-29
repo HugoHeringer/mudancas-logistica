@@ -164,7 +164,13 @@
       "Bash(git status:*)",
       "Bash(npx next:*)",
       "Bash(node -e \"console.log\\(require\\(''lucide-react/package.json''\\).version\\)\")",
-      "Bash(find . -path */lucide-react/package.json -not -path */.cache/*)"
+      "Bash(find . -path */lucide-react/package.json -not -path */.cache/*)",
+      "Bash(find packages/admin/src packages/pwa/src packages/site/src packages/superadmin/src packages/backend/src -name \"*.js\" -type f -delete)",
+      "Bash(xargs git:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(git worktree:*)",
+      "Bash(grep '\\\\.js$')",
+      "Bash(git rm:*)"
     ]
   }
 }
