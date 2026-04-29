@@ -34,7 +34,7 @@ export class PublicService {
         clienteTelefone: dto.clienteTelefone,
         moradaRecolha: dto.moradaRecolha as any,
         moradaEntrega: dto.moradaEntrega as any,
-        dataPretendida: dto.dataPretendida,
+        dataPretendida: dto.dataPretendida ? new Date(dto.dataPretendida) : new Date(),
         horaPretendida: dto.horaPretendida,
         equipa: dto.equipa,
         veiculoId: dto.veiculoId,
