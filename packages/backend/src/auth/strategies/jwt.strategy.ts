@@ -27,6 +27,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Utilizador inativo');
     }
 
+    // Super-admin bypasses tenant check
+    if (payload.isSuperAdmin) {
+      return {
+        id: payload.sub,
+        email: payload.email,
+        tenantId: payload.tenantId,
+        perfil: payload.perfil,
+        isSuperAdmin: true,
+        slug: payload.slug,
+        permissoes: user.permissoes || {},
+      };
+    }
+
     // Check tenant is active
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: user.tenantId },
@@ -42,6 +55,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       tenantId: payload.tenantId,
       perfil: payload.perfil,
+      isSuperAdmin: payload.isSuperAdmin === true,
       slug: payload.slug,
       permissoes: user.permissoes || {},
     };

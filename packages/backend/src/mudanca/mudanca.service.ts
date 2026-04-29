@@ -24,11 +24,13 @@ export class MudancaService {
   ) {}
 
   async create(tenantId: string, createMudancaDto: CreateMudancaDto) {
-    const { tenantId: _dtoTenantId, moradaRecolha, moradaEntrega, materiais, ...rest } = createMudancaDto as any;
+    const { tenantId: _dtoTenantId, moradaRecolha, moradaEntrega, materiais, dataPretendida, ...rest } = createMudancaDto as any;
+    const dataPretendidaDate = dataPretendida ? new Date(dataPretendida) : new Date();
     const mudanca = await this.prisma.mudanca.create({
       data: {
         tenantId,
         ...rest,
+        dataPretendida: dataPretendidaDate,
         estado: 'pendente',
         moradaRecolha: moradaRecolha as any,
         moradaEntrega: moradaEntrega as any,
