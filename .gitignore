@@ -61,3 +61,6 @@ packages/backend/prisma/migrations/**/*.sql
 # Claude Code
 .claude/worktrees/
 .claude/settings.local.json
+
+# Uploads (runtime)
+packages/backend/uploads/
