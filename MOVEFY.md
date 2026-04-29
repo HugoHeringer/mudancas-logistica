@@ -512,7 +512,7 @@
     ```
 
 ### 13.3 Validação por step no formulário
-- [ ] `packages/site/src/components/agendamento-form.tsx`:
+- [x] `packages/site/src/components/agendamento-form.tsx`:
   - Antes de avançar para o próximo step, validar campos obrigatórios do step actual com Zod
   - Se inválido: mostrar erros inline, **não avançar**
   - Step 1 (dados pessoais): nome, apelido, email, telefone obrigatórios
@@ -717,13 +717,13 @@
 | 7 | Clientes: gestão completa | 🟠 ALTO | [x] |
 | 8 | Motoristas e ajudantes | 🟠 ALTO | [x] |
 | 9 | Permissões do gerente | 🟠 ALTO | [x] |
-| 10 | Dark mode funcional | 🟠 ALTO | [ ] |
-| 11 | Configurações: limpeza | 🟠 ALTO | [ ] |
-| 12 | Email real (Resend) | 🟠 ALTO | [ ] |
-| 13 | Site público: SEO + RGPD | 🟠 ALTO | [ ] |
-| 14 | Movefy Console | 🟡 MÉDIO | [ ] |
-| 15 | Notificações in-app | 🟡 MÉDIO | [ ] |
-| 16 | Remoção de lixo | 🟡 MÉDIO | [ ] |
+| 10 | Dark mode funcional | 🟠 ALTO | [x] |
+| 11 | Configurações: limpeza | 🟠 ALTO | [x] |
+| 12 | Email real (Resend) | 🟠 ALTO | [x] |
+| 13 | Site público: SEO + RGPD | 🟠 ALTO | [x] |
+| 14 | Movefy Console | 🟡 MÉDIO | [x] |
+| 15 | Notificações in-app | 🟡 MÉDIO | [x] |
+| 16 | Remoção de lixo | 🟡 MÉDIO | [x] |
 | 17 | Qualidade e segurança | 🟢 BAIXO | [x] |
 | 18 | Site movefy.pt | 🟢 BAIXO | [x] |
 

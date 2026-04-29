@@ -75,6 +75,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
   const [consentimentoDados, setConsentimentoDados] = useState(false);
   const [consentimentoMarketing, setConsentimentoMarketing] = useState(false);
   const [veiculoError, setVeiculoError] = useState(false);
+  const [dataHoraError, setDataHoraError] = useState(false);
 
   useEffect(() => {
     if (tenantId) {
@@ -126,12 +127,25 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
       const valid = await trigger(fields);
       if (!valid) return;
     }
-    // Step 3: veiculo obrigatorio
-    if (step === 3 && veiculos.length > 0 && !selectedVeiculoId) {
-      setVeiculoError(true);
-      return;
+    // Step 3: data/hora obrigatórias + veiculo obrigatório
+    if (step === 3) {
+      let blocked = false;
+      if (!selectedDate || !selectedHora) {
+        setDataHoraError(true);
+        blocked = true;
+      } else {
+        setDataHoraError(false);
+      }
+      if (veiculos.length > 0 && !selectedVeiculoId) {
+        setVeiculoError(true);
+        blocked = true;
+      } else {
+        setVeiculoError(false);
+      }
+      if (blocked) return;
     }
     setVeiculoError(false);
+    setDataHoraError(false);
     setStep(nextStep);
   };
 
@@ -530,6 +544,9 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
             )}
             {veiculoError && (
               <p className="text-xs text-terracotta mt-2">Seleccione um veiculo para continuar</p>
+            )}
+            {dataHoraError && (
+              <p className="text-xs text-terracotta mt-2">Seleccione data e hora pretendidas para continuar</p>
             )}
 
             <div className="flex justify-between mt-6">
