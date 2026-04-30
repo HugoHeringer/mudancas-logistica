@@ -1,6 +1,6 @@
 # MUDANCAS & LOGISTICA — Checklist de Desenvolvimento
 
-> **Ultima atualizacao:** 2026-04-15
+> **Ultima atualizacao:** 2026-04-30
 > **Tema visual:** Sirocco / Desert Luxury — INSPIRACAO de layout, efeitos e composicao visual (nao de cores)
 >   - O que copiamos: layouts de seccao, parallax, glassmorphism, scroll reveal, stagger animations, noise overlay, hero com overlay, galeria com hover, lightbox, contadores animados, tipografia serif+sans
 >   - O que NAO copiamos: paleta de cores — cada empresa define a sua (60/30/10)
@@ -377,3 +377,18 @@
 - **Fontes:** Display = Cormorant Garamond (serif, weight 300), Body = Inter (sans-serif)
 - **Efeitos:** Glassmorphism (GlassCard), scroll reveal (.reveal), stagger animations, noise overlay, parallax suave
 - **Regra:** Nenhuma cor, logo ou fonte e hardcoded — tudo vem do TenantProvider via CSS custom properties
+
+---
+
+## SESSAO 2026-04-30 — Bug Fixes e Validação
+
+Correcções efectuadas durante a sessão de validação:
+
+- [x] Fix: Super-admin 403 em endpoints protegidos — `isSuperAdmin` adicionado ao JWT payload, `JwtStrategy.validate()` e `RolesGuard`
+- [x] Fix: 500 ao criar mudança — `dataPretendida` string convertida para `Date` em `mudanca.service.ts` e `public.service.ts`
+- [x] Fix: 500 ao submeter pedido no site público — mesma conversão de `dataPretendida` no `public.service.ts`
+- [x] Fix: Compilação backend — imports de `helmet`/`compression`, `IsString` removido de `@nestjs/common`
+- [x] Fix: Dev script do backend — `./node_modules/.bin/nest` → `nest`
+- [x] Chore: Removidos ~130 ficheiros `.js` compilados que causavam erros Vite/Next.js
+- [x] Chore: `.gitignore` actualizado para prevenir commits de `.js` compilados
+- [x] Seed: 30 mudanças + 30 clientes + 40 movimentos financeiros para tenant ktransportes (Abril 2026)
