@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-Sistema de Gestão de Mudanças - Plataforma SaaS Multi-tenant
+Movefy — Plataforma SaaS de Gestão de Empresas de Mudanças
 
 ## 🏗️ Arquitectura
 
@@ -16,7 +16,7 @@ mudancas-logistica/
 │   ├── admin/         # Painel Administrativo (React + Vite)
 │   ├── pwa/           # PWA do Motorista (React + Vite PWA)
 │   ├── site/          # Site Público (Next.js)
-│   └── superadmin/    # Painel Super-Admin (React + Vite)
+│   └── superadmin/    # Painel Movefy Console (React + Vite)
 ├── docker/            # Dockerfiles
 └── docker-compose.yml
 ```
@@ -25,9 +25,29 @@ mudancas-logistica/
 
 O sistema utiliza arquitectura multi-tenant com isolamento lógico:
 
-- **tenantId** em todas as tabelas (exceto super-admin)
-- **Subdomínios** para identificação (empresa.plataforma.pt)
+- **tenantId** em todas as tabelas (exceto movefy-console)
+- **Subdomínios** para identificação (empresa.movefy.pt)
 - **Middleware** que valida tenant e injeta contexto
+
+### Domínios em Produção
+
+| Domínio | Descrição |
+|---------|-----------|
+| `movefy.pt` | Landing page / marketing |
+| `console.movefy.pt` | Movefy Console (gestão da plataforma) |
+| `empresa.movefy.pt` | Site público de cada tenant (white-label) |
+
+### Campos Recentes no Schema
+
+| Modelo | Campo | Tipo | Descrição |
+|--------|-------|------|-----------|
+| Motorista | `valorHora` | Decimal(10,2) | Valor pago ao motorista por hora |
+| Ajudante | `valorHora` | Decimal(10,2) | Valor pago ao ajudante por hora |
+| Tenant (configAgenda) | `capacidadeMaximaDiaria` | Int | Nº máximo de mudanças por dia (default: 3) |
+| Tenant (configPreco) | `acrescimo1Ajudante` | Decimal | Acréscimo para 1 ajudante |
+| Tenant (configPreco) | `acrescimo2Ajudantes` | Decimal | Acréscimo para 2 ajudantes |
+| Tenant | `slug` | String? | Identificador legível para login PWA e URL pública |
+| Tenant | `eAtivo` | Boolean | Flag de activação do tenant |
 
 ## 🚀 Quick Start
 
@@ -118,7 +138,7 @@ npm run dev --workspace=packages/site
 
 ### @mudancas/superadmin
 
-Painel Super-Admin para gestão da plataforma.
+Painel Movefy Console para gestão da plataforma.
 
 ```bash
 npm run dev --workspace=packages/superadmin
@@ -162,7 +182,7 @@ npx prisma generate
 ### JWT Flow
 
 1. POST /api/auth/login → accessToken + refreshToken
-2. accessToken expira em 1d
+2. accessToken expira em 15m
 3. refreshToken expira em 7d
 4. POST /api/auth/refresh → novo accessToken
 
