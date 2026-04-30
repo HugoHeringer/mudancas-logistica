@@ -1,16 +1,16 @@
-# Movefy
+# Movefy — Plataforma SaaS de Gestão de Empresas de Mudanças
 
-Plataforma SaaS Multi-tenant para Gestao de Empresas de Mudancas
+Sistema completo para gestão de empresas de mudanças. Multi-tenant, white-label, com painel administrativo, site público, PWA para motoristas e Movefy Console.
 
-## Visao Geral
+## Visão Geral
 
-Plataforma completa para gestao de empresas de mudancas portuguesas, composta por:
+Plataforma completa para gestão de empresas de mudanças portuguesas, composta por:
 
-- **Movefy.pt** - Site institucional B2B com landing page, precos e registo trial
-- **Site Publico** - Vitrine dinamica por tenant para clientes solicitarem mudancas
-- **Painel Administrativo** - Gestao completa do negocio (dashboard, agenda, clientes, financeiro)
+- **Movefy.pt** - Site institucional B2B com landing page, preços e registo trial
+- **Site Público** - Vitrine dinâmica por tenant para clientes solicitarem mudanças
+- **Painel Administrativo** - Gestão completa do negócio (dashboard, agenda, clientes, financeiro)
 - **PWA do Motorista** - App mobile para equipas em campo
-- **Movefy Console** - Gestao da plataforma SaaS (super-admin)
+- **Movefy Console** - Gestão da plataforma SaaS (super-admin)
 
 ## Arquitectura
 
@@ -73,6 +73,14 @@ npm run dev
 | Console | http://localhost:5175 | `@mudancas/superadmin` |
 | Site Publico | http://localhost:5176 | `@mudancas/site` |
 | Movefy.pt | http://localhost:3002 | `@mudancas/movefy-site` |
+
+### Domínios em Produção
+
+| Domínio | Descrição |
+|---------|-----------|
+| `movefy.pt` | Landing page / marketing institucional |
+| `console.movefy.pt` | Movefy Console (gestão da plataforma) |
+| `empresa.movefy.pt` | Site público de cada tenant (white-label) |
 
 ### Scripts Principais
 
