@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMudancaDto } from './dto/create-mudanca.dto';
@@ -10,7 +10,9 @@ import { EmailService } from '../comunicacao/email.service';
 import { NotificacaoService } from '../notificacao/notificacao.service';
 import { SMS_SERVICE_TOKEN, ISmsService } from '../comunicacao/sms.interface';
 import { ClienteService } from '../cliente/cliente.service';
+import { ConflictDetectorService } from './conflict-detector.service';
 import { getMotoristaFilter } from '../common/helpers/get-motorista-filter';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 @Injectable()
 export class MudancaService {
@@ -21,11 +23,47 @@ export class MudancaService {
     private notificacaoService: NotificacaoService,
     @Inject(SMS_SERVICE_TOKEN) private smsService: ISmsService,
     private clienteService: ClienteService,
+    private conflictDetector: ConflictDetectorService,
   ) {}
 
   async create(tenantId: string, createMudancaDto: CreateMudancaDto) {
     const { tenantId: _dtoTenantId, moradaRecolha, moradaEntrega, materiais, dataPretendida, ...rest } = createMudancaDto as any;
     const dataPretendidaDate = dataPretendida ? new Date(dataPretendida) : new Date();
+
+    // C5: Validar veículo não está em manutenção
+    if (createMudancaDto.veiculoId) {
+      const veiculoRecord = await this.prisma.veiculo.findUnique({ where: { id: createMudancaDto.veiculoId } });
+      if (veiculoRecord?.estado === 'em_manutencao') {
+        throw new BadRequestException('Veículo em manutenção não pode ser seleccionado');
+      }
+    }
+
+    // C6: Validar motorista não está inactivo
+    if (createMudancaDto.motoristaId) {
+      const motoristaRecord = await this.prisma.motorista.findUnique({ where: { id: createMudancaDto.motoristaId } });
+      if (motoristaRecord?.estado === 'inativo') {
+        throw new BadRequestException('Motorista inactivo não pode ser seleccionado');
+      }
+    }
+
+    // Validar conflitos se houver motorista/veículo já no create (Site Público)
+    if (createMudancaDto.motoristaId || createMudancaDto.veiculoId) {
+      const conflict = await this.conflictDetector.checkConflicts(
+        tenantId,
+        dataPretendidaDate,
+        createMudancaDto.horaPretendida || '08:00',
+        Number((createMudancaDto as any).tempoEstimadoHoras || 4),
+        createMudancaDto.motoristaId,
+        createMudancaDto.veiculoId,
+      );
+      
+      if (conflict.hasConflict) {
+        throw new BadRequestException(
+          `O ${conflict.type === 'motorista' ? 'motorista' : 'veículo'} já possui um serviço agendado para este horário.`,
+        );
+      }
+    }
+
     const mudanca = await this.prisma.mudanca.create({
       data: {
         tenantId,
@@ -169,6 +207,21 @@ export class MudancaService {
     const hasRelevantChange = relevantFields.some(f => dto[f] !== undefined);
 
     if (hasRelevantChange) {
+      const conflict = await this.conflictDetector.checkConflicts(
+        tenantId,
+        updated.dataPretendida,
+        updated.horaPretendida || '08:00',
+        Number(updated.tempoEstimadoHoras || 4),
+        updated.motoristaId,
+        updated.veiculoId,
+        id,
+      );
+      if (conflict.hasConflict) {
+        console.warn(`[Agenda] Admin atualizando mudança com conflito de ${conflict.type}. Mudança ID: ${id}`);
+      }
+    }
+
+    if (hasRelevantChange) {
       // Email ao cliente
       if (updated.clienteEmail) {
         this.emailService.send(tenantId, updated.clienteEmail, 'mudanca_alterada', {
@@ -204,12 +257,47 @@ export class MudancaService {
       throw new Error('Configuração de preço (precoHora) não definida para este tenant. Configure antes de aprovar mudanças.');
     }
 
-    // Atualizar estado do motorista
+    // Validar conflitos (Apenas aviso para admin, não bloqueia)
+    const conflict = await this.conflictDetector.checkConflicts(
+      tenantId,
+      mudanca.dataPretendida,
+      mudanca.horaPretendida || '08:00',
+      Number(aprovarMudancaDto.tempoEstimadoHoras || 4),
+      aprovarMudancaDto.motoristaId,
+      aprovarMudancaDto.veiculoId,
+      id,
+    );
+
+    if (conflict.hasConflict) {
+      // O admin pode ignorar, mas logamos ou poderíamos emitir um alerta
+      console.warn(`[Agenda] Admin aprovando mudança com conflito de ${conflict.type}. Mudança ID: ${id}`);
+    }
+
+    // Validate motorista is available
     if (aprovarMudancaDto.motoristaId) {
-      await this.prisma.motorista.update({
-        where: { id: aprovarMudancaDto.motoristaId },
-        data: { estado: 'ocupado' },
+      const motoristaRecord = await this.prisma.motorista.findUnique({ where: { id: aprovarMudancaDto.motoristaId } });
+      if (motoristaRecord?.estado === 'inativo') {
+        throw new BadRequestException('Motorista inactivo não pode ser seleccionado');
+      }
+    }
+
+    // Validate veiculo is not in maintenance
+    if (aprovarMudancaDto.veiculoId) {
+      const veiculoRecord = await this.prisma.veiculo.findUnique({ where: { id: aprovarMudancaDto.veiculoId } });
+      if (veiculoRecord?.estado === 'em_manutencao') {
+        throw new BadRequestException('Veículo em manutenção não pode ser seleccionado');
+      }
+    }
+
+    // Validate ajudantes are active
+    if (aprovarMudancaDto.ajudantesIds && aprovarMudancaDto.ajudantesIds.length > 0) {
+      const ajudantes = await this.prisma.ajudante.findMany({
+        where: { id: { in: aprovarMudancaDto.ajudantesIds }, tenantId },
       });
+      const inactiveAjudante = ajudantes.find(a => !a.eAtivo);
+      if (inactiveAjudante) {
+        throw new BadRequestException(`Ajudante "${inactiveAjudante.nome}" está inactivo`);
+      }
     }
 
     // Buscar veículo com precoHora
@@ -336,6 +424,20 @@ export class MudancaService {
       },
     });
 
+    // Atualizar estados: motorista → em_deslocamento, veículo → em_servico
+    if (updated.motoristaId) {
+      await this.prisma.motorista.update({
+        where: { id: updated.motoristaId },
+        data: { estado: 'em_deslocamento' },
+      });
+    }
+    if (updated.veiculoId) {
+      await this.prisma.veiculo.update({
+        where: { id: updated.veiculoId },
+        data: { estado: 'em_servico' },
+      });
+    }
+
     // Email ao cliente
     if (updated.clienteEmail) {
       this.emailService.send(tenantId, updated.clienteEmail, 'inicio_deslocamento', {
@@ -389,13 +491,23 @@ export class MudancaService {
       throw new NotFoundException('Mudança não atribuída a este motorista');
     }
 
-    return this.prisma.mudanca.update({
+    const updated = await this.prisma.mudanca.update({
       where: { id },
       data: {
         estado: 'em_servico',
         ...(mudanca.iniciadoEm ? {} : { iniciadoEm: new Date() }),
       },
     });
+
+    // Atualizar estado do motorista para 'em_servico'
+    if (updated.motoristaId) {
+      await this.prisma.motorista.update({
+        where: { id: updated.motoristaId },
+        data: { estado: 'em_servico' },
+      });
+    }
+
+    return updated;
   }
 
   async concluir(tenantId: string, id: string, concluirMudancaDto: ConcluirMudancaDto) {
@@ -541,6 +653,31 @@ export class MudancaService {
       await this.clienteService.incrementMudancasCount(tenantId, updated.clienteEmail);
     }
 
+    // Libertar recursos (motorista e veículo)
+    if (updated.motoristaId) {
+      await this.prisma.motorista.update({
+        where: { id: updated.motoristaId },
+        data: { estado: 'disponivel' },
+      });
+    }
+    if (updated.veiculoId) {
+      await this.prisma.veiculo.update({
+        where: { id: updated.veiculoId },
+        data: { estado: 'disponivel' },
+      });
+    }
+    // Libertar ajudantes
+    const ajudantesNaMudanca = await this.prisma.ajudante.findMany({
+      where: { mudancas: { some: { id: updated.id } }, tenantId },
+      select: { id: true },
+    });
+    if (ajudantesNaMudanca.length > 0) {
+      await this.prisma.ajudante.updateMany({
+        where: { id: { in: ajudantesNaMudanca.map(a => a.id) } },
+        data: { disponivel: true },
+      });
+    }
+
     return updated;
   }
 
@@ -646,13 +783,42 @@ export class MudancaService {
   async cancelar(tenantId: string, id: string, motivo?: string) {
     const mudanca = await this.findOne(tenantId, id);
 
-    return this.prisma.mudanca.update({
+    const updated = await this.prisma.mudanca.update({
       where: { id },
       data: {
         estado: 'cancelada',
         ...(motivo ? { observacoesAdmin: motivo } : {}),
       },
     });
+
+    // Reverter estados dos recursos se a mudança estava em curso
+    if (['a_caminho', 'em_servico', 'aprovada'].includes(mudanca.estado)) {
+      if (updated.motoristaId) {
+        await this.prisma.motorista.update({
+          where: { id: updated.motoristaId },
+          data: { estado: 'disponivel' },
+        });
+      }
+      if (updated.veiculoId) {
+        await this.prisma.veiculo.update({
+          where: { id: updated.veiculoId },
+          data: { estado: 'disponivel' },
+        });
+      }
+      // Reverter ajudantes
+      const ajudantesNaMudanca = await this.prisma.ajudante.findMany({
+        where: { mudancas: { some: { id: updated.id } }, tenantId },
+        select: { id: true },
+      });
+      if (ajudantesNaMudanca.length > 0) {
+        await this.prisma.ajudante.updateMany({
+          where: { id: { in: ajudantesNaMudanca.map(a => a.id) } },
+          data: { disponivel: true },
+        });
+      }
+    }
+
+    return updated;
   }
 
   async remove(tenantId: string, id: string) {
@@ -703,10 +869,21 @@ export class MudancaService {
   }
 
   async getDashboard(tenantId: string, userId?: string) {
-    const hoje = new Date();
-    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-    const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999);
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const timeZone = 'Europe/Lisbon';
+    const agoraLisboa = toZonedTime(new Date(), timeZone);
+    
+    const inicioDia = fromZonedTime(
+      new Date(agoraLisboa.getFullYear(), agoraLisboa.getMonth(), agoraLisboa.getDate()), 
+      timeZone
+    );
+    const fimDia = fromZonedTime(
+      new Date(agoraLisboa.getFullYear(), agoraLisboa.getMonth(), agoraLisboa.getDate(), 23, 59, 59, 999), 
+      timeZone
+    );
+    const inicioMes = fromZonedTime(
+      new Date(agoraLisboa.getFullYear(), agoraLisboa.getMonth(), 1), 
+      timeZone
+    );
 
     // Resolve gerente motorista restrictions
     let motoristaFilterWhere: Record<string, any> = {};

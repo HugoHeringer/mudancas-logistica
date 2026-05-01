@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Car, TrendingUp } from 'lucide-react';
+import { Plus, Search, Car, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { motoristasApi, veiculosApi } from '../../lib/api';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
@@ -48,6 +48,8 @@ export function MotoristasPage() {
   const [selectedMotorista, setSelectedMotorista] = useState<Motorista | null>(null);
   const [showPerformance, setShowPerformance] = useState(false);
   const [busca, setBusca] = useState('');
+  const [showInativos, setShowInativos] = useState(false);
+  const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
   // Form state
   const [formNome, setFormNome] = useState('');
@@ -97,6 +99,16 @@ export function MotoristasPage() {
     onError: () => toast({ title: 'Erro ao atualizar motorista', variant: 'destructive' }),
   });
 
+  const updateEstadoMutation = useMutation({
+    mutationFn: (data: { id: string; estado: string }) => motoristasApi.updateEstado(data.id, data.estado),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['motoristas'] });
+      toast({ title: 'Estado atualizado' });
+      setActionMenuId(null);
+    },
+    onError: () => toast({ title: 'Erro ao atualizar estado', variant: 'destructive' }),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => motoristasApi.delete(id),
     onSuccess: () => {
@@ -112,6 +124,7 @@ export function MotoristasPage() {
     setShowEdit(false);
     setShowPerformance(false);
     setSelectedMotorista(null);
+    setActionMenuId(null);
     setFormNome('');
     setFormEmail('');
     setFormTelefone('');
@@ -131,11 +144,13 @@ export function MotoristasPage() {
     setShowEdit(true);
   };
 
-  const filteredData = (motoristas || []).filter((m) => {
+  const allFiltered = (motoristas || []).filter((m) => {
     if (!busca) return true;
     const termo = busca.toLowerCase();
     return m.nome?.toLowerCase().includes(termo) || m.email?.toLowerCase().includes(termo);
   });
+  const filteredData = allFiltered.filter((m) => m.estado !== 'inativo');
+  const inativosData = allFiltered.filter((m) => m.estado === 'inativo');
 
   const columns: ColumnDef<Motorista>[] = [
     { accessorKey: 'nome', header: 'Nome' },
@@ -186,6 +201,24 @@ export function MotoristasPage() {
         <EmptyState icon={Car} title="Nenhum motorista" description="Comece por adicionar o primeiro motorista." action={<Button onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-1" />Novo Motorista</Button>} />
       ) : (
         <DataTable columns={columns} data={filteredData} isLoading={isLoading} onRowClick={(row) => openEdit(row as Motorista)} />
+      )}
+
+      {/* Motoristas Inactivos */}
+      {inativosData.length > 0 && (
+        <div className="border rounded-lg">
+          <button
+            className="w-full flex items-center gap-2 p-3 text-sm font-medium text-muted-foreground hover:bg-muted/50 rounded-lg"
+            onClick={() => setShowInativos(!showInativos)}
+          >
+            {showInativos ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            Inactivos ({inativosData.length})
+          </button>
+          {showInativos && (
+            <div className="border-t">
+              <DataTable columns={columns} data={inativosData} isLoading={false} onRowClick={(row) => openEdit(row as Motorista)} />
+            </div>
+          )}
+        </div>
       )}
 
       {/* Dialog Criar */}
@@ -260,9 +293,37 @@ export function MotoristasPage() {
                 <Button variant="outline" className="flex-1" onClick={() => { setShowPerformance(true); setShowEdit(false); }}>
                   <TrendingUp className="h-4 w-4 mr-1" /> Performance
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => { if (confirm('Tem a certeza?')) deleteMutation.mutate(selectedMotorista.id); }}>
-                  Remover
-                </Button>
+                <div className="relative">
+                    <Button variant="outline" size="sm" onClick={() => setActionMenuId(actionMenuId === selectedMotorista.id ? null : selectedMotorista.id)}>
+                      Mais...
+                    </Button>
+                    {actionMenuId === selectedMotorista.id && (
+                      <div className="absolute right-0 top-full mt-1 bg-background border rounded-lg shadow-lg z-50 min-w-[160px]">
+                        <button
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-center gap-2"
+                          onClick={() => {
+                            if (selectedMotorista.estado !== 'inativo') {
+                              updateEstadoMutation.mutate({ id: selectedMotorista.id, estado: 'inativo' });
+                            } else {
+                              updateEstadoMutation.mutate({ id: selectedMotorista.id, estado: 'disponivel' });
+                            }
+                          }}
+                        >
+                          {selectedMotorista.estado !== 'inativo' ? 'Inactivar' : 'Reactivar'}
+                        </button>
+                        <button
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-destructive/10 text-destructive flex items-center gap-2"
+                          onClick={() => {
+                            if (confirm('Tem a certeza que deseja eliminar este motorista? Esta acção é irreversível.')) {
+                              deleteMutation.mutate(selectedMotorista.id);
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
+                  </div>
               </div>
             </div>
           )}

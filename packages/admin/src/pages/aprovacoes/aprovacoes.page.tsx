@@ -435,10 +435,10 @@ const { data: todosMotoristas } = useQuery({
                     <SelectValue placeholder="Selecionar motorista disponível" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(todosMotoristas || []).map((m: any) => (
-                      <SelectItem key={m.id} value={m.id}>
+                    {(todosMotoristas || []).filter((m: any) => m.estado !== 'inativo').map((m: any) => (
+                      <SelectItem key={m.id} value={m.id} disabled={m.estado !== 'disponivel'}>
                         {m.nome} {m.veiculo ? `— ${m.veiculo.nome}` : ''}
-                        {m.estado !== 'disponivel' && m.estado !== 'indisponivel' && ` (${m.estado})`}
+                        {m.estado !== 'disponivel' && ` (${m.estado})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -454,8 +454,8 @@ const { data: todosMotoristas } = useQuery({
                   <SelectContent>
                     <SelectItem value="_none">Sem veículo</SelectItem>
                     {(veiculos || []).map((v: any) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.nome} - {v.matricula}
+                      <SelectItem key={v.id} value={v.id} disabled={v.estado === 'em_manutencao'}>
+                        {v.nome} - {v.matricula}{v.estado === 'em_manutencao' ? ' (Em manutenção)' : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>

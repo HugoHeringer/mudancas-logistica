@@ -36,6 +36,7 @@ interface Veiculo {
   precoHora: number;
   estado: string;
   eParaUrgencias: boolean;
+  imagemUrl?: string;
 }
 
 export function VeiculosPage() {
@@ -56,6 +57,7 @@ export function VeiculosPage() {
   const [formUrgencias, setFormUrgencias] = useState(false);
   const [formImagemUrl, setFormImagemUrl] = useState('');
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImagem, setUploadingImagem] = useState(false);
 
@@ -109,7 +111,7 @@ export function VeiculosPage() {
     setSelectedVeiculo(null);
     setFormNome(''); setFormMarca(''); setFormModelo(''); setFormMatricula('');
     setFormM3(''); setFormPrecoHora(''); setFormUrgencias(false);
-    setFormImagemUrl(''); setImagemPreview(null);
+    setFormImagemUrl(''); setImagemPreview(null); setSelectedFile(null);
   };
 
   const openEdit = (v: Veiculo) => {
@@ -117,24 +119,45 @@ export function VeiculosPage() {
     setFormNome(v.nome); setFormMarca(v.marca); setFormModelo(v.modelo || '');
     setFormMatricula(v.matricula); setFormM3(String(v.metrosCubicos));
     setFormPrecoHora(String(v.precoHora)); setFormUrgencias(v.eParaUrgencias);
-    setFormImagemUrl((v as any).imagemUrl || '');
-    setImagemPreview((v as any).imagemUrl || null);
+    setFormImagemUrl(v.imagemUrl || '');
+    setImagemPreview(v.imagemUrl || null);
+    setSelectedFile(null);
     setShowEdit(true);
   };
 
-  const handleImagemUpload = async (file: File) => {
-    setUploadingImagem(true);
-    try {
-      const res = await uploadApi.upload(file, 'veiculo');
-      const url = res.data?.url;
-      setFormImagemUrl(url);
-      setImagemPreview(url);
-      toast({ title: 'Imagem carregada' });
-    } catch {
-      toast({ title: 'Erro ao carregar imagem', variant: 'destructive' });
-    } finally {
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setImagemPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async () => {
+    let imagemUrl = formImagemUrl || undefined;
+
+    // Upload image first if a new file was selected
+    if (selectedFile) {
+      setUploadingImagem(true);
+      try {
+        const res = await uploadApi.uploadVeiculoImagem(selectedFile);
+        imagemUrl = res.data?.url;
+      } catch {
+        toast({ title: 'Erro ao carregar imagem', variant: 'destructive' });
+        setUploadingImagem(false);
+        return;
+      }
       setUploadingImagem(false);
     }
+
+    const payload = {
+      nome: formNome, marca: formMarca, modelo: formModelo || undefined,
+      matricula: formMatricula, metrosCubicos: parseFloat(formM3) || 0,
+      precoHora: parseFloat(formPrecoHora) || 0, eParaUrgencias: formUrgencias,
+      imagemUrl,
+    };
+
+    if (showCreate) createMutation.mutate(payload);
+    else if (selectedVeiculo) updateMutation.mutate({ id: selectedVeiculo.id, data: payload });
   };
 
   const filteredData = (veiculos || []).filter((v) => {
@@ -148,8 +171,8 @@ export function VeiculosPage() {
       accessorKey: 'imagemUrl',
       header: 'Imagem',
       cell: ({ row }) => (
-        (row.original as any).imagemUrl ? (
-          <img src={(row.original as any).imagemUrl} alt={row.original.nome} className="w-12 h-12 object-cover rounded" />
+        row.original.imagemUrl ? (
+          <img src={row.original.imagemUrl} alt={row.original.nome} className="w-12 h-12 object-cover rounded" />
         ) : (
           <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
             <Building className="w-6 h-6 text-muted-foreground" />
@@ -173,21 +196,27 @@ export function VeiculosPage() {
     {
       accessorKey: 'estado',
       header: 'Estado',
-      cell: ({ row }) => (
-        <Select
-          value={row.original.estado}
-          onValueChange={(val) => updateEstadoMutation.mutate({ id: row.original.id, estado: val })}
-        >
-          <SelectTrigger className="w-[140px] h-8">
-            <StatusBadge status={row.original.estado} size="sm" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="disponivel">Disponível</SelectItem>
-            <SelectItem value="em_servico">Em Serviço</SelectItem>
-            <SelectItem value="em_manutencao">Em Manutenção</SelectItem>
-          </SelectContent>
-        </Select>
-      ),
+      cell: ({ row }) => {
+        const v = row.original;
+        // em_servico is system-managed — show read-only badge
+        if (v.estado === 'em_servico') {
+          return <StatusBadge status="em_servico" size="sm" />;
+        }
+        return (
+          <Select
+            value={v.estado}
+            onValueChange={(val) => updateEstadoMutation.mutate({ id: v.id, estado: val })}
+          >
+            <SelectTrigger className="w-[140px] h-8">
+              <StatusBadge status={v.estado} size="sm" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="disponivel">Disponível</SelectItem>
+              <SelectItem value="em_manutencao">Em Manutenção</SelectItem>
+            </SelectContent>
+          </Select>
+        );
+      },
     },
     {
       accessorKey: 'eParaUrgencias',
@@ -247,10 +276,10 @@ export function VeiculosPage() {
               <input
                 type="file"
                 ref={fileInputRef}
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImagemUpload(file);
+                  if (file) handleFileSelect(file);
                 }}
                 className="hidden"
               />
@@ -259,7 +288,7 @@ export function VeiculosPage() {
                   <img src={imagemPreview} alt="Preview" className="w-32 h-24 object-cover rounded-lg border" />
                   <button
                     type="button"
-                    onClick={() => { setFormImagemUrl(''); setImagemPreview(null); }}
+                    onClick={() => { setFormImagemUrl(''); setImagemPreview(null); setSelectedFile(null); }}
                     className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1"
                   >
                     <X className="w-3 h-3" />
@@ -270,13 +299,12 @@ export function VeiculosPage() {
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingImagem}
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  {uploadingImagem ? 'A carregar...' : 'Carregar imagem'}
+                  Selecionar imagem
                 </Button>
               )}
-              <p className="text-xs text-muted-foreground">Tamanho recomendado: 800x600px</p>
+              <p className="text-xs text-muted-foreground">JPEG, PNG ou WebP. Será redimensionado para 800×600px.</p>
             </div>
           </div>
           <DialogFooter>
@@ -285,19 +313,10 @@ export function VeiculosPage() {
             )}
             <Button variant="outline" onClick={closeDialogs}>Cancelar</Button>
             <Button
-              disabled={!formNome || !formMatricula || createMutation.isPending || updateMutation.isPending}
-              onClick={() => {
-                const payload = {
-                  nome: formNome, marca: formMarca, modelo: formModelo || undefined,
-                  matricula: formMatricula, metrosCubicos: parseFloat(formM3) || 0,
-                  precoHora: parseFloat(formPrecoHora) || 0, eParaUrgencias: formUrgencias,
-                  imagemUrl: formImagemUrl || undefined,
-                };
-                if (showCreate) createMutation.mutate(payload);
-                else if (selectedVeiculo) updateMutation.mutate({ id: selectedVeiculo.id, data: payload });
-              }}
+              disabled={!formNome || !formMatricula || uploadingImagem || createMutation.isPending || updateMutation.isPending}
+              onClick={handleSubmit}
             >
-              {showCreate ? (createMutation.isPending ? 'A criar...' : 'Criar') : (updateMutation.isPending ? 'A guardar...' : 'Guardar')}
+              {uploadingImagem ? 'A carregar imagem...' : showCreate ? (createMutation.isPending ? 'A criar...' : 'Criar') : (updateMutation.isPending ? 'A guardar...' : 'Guardar')}
             </Button>
           </DialogFooter>
         </DialogContent>
