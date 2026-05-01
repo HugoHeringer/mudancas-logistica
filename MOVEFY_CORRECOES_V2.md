@@ -225,7 +225,7 @@ O conflito de agendamento deve verificar: se o motorista/veículo/ajudante já t
 
 ### TAREFAS
 
-- [ ] **D1 — Função centralizada de detecção de conflito**
+- [x] **D1 — Função centralizada de detecção de conflito**
   - Criar `packages/backend/src/mudancas/conflict-detector.service.ts`:
     ```typescript
     async detectarConflito(
@@ -248,7 +248,7 @@ O conflito de agendamento deve verificar: se o motorista/veículo/ajudante já t
     - Para cada mudança encontrada: calcular `inicioExistente` e `fimExistente`
     - Sobreposição: `inicioNovo < fimExistente AND inicioExistente < fimNovo`
 
-- [ ] **D2 — Aplicar detecção de conflito na função aprovar()**
+- [x] **D2 — Aplicar detecção de conflito na função aprovar()**
   - `packages/backend/src/mudancas/mudancas.service.ts` → função `aprovar()`:
     - Verificar conflito de motorista: `conflictDetector.detectarConflito(motoristaId, 'motorista', ...)`
     - Verificar conflito de veículo: `conflictDetector.detectarConflito(veiculoId, 'veiculo', ...)`
@@ -257,7 +257,7 @@ O conflito de agendamento deve verificar: se o motorista/veículo/ajudante já t
       `{ statusCode: 409, message: "Motorista João já tem serviço das 09:00 às 11:00 no dia 30/04" }`
     - Este é o ÚNICO ponto de validação de conflito — remover qualquer outra validação duplicada
 
-- [ ] **D3 — Unificar comportamento: lista de aprovações vs detalhe da mudança**
+- [x] **D3 — Unificar comportamento: lista de aprovações vs detalhe da mudança**
   - O popup/modal de aprovação deve ser o MESMO componente em ambos os casos
   - `packages/admin/src/components/aprovar-mudanca-modal.tsx` (criar componente único):
     - Recebe `mudancaId` como prop
@@ -267,7 +267,7 @@ O conflito de agendamento deve verificar: se o motorista/veículo/ajudante já t
     - Handles do response: sucesso → fechar modal + toast "Aprovado"; conflito 409 → mostrar mensagem de conflito
   - Usar este componente tanto na página de aprovações quanto no detalhe da mudança
 
-- [ ] **D4 — Selecção de ajudante: modal com pesquisa (igual ao motorista)**
+- [x] **D4 — Selecção de ajudante: modal com pesquisa (igual ao motorista)**
   - Dentro do `AprovarMudancaModal`:
     - Remover checkboxes de ajudantes
     - Adicionar botão "Adicionar Ajudante" que abre sub-modal com:

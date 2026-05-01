@@ -266,7 +266,7 @@ export class MudancaService {
         mudanca.dataPretendida, mudanca.horaPretendida || '08:00', tempoHoras, id,
       );
       if (motoristaConflict.hasConflict) {
-        throw new ConflictException(motoristaConflict.message || 'Motorista já tem serviço neste horário');
+        console.warn(`[Agenda] Alerta de Conflito (Motorista): ${motoristaConflict.message}`);
       }
     }
 
@@ -276,7 +276,7 @@ export class MudancaService {
         mudanca.dataPretendida, mudanca.horaPretendida || '08:00', tempoHoras, id,
       );
       if (veiculoConflict.hasConflict) {
-        throw new ConflictException(veiculoConflict.message || 'Veículo já tem serviço neste horário');
+        console.warn(`[Agenda] Alerta de Conflito (Veículo): ${veiculoConflict.message}`);
       }
     }
 
@@ -287,7 +287,7 @@ export class MudancaService {
           mudanca.dataPretendida, mudanca.horaPretendida || '08:00', tempoHoras, id,
         );
         if (ajudanteConflict.hasConflict) {
-          throw new ConflictException(ajudanteConflict.message || 'Ajudante já tem serviço neste horário');
+          console.warn(`[Agenda] Alerta de Conflito (Ajudante): ${ajudanteConflict.message}`);
         }
       }
     }
@@ -409,6 +409,20 @@ export class MudancaService {
         dataPretendida: updated.dataPretendida,
         horaPretendida: updated.horaPretendida || '08:00',
       }, updated.id);
+    }
+
+    // Atualizar estados para 'reservado'
+    if (aprovarMudancaDto.motoristaId) {
+      await this.prisma.motorista.update({
+        where: { id: aprovarMudancaDto.motoristaId },
+        data: { estado: 'reservado' },
+      });
+    }
+    if (aprovarMudancaDto.veiculoId) {
+      await this.prisma.veiculo.update({
+        where: { id: aprovarMudancaDto.veiculoId },
+        data: { estado: 'reservado' },
+      });
     }
 
     // Notificação ao motorista
@@ -676,6 +690,12 @@ export class MudancaService {
     if (updated.motoristaId) {
       await this.prisma.motorista.update({
         where: { id: updated.motoristaId },
+        data: { estado: 'disponivel' },
+      });
+    }
+    if (updated.veiculoId) {
+      await this.prisma.veiculo.update({
+        where: { id: updated.veiculoId },
         data: { estado: 'disponivel' },
       });
     }

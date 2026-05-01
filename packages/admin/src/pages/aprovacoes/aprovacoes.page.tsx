@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, XCircle, Eye, AlertTriangle, Clock } from 'lucide-react';
-import { mudancasApi, motoristasApi, ajudantesApi, veiculosApi } from '../../lib/api';
+import { CheckCircle, XCircle, Eye, AlertTriangle } from 'lucide-react';
+import { mudancasApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth.store';
 import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { GlassCard } from '../../components/luxury/GlassCard';
 import { PageHeader } from '../../components/ui/page-header';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import {
@@ -30,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
+import { AprovarMudancaModal } from '../../components/aprovar-mudanca-modal';
 
 const EQUIPA_LABELS: Record<string, string> = {
   motorist: 'Motorista',
@@ -40,48 +40,16 @@ const EQUIPA_LABELS: Record<string, string> = {
   motorista_2_ajudantes: 'Motorista + 2 Ajudantes',
 };
 
-const EQUIPA_AJUDANTES: Record<string, number> = {
-  motorist: 0,
-  motorist_1_ajudante: 1,
-  motorist_2_ajudantes: 2,
-};
-
-function getEquipaAjudantesCount(equipa: string): number {
-  // Normalize: "motorista_*" -> "motorist_*"
-  const normalized = equipa.replace('motorista_', 'motorist_');
-  return EQUIPA_AJUDANTES[normalized] ?? 0;
-}
-
 export function AprovacoesPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
   const { podeVer } = usePermissao();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedMudanca, setSelectedMudanca] = useState<any>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showAprovar, setShowAprovar] = useState(false);
   const [showRecusar, setShowRecusar] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
-
-  // Reset form when approve dialog closes
-  useEffect(() => {
-    if (!showAprovar) {
-      setSelectedMudanca(null);
-      setMotoristaId('');
-      setVeiculoId('');
-      setAjudantesSelecionados([]);
-      setTempoEstimado('2');
-      setObservacoesAdmin('');
-    }
-  }, [showAprovar]);
-
-  // Form state
-  const [motoristaId, setMotoristaId] = useState('');
-  const [veiculoId, setVeiculoId] = useState('');
-  const [ajudantesSelecionados, setAjudantesSelecionados] = useState<string[]>([]);
-  const [tempoEstimado, setTempoEstimado] = useState('2');
-  const [observacoesAdmin, setObservacoesAdmin] = useState('');
   const [motivoRecusa, setMotivoRecusa] = useState('');
 
   const { data: pendentes, isLoading } = useQuery({
@@ -94,43 +62,6 @@ export function AprovacoesPage() {
     },
   });
 
-const { data: todosMotoristas } = useQuery({
-    queryKey: ['motoristas', 'todos'],
-    queryFn: () =>motoristasApi.findAll().then((r) => r.data),
-  });
-
-  const { data: veiculos } = useQuery({
-    queryKey: ['veiculos'],
-    queryFn: () => veiculosApi.findAll().then((r) => r.data),
-  });
-
-  const { data: todosAjudantes } = useQuery({
-    queryKey: ['ajudantes', 'todos'],
-    queryFn: () =>ajudantesApi.findAll().then((r) => r.data),
-});
-
-  const approveMutation = useMutation({
-    mutationFn: (data: { id: string; aprovadoPor: string; motoristaId: string; veiculoId?: string | null; ajudantesIds?: string[]; tempoEstimadoHoras: number; observacoesAdmin?: string }) =>
-      mudancasApi.approve(data.id, {
-        aprovadoPor: data.aprovadoPor,
-        motoristaId: data.motoristaId,
-        veiculoId: data.veiculoId,
-        ajudantesIds: data.ajudantesIds,
-        tempoEstimadoHoras: data.tempoEstimadoHoras,
-        observacoesAdmin: data.observacoesAdmin,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mudancas'] });
-      toast({ title: 'Mudança aprovada', description: 'A agenda foi atualizada e o motorista notificado.' });
-      setShowAprovar(false);
-      setSelectedMudanca(null);
-      resetForm();
-    },
-    onError: () => {
-      toast({ title: 'Erro', description: 'Não foi possível aprovar a mudança.', variant: 'destructive' });
-    },
-  });
-
   const recusarMutation = useMutation({
     mutationFn: (data: { id: string; motivo: string }) =>
       mudancasApi.refuse(data.id, data.motivo),
@@ -139,61 +70,23 @@ const { data: todosMotoristas } = useQuery({
       toast({ title: 'Mudança recusada', description: 'O cliente será notificado.' });
       setShowRecusar(false);
       setSelectedMudanca(null);
-      resetForm();
+      setMotivoRecusa('');
     },
     onError: () => {
       toast({ title: 'Erro', description: 'Não foi possível recusar a mudança.', variant: 'destructive' });
     },
   });
 
-  const resetForm = () => {
-    setMotoristaId('');
-    setVeiculoId('');
-    setAjudantesSelecionados([]);
-    setTempoEstimado('2');
-    setObservacoesAdmin('');
-    setMotivoRecusa('');
-  };
-
   const handleOpenAprovar = (mudanca: any) => {
     setSelectedMudanca(mudanca);
-    if (mudanca.veiculoId) {
-      setVeiculoId(mudanca.veiculoId);
-    } else {
-      setVeiculoId('');
-    }
-    setMotoristaId('');
-    setAjudantesSelecionados([]);
-    setTempoEstimado('2');
-    setObservacoesAdmin('');
     setShowDetail(false);
     setShowAprovar(true);
-  };
-
-  const handleMotoristaChange = (mid: string) => {
-    setMotoristaId(mid);
-    if (mid) {
-      const selected = (todosMotoristas as any[])?.find((m: any) => m.id === mid);
-      if (selected?.veiculoId) {
-        setVeiculoId(selected.veiculoId);
-      } else {
-        setVeiculoId('');
-      }
-    }
-  };
-
-  const handleVeiculoChange = (vid: string) => {
-    setVeiculoId(vid === '_none' ? '' : vid);
   };
 
   const handleOpenRecusar = (mudanca: any) => {
     setSelectedMudanca(mudanca);
     setShowDetail(false);
     setShowRecusar(true);
-  };
-
-  const handleOpenDetail = (mudanca: any) => {
-    navigate(`/mudancas/${mudanca.id}`);
   };
 
   const renderMorada = (morada: any) => {
@@ -279,7 +172,7 @@ const { data: todosMotoristas } = useQuery({
 
                 {/* Ações */}
                 <div className="flex flex-row lg:flex-col gap-2 lg:min-w-[120px]">
-                  <Button variant="outline" size="sm" className="flex-1 lg:flex-none" onClick={() => handleOpenDetail(mudanca)}>
+                  <Button variant="outline" size="sm" className="flex-1 lg:flex-none" onClick={() => navigate(`/mudancas/${mudanca.id}`)}>
                     <Eye className="h-3.5 w-3.5 mr-1.5" /> Ver
                   </Button>
                   {podeVer('aprovar') && (
@@ -301,263 +194,13 @@ const { data: todosMotoristas } = useQuery({
         </div>
       )}
 
-      {/* Dialog de Detalhe */}
-      <Dialog open={showDetail} onOpenChange={setShowDetail}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Solicitação</DialogTitle>
-            <DialogDescription>
-              Informações completas enviadas pelo cliente
-            </DialogDescription>
-          </DialogHeader>
-          {selectedMudanca && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <StatusBadge status={selectedMudanca.estado} />
-                {selectedMudanca.tipoServico === 'urgente' && (
-                  <span className="px-2 py-0.5 text-xs font-semibold bg-destructive/10 text-destructive rounded-full">
-                    URGENTE
-                  </span>
-                )}
-              </div>
-
-              <Card>
-                <CardHeader><CardTitle className="text-base">Dados do Cliente</CardTitle></CardHeader>
-                <CardContent className="space-y-1 text-sm">
-                  <p><span className="font-medium">Nome:</span> {selectedMudanca.clienteNome}</p>
-                  <p><span className="font-medium">Email:</span> {selectedMudanca.clienteEmail}</p>
-                  <p><span className="font-medium">Telefone:</span> {selectedMudanca.clienteTelefone}</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader><CardTitle className="text-base">Morada de Recolha</CardTitle></CardHeader>
-                <CardContent className="text-sm">
-                  <p>{renderMorada(selectedMudanca.moradaRecolha)}</p>
-                  {selectedMudanca.eInternacional && selectedMudanca.moradaRecolha?.pais && (
-                    <p className="text-primary mt-1">Pais: {selectedMudanca.moradaRecolha.pais}</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader><CardTitle className="text-base">Morada de Entrega</CardTitle></CardHeader>
-                <CardContent className="text-sm">
-                  <p>{renderMorada(selectedMudanca.moradaEntrega)}</p>
-                  {selectedMudanca.eInternacional && selectedMudanca.moradaEntrega?.pais && (
-                    <p className="text-primary mt-1">Pais: {selectedMudanca.moradaEntrega.pais}</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader><CardTitle className="text-base">Serviço</CardTitle></CardHeader>
-                <CardContent className="space-y-1 text-sm">
-                  <p><span className="font-medium">Data pretendida:</span> {selectedMudanca.dataPretendida}</p>
-                  {selectedMudanca.horaPretendida && <p><span className="font-medium">Hora:</span> {selectedMudanca.horaPretendida}</p>}
-                  <p><span className="font-medium">Equipa:</span> {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa}</p>
-                  {selectedMudanca.veiculo && <p><span className="font-medium">Veículo:</span> {selectedMudanca.veiculo.nome} ({selectedMudanca.veiculo.metrosCubicos}m³)</p>}
-                  {selectedMudanca.eInternacional && <p><span className="font-medium text-primary">Internacional</span></p>}
-                </CardContent>
-              </Card>
-
-              {selectedMudanca.materiais && Object.keys(selectedMudanca.materiais).length > 0 && (
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Materiais</CardTitle></CardHeader>
-                  <CardContent className="text-sm">
-                    <ul className="list-disc list-inside">
-                      {selectedMudanca.materiais.protecaoFilme > 0 && <li>Proteção Filme: {selectedMudanca.materiais.protecaoFilme}</li>}
-                      {selectedMudanca.materiais.protecaoCartao > 0 && <li>Proteção Cartão: {selectedMudanca.materiais.protecaoCartao}</li>}
-                      {selectedMudanca.materiais.caixas > 0 && <li>Caixas: {selectedMudanca.materiais.caixas}</li>}
-                      {selectedMudanca.materiais.fitaCola > 0 && <li>Fita Cola: {selectedMudanca.materiais.fitaCola}</li>}
-                    </ul>
-                  </CardContent>
-                </Card>
-              )}
-
-              {selectedMudanca.observacoes && (
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Observações</CardTitle></CardHeader>
-                  <CardContent className="text-sm">
-                    <p>{selectedMudanca.observacoes}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              <DialogFooter>
-                {podeVer('recusar') && (
-                <Button
-                  variant="destructive"
-                  onClick={() => { setShowDetail(false); handleOpenRecusar(selectedMudanca); }}
-                >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  Recusar
-                </Button>
-                )}
-                {podeVer('aprovar') && (
-                <Button
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => { setShowDetail(false); handleOpenAprovar(selectedMudanca); }}
-                >
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  Aprovar
-                </Button>
-                )}
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog de Aprovação */}
-      <Dialog open={showAprovar} onOpenChange={setShowAprovar}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aprovar Solicitação</DialogTitle>
-            <DialogDescription>
-              Atribua um motorista e defina o tempo estimado para bloquear na agenda.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedMudanca && (
-            <div className="space-y-4">
-              <div className="bg-primary/10 p-3 rounded-lg text-sm">
-                <p className="font-medium text-foreground">{selectedMudanca.clienteNome}</p>
-                <p className="text-primary">{selectedMudanca.dataPretendida} {selectedMudanca.horaPretendida && `às ${selectedMudanca.horaPretendida}`}</p>
-                {selectedMudanca.veiculo && (
-                  <p className="text-muted-foreground mt-1">Veículo: {selectedMudanca.veiculo.nome || selectedMudanca.veiculo.matricula}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Motorista</Label>
-                <Select value={motoristaId} onValueChange={handleMotoristaChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar motorista disponível" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(todosMotoristas || []).filter((m: any) => m.estado !== 'inativo').map((m: any) => (
-                      <SelectItem key={m.id} value={m.id} disabled={m.estado !== 'disponivel'}>
-                        {m.nome} {m.veiculo ? `— ${m.veiculo.nome}` : ''}
-                        {m.estado !== 'disponivel' && ` (${m.estado})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Veículo</Label>
-                <Select value={veiculoId} onValueChange={handleVeiculoChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar veículo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">Sem veículo</SelectItem>
-                    {(veiculos || []).map((v: any) => (
-                      <SelectItem key={v.id} value={v.id} disabled={v.estado === 'em_manutencao'}>
-                        {v.nome} - {v.matricula}{v.estado === 'em_manutencao' ? ' (Em manutenção)' : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  O veículo é pré-selecionado conforme escolha do cliente. Selecione outro se necessário.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Ajudantes (opcional)</Label>
-                {selectedMudanca && (
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Cliente escolheu: {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa} ({getEquipaAjudantesCount(selectedMudanca.equipa)} ajudante(s))
-                  </p>
-                )}
-                {(todosAjudantes || []).length > 0 ? (
-                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
-                    {(todosAjudantes as any[]).map((a: any) => (
-                      <label key={a.id} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={ajudantesSelecionados.includes(a.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setAjudantesSelecionados([...ajudantesSelecionados, a.id]);
-                            } else {
-                              setAjudantesSelecionados(ajudantesSelecionados.filter((id) => id !== a.id));
-                            }
-                          }}
-                          className="rounded border-border"
-                        />
-                        <span className="text-sm">{a.nome}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Sem ajudantes disponíveis</p>
-                )}
-                {selectedMudanca && (
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Equipa escolhida: {EQUIPA_LABELS[selectedMudanca.equipa] || selectedMudanca.equipa} → {getEquipaAjudantesCount(selectedMudanca.equipa)} ajudante(s)
-                  </p>
-                )}
-                {selectedMudanca && ajudantesSelecionados.length > getEquipaAjudantesCount(selectedMudanca.equipa) && (
-                  <p className="text-xs text-amber-600">
-                    ⚠️ Admin selecionou {ajudantesSelecionados.length} ajudante(s), mais do que a escolha do cliente
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Tempo estimado (horas)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  max="24"
-                  value={tempoEstimado}
-                  onChange={(e) => setTempoEstimado(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Este tempo será bloqueado na agenda do motorista.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Observações internas (opcional)</Label>
-                <Textarea
-                  value={observacoesAdmin}
-                  onChange={(e) => setObservacoesAdmin(e.target.value)}
-                  placeholder="Notas para o motorista ou registo interno..."
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAprovar(false); resetForm(); }}>
-              Cancelar
-            </Button>
-            <Button
-              className="bg-green-600 hover:bg-green-700 text-white"
-              disabled={!motoristaId || approveMutation.isPending}
-onClick={() => {
-                if (!selectedMudanca || !motoristaId) return;
-                // [3.1] Use admin's dropdown selections, NOT the mudanca's original (null) values
-                approveMutation.mutate({
-                  id: selectedMudanca.id,
-                  aprovadoPor: user?.id || '',
-                  motoristaId: motoristaId,
-                  veiculoId: veiculoId || null,
-                  ajudantesIds: ajudantesSelecionados.length > 0 ? ajudantesSelecionados : undefined,
-                  tempoEstimadoHoras: parseFloat(tempoEstimado),
-                  observacoesAdmin: observacoesAdmin || undefined,
-                });
-              }}
-            >
-              {approveMutation.isPending ? 'A aprovar...' : 'Confirmar Aprovação'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Shared AprovarMudancaModal — D3 */}
+      <AprovarMudancaModal
+        open={showAprovar}
+        onOpenChange={setShowAprovar}
+        mudancaId={selectedMudanca?.id || ''}
+        initialVeiculoId={selectedMudanca?.veiculoId}
+      />
 
       {/* Dialog de Recusa */}
       <Dialog open={showRecusar} onOpenChange={setShowRecusar}>
@@ -586,7 +229,7 @@ onClick={() => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowRecusar(false); resetForm(); }}>
+            <Button variant="outline" onClick={() => { setShowRecusar(false); setMotivoRecusa(''); }}>
               Cancelar
             </Button>
             <Button
@@ -594,10 +237,7 @@ onClick={() => {
               disabled={!motivoRecusa.trim() || recusarMutation.isPending}
               onClick={() => {
                 if (!selectedMudanca || !motivoRecusa.trim()) return;
-                recusarMutation.mutate({
-                  id: selectedMudanca.id,
-                  motivo: motivoRecusa,
-                });
+                recusarMutation.mutate({ id: selectedMudanca.id, motivo: motivoRecusa });
               }}
             >
               {recusarMutation.isPending ? 'A recusar...' : 'Confirmar Recusa'}
