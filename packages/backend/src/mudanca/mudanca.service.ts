@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef, BadRequestException, ConflictException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMudancaDto } from './dto/create-mudanca.dto';
@@ -257,20 +257,39 @@ export class MudancaService {
       throw new Error('Configuração de preço (precoHora) não definida para este tenant. Configure antes de aprovar mudanças.');
     }
 
-    // Validar conflitos (Apenas aviso para admin, não bloqueia)
-    const conflict = await this.conflictDetector.checkConflicts(
-      tenantId,
-      mudanca.dataPretendida,
-      mudanca.horaPretendida || '08:00',
-      Number(aprovarMudancaDto.tempoEstimadoHoras || 4),
-      aprovarMudancaDto.motoristaId,
-      aprovarMudancaDto.veiculoId,
-      id,
-    );
+    // Validar conflitos — bloqueia com erro 409 se houver sobreposição
+    const tempoHoras = Number(aprovarMudancaDto.tempoEstimadoHoras || 4);
 
-    if (conflict.hasConflict) {
-      // O admin pode ignorar, mas logamos ou poderíamos emitir um alerta
-      console.warn(`[Agenda] Admin aprovando mudança com conflito de ${conflict.type}. Mudança ID: ${id}`);
+    if (aprovarMudancaDto.motoristaId) {
+      const motoristaConflict = await this.conflictDetector.detectarConflito(
+        tenantId, aprovarMudancaDto.motoristaId, 'motorista',
+        mudanca.dataPretendida, mudanca.horaPretendida || '08:00', tempoHoras, id,
+      );
+      if (motoristaConflict.hasConflict) {
+        throw new ConflictException(motoristaConflict.message || 'Motorista já tem serviço neste horário');
+      }
+    }
+
+    if (aprovarMudancaDto.veiculoId) {
+      const veiculoConflict = await this.conflictDetector.detectarConflito(
+        tenantId, aprovarMudancaDto.veiculoId, 'veiculo',
+        mudanca.dataPretendida, mudanca.horaPretendida || '08:00', tempoHoras, id,
+      );
+      if (veiculoConflict.hasConflict) {
+        throw new ConflictException(veiculoConflict.message || 'Veículo já tem serviço neste horário');
+      }
+    }
+
+    if (aprovarMudancaDto.ajudantesIds && aprovarMudancaDto.ajudantesIds.length > 0) {
+      for (const ajudanteId of aprovarMudancaDto.ajudantesIds) {
+        const ajudanteConflict = await this.conflictDetector.detectarConflito(
+          tenantId, ajudanteId, 'ajudante',
+          mudanca.dataPretendida, mudanca.horaPretendida || '08:00', tempoHoras, id,
+        );
+        if (ajudanteConflict.hasConflict) {
+          throw new ConflictException(ajudanteConflict.message || 'Ajudante já tem serviço neste horário');
+        }
+      }
     }
 
     // Validate motorista is available
