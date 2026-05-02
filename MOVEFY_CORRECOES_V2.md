@@ -762,7 +762,7 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 
 ### TAREFAS
 
-- [ ] **P1 — Tamanho recomendado e validação**
+- [x] **P1 — Tamanho recomendado e validação**
   - Tamanho recomendado para banners: **1920×600px** (ratio 16:5 wide banner)
   - Tamanho mínimo aceite: 1200×375px
   - Tamanho máximo do ficheiro: 2MB após compressão
@@ -770,13 +770,13 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
     - Resize: `sharp.resize(1920, 600, { fit: 'cover', position: 'centre' }).jpeg({ quality: 90 })`
     - Mostrar aviso se imagem original < 1200px largura: "Imagem pode ficar desfocada"
 
-- [ ] **P2 — Preview de banner correcto no admin**
+- [x] **P2 — Preview de banner correcto no admin**
   - `packages/admin/src/pages/configuracoes.page.tsx` → tab "Marca" → secção Banners:
     - Preview de cada banner: container com `aspect-ratio: 16/5, width: 100%, overflow: hidden`
     - `<img src={banner.url} className="w-full h-full object-cover" />`
     - Label com dimensões recomendadas: "Recomendado: 1920×600px"
 
-- [ ] **P3 — Drag-and-drop para reordenar banners**
+- [x] **P3 — Drag-and-drop para reordenar banners**
   - Instalar: `npm install @dnd-kit/core @dnd-kit/sortable --workspace=packages/admin`
   - `packages/admin/src/pages/configuracoes.page.tsx` → lista de banners:
     - Usar `SortableContext` do `@dnd-kit/sortable`
@@ -806,7 +806,7 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | M | Formatação de datas | 🟡 MÉDIO | [x] |
 | N | Mensagens de erro | 🟡 MÉDIO | [x] |
 | O | PWA — senha | 🟡 MÉDIO | [x] |
-| P | Banners | 🟡 MÉDIO | [ ] |
+| P | Banners | 🟡 MÉDIO | [x] |
 
 ---
 

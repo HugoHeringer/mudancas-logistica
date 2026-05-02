@@ -18,6 +18,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '../../components/ui/select';
 import { Upload, Image, Trash2, GripVertical, Eye, Plus, Shield, X } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -128,6 +131,35 @@ function LogoUpload({ logoUrl, onUpload }: { logoUrl?: string; onUpload: (file: 
 
 // ─── Banners Section ────────────────────────────────────────────────────────
 
+function SortableBannerItem({ banner, onToggle, onRemove }: { banner: any; onToggle: () => void; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: banner.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-3 p-2 rounded-lg border bg-muted/30">
+      <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1" {...attributes} {...listeners}>
+        <GripVertical className="w-5 h-5" />
+      </button>
+      <div className="w-48 aspect-[16/5] overflow-hidden rounded flex-shrink-0">
+        <img src={banner.url} alt={banner.nomeOriginal} className="w-full h-full object-cover" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm truncate">{banner.nomeOriginal}</div>
+        <div className="text-[10px] text-muted-foreground">Recomendado: 1920×600px</div>
+      </div>
+      <Switch checked={banner.eAtivo} onCheckedChange={onToggle} />
+      <Button variant="ghost" size="icon" onClick={onRemove}>
+        <Trash2 className="w-4 h-4 text-red-500" />
+      </Button>
+    </div>
+  );
+}
+
 function BannersSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -144,7 +176,10 @@ function BannersSection() {
       queryClient.invalidateQueries({ queryKey: ['banners'] });
       toast({ title: 'Banner adicionado' });
     },
-    onError: () => toast({ title: 'Erro ao fazer upload', variant: 'destructive' }),
+    onError: (err: any) => {
+      const msg = err.response?.data?.message || 'Erro ao fazer upload';
+      toast({ title: msg, variant: 'destructive' });
+    },
   });
 
   const toggleMutation = useMutation({
@@ -160,12 +195,25 @@ function BannersSection() {
     },
   });
 
-  const moveBanner = (index: number, direction: 'up' | 'down') => {
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= banners.length) return;
-    const updated = [...banners];
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const sorted = [...(banners as any[])].sort((a: any, b: any) => a.ordem - b.ordem);
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sorted.findIndex((b: any) => b.id === active.id);
+    const newIndex = sorted.findIndex((b: any) => b.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const updated = [...sorted];
+    const [moved] = updated.splice(oldIndex, 1);
+    updated.splice(newIndex, 0, moved);
     updated.forEach((b: any, i: number) => { b.ordem = i; });
+
     uploadApi.reorderBanners(updated.map((b: any) => ({ id: b.id, ordem: b.ordem }))).then(() => {
       queryClient.invalidateQueries({ queryKey: ['banners'] });
     });
@@ -180,29 +228,23 @@ function BannersSection() {
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
-        {banners.length === 0 && (
+        {sorted.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">
             Nenhum banner. Clique em "Adicionar" para fazer upload.
           </p>
         )}
-        {(banners as any[]).sort((a: any, b: any) => a.ordem - b.ordem).map((banner: any, idx: number) => (
-          <div key={banner.id} className="flex items-center gap-3 p-2 rounded-lg border bg-muted/30">
-            <div className="flex flex-col gap-0.5">
-              <button className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={idx === 0} onClick={() => moveBanner(idx, 'up')}>
-                <GripVertical className="w-4 h-4 rotate-180" />
-              </button>
-              <button className="text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={idx === banners.length - 1} onClick={() => moveBanner(idx, 'down')}>
-                <GripVertical className="w-4 h-4" />
-              </button>
-            </div>
-            <img src={banner.url} alt={banner.nomeOriginal} className="w-32 h-16 object-cover rounded" />
-            <div className="flex-1 text-sm truncate">{banner.nomeOriginal}</div>
-            <Switch checked={banner.eAtivo} onCheckedChange={() => toggleMutation.mutate(banner.id)} />
-            <Button variant="ghost" size="icon" onClick={() => removeMutation.mutate(banner.id)}>
-              <Trash2 className="w-4 h-4 text-red-500" />
-            </Button>
-          </div>
-        ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sorted.map((b: any) => b.id)} strategy={verticalListSortingStrategy}>
+            {sorted.map((banner: any) => (
+              <SortableBannerItem
+                key={banner.id}
+                banner={banner}
+                onToggle={() => toggleMutation.mutate(banner.id)}
+                onRemove={() => removeMutation.mutate(banner.id)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) uploadMutation.mutate(f);

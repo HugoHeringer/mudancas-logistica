@@ -183,7 +183,37 @@ export class UploadService {
 
   async salvarBanner(tenantId: string, file: Express.Multer.File) {
     this.validateImageMime(file);
-    const { url, size } = await this.saveFileToDisk(tenantId, file, 'banners', { maxWidth: 1920, maxHeight: 600, fit: 'cover' });
+
+    // Validate minimum dimensions
+    const metadata = await sharp(file.buffer).metadata();
+    if (metadata.width && metadata.width < 1200) {
+      throw new BadRequestException(
+        `Imagem demasiado pequena (${metadata.width}×${metadata.height || '?'}px). Mínimo: 1200×375px. Recomendado: 1920×600px.`,
+      );
+    }
+
+    // 2MB max after compression
+    const MAX_COMPRESSED_SIZE = 2 * 1024 * 1024;
+    let buffer = await sharp(file.buffer)
+      .resize(1920, 600, { fit: 'cover', position: 'centre' })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    if (buffer.length > MAX_COMPRESSED_SIZE) {
+      // Reduce quality to fit under 2MB
+      buffer = await sharp(file.buffer)
+        .resize(1920, 600, { fit: 'cover', position: 'centre' })
+        .jpeg({ quality: 75 })
+        .toBuffer();
+    }
+
+    const uploadDir = this.ensureUploadDir(tenantId, 'banners');
+    const fileName = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+    const filePath = path.join(uploadDir, fileName);
+    fs.writeFileSync(filePath, buffer);
+
+    const url = `/uploads/${tenantId}/banners/${fileName}`;
+    const size = buffer.length;
 
     // Get current banners count for ordering
     const existingBanners = (await this.getBannersConfig(tenantId)) || [];
