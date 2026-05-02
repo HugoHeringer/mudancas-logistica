@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Building, Plus, Users, Truck, Loader2, Ban, CheckCircle, Eye } from 'lucide-react';
+import { Building, Plus, Users, Truck, Loader2, Ban, CheckCircle, Eye, Clock, AlertTriangle } from 'lucide-react';
 import { superAdminApi } from '../lib/api';
 
 const planoColors: Record<string, string> = {
@@ -17,19 +17,36 @@ const planoLabels: Record<string, string> = {
   enterprise: 'Enterprise',
 };
 
-const estadoColors: Record<string, string> = {
-  ativa: 'bg-green-100 text-green-800',
-  em_setup: 'bg-yellow-100 text-yellow-800',
-  suspensa: 'bg-red-100 text-red-800',
-  cancelada: 'bg-gray-200 text-gray-600',
-};
+function getTrialInfo(tenant: any) {
+  const now = new Date();
+  const trialFim = tenant.trialFim ? new Date(tenant.trialFim) : null;
+  const trialInicio = tenant.trialInicio ? new Date(tenant.trialInicio) : null;
 
-const estadoLabels: Record<string, string> = {
-  ativa: 'Activo',
-  em_setup: 'Em Setup',
-  suspensa: 'Suspenso',
-  cancelada: 'Cancelado',
-};
+  if (tenant.estado === 'ativa') {
+    return { label: 'Activo', color: 'bg-green-100 text-green-800', daysLeft: null };
+  }
+  if (tenant.estado === 'suspensa') {
+    if (trialFim && trialFim < now) {
+      return { label: 'Trial expirado', color: 'bg-red-100 text-red-800', daysLeft: 0 };
+    }
+    return { label: 'Suspenso', color: 'bg-red-200 text-red-900', daysLeft: null };
+  }
+  if (tenant.estado === 'cancelada') {
+    return { label: 'Cancelado', color: 'bg-gray-200 text-gray-600', daysLeft: null };
+  }
+  if (tenant.estado === 'em_setup') {
+    if (trialFim && trialFim > now) {
+      const daysLeft = Math.ceil((trialFim.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return { label: `Trial activo (${daysLeft}d)`, color: 'bg-blue-100 text-blue-800', daysLeft };
+    }
+    if (trialFim && trialFim < now) {
+      return { label: 'Trial expirado', color: 'bg-red-100 text-red-800', daysLeft: 0 };
+    }
+    // Sem trialFim — setup manual
+    return { label: 'Em Setup', color: 'bg-yellow-100 text-yellow-800', daysLeft: null };
+  }
+  return { label: tenant.estado, color: 'bg-gray-100 text-gray-600', daysLeft: null };
+}
 
 export function DashboardPage() {
   const queryClient = useQueryClient();
@@ -127,7 +144,7 @@ export function DashboardPage() {
               </tr>
             ) : (
               tenants?.map((t: any) => {
-                const isSuspended = t.estado === 'suspensa';
+                const trialInfo = getTrialInfo(t);
                 return (
                   <tr key={t.id} className="border-b hover:bg-gray-50">
                     <td className="p-4 font-medium">{(t.configMarca as any)?.nome || t.subdomain}</td>
@@ -138,24 +155,28 @@ export function DashboardPage() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${estadoColors[t.estado] || 'bg-gray-100 text-gray-600'}`}>
-                        {estadoLabels[t.estado] || t.estado}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${trialInfo.color}`}>
+                        {trialInfo.label}
                       </span>
+                      {trialInfo.daysLeft !== null && trialInfo.daysLeft > 0 && trialInfo.daysLeft <= 7 && (
+                        <AlertTriangle className="inline-block h-3.5 w-3.5 ml-1 text-amber-500" />
+                      )}
                     </td>
                     <td className="p-4">{t._count?.mudancas || 0}</td>
                     <td className="p-4">{t._count?.users || 0}</td>
                     <td className="text-right p-4">
                       <div className="flex items-center justify-end gap-2">
-                        {isSuspended ? (
+                        {t.estado === 'suspensa' && (
                           <button
                             onClick={() => estadoMutation.mutate({ id: t.id, estado: 'ativa' })}
                             className="flex items-center gap-1 px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100"
-                            title="Reactivar"
+                            title="Activar manualmente"
                           >
                             <CheckCircle className="h-3.5 w-3.5" />
-                            Reactivar
+                            Activar
                           </button>
-                        ) : t.estado === 'ativa' ? (
+                        )}
+                        {t.estado === 'ativa' && (
                           <button
                             onClick={() => estadoMutation.mutate({ id: t.id, estado: 'suspensa' })}
                             className="flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100"
@@ -164,7 +185,7 @@ export function DashboardPage() {
                             <Ban className="h-3.5 w-3.5" />
                             Suspender
                           </button>
-                        ) : null}
+                        )}
                         <Link
                           to={`/tenant/${t.id}`}
                           className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100"

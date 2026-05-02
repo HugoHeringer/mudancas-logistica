@@ -27,7 +27,9 @@ export class SuperAdminService {
         estado: true,
         plano: true,
         eAtivo: true,
-        trialExpiraEm: true,
+        trialInicio: true,
+        trialFim: true,
+        trialNotificadoEm: true,
         configMarca: true,
         createdAt: true,
         _count: {
@@ -72,10 +74,15 @@ export class SuperAdminService {
     }
 
     // Criar tenant
+    const trialInicio = new Date();
+    const trialFim = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // +30 dias
+
     const tenant = await this.prisma.tenant.create({
       data: {
         subdomain: createTenantDto.subdomain,
         estado: createTenantDto.estado || 'em_setup',
+        trialInicio,
+        trialFim,
         configMarca: createTenantDto.configMarca || {},
         configPreco: createTenantDto.configPreco || {},
         configAgenda: createTenantDto.configAgenda || {},
@@ -231,8 +238,8 @@ export class SuperAdminService {
     }
 
     // 3. Criar tenant em modo trial
-    const trialExpiraEm = new Date();
-    trialExpiraEm.setDate(trialExpiraEm.getDate() + 30);
+    const trialInicio = new Date();
+    const trialFim = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // +30 dias
 
     const tenant = await this.prisma.tenant.create({
       data: {
@@ -241,7 +248,8 @@ export class SuperAdminService {
         plano: 'trial',
         estado: 'em_setup',
         eAtivo: true,
-        trialExpiraEm,
+        trialInicio,
+        trialFim,
         configMarca: { nome: dto.nomeEmpresa, email: dto.email, telefone: dto.telefone },
         configPreco: {},
         configAgenda: {},

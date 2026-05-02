@@ -221,7 +221,14 @@ export function VeiculosPage() {
     {
       accessorKey: 'eParaUrgencias',
       header: 'Urgências',
-      cell: ({ row }) => row.original.eParaUrgencias ? <span className="text-xs font-semibold text-red-600">SIM</span> : <span className="text-xs text-muted-foreground">Não</span>,
+      cell: ({ row }) => row.original.eParaUrgencias ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+          Urgente
+        </span>
+      ) : (
+        <span className="text-xs text-muted-foreground">—</span>
+      ),
     },
   ];
 

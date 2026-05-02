@@ -21,6 +21,7 @@ import { NotificacaoModule } from './notificacao/notificacao.module';
 import { FormularioModule } from './formulario/formulario.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { TenantActiveGuard } from './auth/guards/tenant-active.guard';
 import { SuperAdminGuard } from './auth/guards/super-admin.guard';
 import { PublicModule } from './public/public.module';
 import { TestRunnerModule } from './test-runner/test-runner.module';
@@ -70,6 +71,10 @@ import { SchedulerModule } from './common/scheduler/scheduler.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: TenantActiveGuard,
     },
     {
       provide: APP_GUARD,

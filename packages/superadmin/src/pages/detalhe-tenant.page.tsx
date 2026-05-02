@@ -1,8 +1,37 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Building, Users, Truck, Settings, Loader2, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
+import { ArrowLeft, Building, Users, Truck, Settings, Loader2, CheckCircle2, KeyRound, AlertTriangle, Clock } from 'lucide-react';
 import { superAdminApi } from '../lib/api';
+
+function getTrialBadge(tenant: any) {
+  const now = new Date();
+  const trialFim = tenant.trialFim ? new Date(tenant.trialFim) : null;
+
+  if (tenant.estado === 'ativa') {
+    return { label: 'Activo', color: 'bg-green-100 text-green-800', icon: null };
+  }
+  if (tenant.estado === 'cancelada') {
+    return { label: 'Cancelado', color: 'bg-gray-200 text-gray-600', icon: null };
+  }
+  if (tenant.estado === 'suspensa') {
+    if (trialFim && trialFim < now) {
+      return { label: 'Trial expirado', color: 'bg-red-100 text-red-800', icon: <AlertTriangle className="h-4 w-4" /> };
+    }
+    return { label: 'Suspenso', color: 'bg-red-200 text-red-900', icon: null };
+  }
+  if (tenant.estado === 'em_setup') {
+    if (trialFim && trialFim > now) {
+      const daysLeft = Math.ceil((trialFim.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return { label: `Trial activo — ${daysLeft} dias restantes`, color: 'bg-blue-100 text-blue-800', icon: <Clock className="h-4 w-4" /> };
+    }
+    if (trialFim && trialFim < now) {
+      return { label: 'Trial expirado', color: 'bg-red-100 text-red-800', icon: <AlertTriangle className="h-4 w-4" /> };
+    }
+    return { label: 'Em Setup', color: 'bg-yellow-100 text-yellow-800', icon: null };
+  }
+  return { label: tenant.estado, color: 'bg-gray-100 text-gray-600', icon: null };
+}
 
 export function DetalheTenantPage() {
   const { id } = useParams();
@@ -58,6 +87,9 @@ export function DetalheTenantPage() {
   }
 
   const marca = (tenant.configMarca as any) || {};
+  const trialBadge = getTrialBadge(tenant);
+  const trialFim = tenant.trialFim ? new Date(tenant.trialFim) : null;
+  const trialInicio = tenant.trialInicio ? new Date(tenant.trialInicio) : null;
 
   return (
     <div className="space-y-6">
@@ -123,17 +155,12 @@ export function DetalheTenantPage() {
           </div>
           <div>
             <p className="text-sm text-gray-500">Estado</p>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              tenant.estado === 'ativa' ? 'bg-green-100 text-green-800' :
-              tenant.estado === 'em_setup' ? 'bg-yellow-100 text-yellow-800' :
-              tenant.estado === 'suspensa' ? 'bg-red-100 text-red-800' :
-              'bg-gray-200 text-gray-600'
-            }`}>
-              {tenant.estado === 'ativa' ? 'Activo' :
-               tenant.estado === 'em_setup' ? 'Em Setup' :
-               tenant.estado === 'suspensa' ? 'Suspenso' :
-               tenant.estado}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${trialBadge.color}`}>
+                {trialBadge.label}
+              </span>
+              {trialBadge.icon}
+            </div>
           </div>
           <div>
             <p className="text-sm text-gray-500">Plano</p>
@@ -143,10 +170,16 @@ export function DetalheTenantPage() {
               {{ trial: 'Trial', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' }[tenant.plano] || tenant.plano}
             </span>
           </div>
-          {tenant.trialExpiraEm && (
+          {trialInicio && (
             <div>
-              <p className="text-sm text-gray-500">Trial Expira</p>
-              <p className="font-medium">{new Date(tenant.trialExpiraEm).toLocaleDateString('pt-PT')}</p>
+              <p className="text-sm text-gray-500">Início do Trial</p>
+              <p className="font-medium">{trialInicio.toLocaleDateString('pt-PT')}</p>
+            </div>
+          )}
+          {trialFim && (
+            <div>
+              <p className="text-sm text-gray-500">Fim do Trial</p>
+              <p className="font-medium">{trialFim.toLocaleDateString('pt-PT')}</p>
             </div>
           )}
           <div>
@@ -166,7 +199,7 @@ export function DetalheTenantPage() {
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               disabled={updateEstadoMutation.isPending}
             >
-              Ativar
+              Activar manualmente
             </button>
           )}
           {tenant.estado === 'ativa' && (

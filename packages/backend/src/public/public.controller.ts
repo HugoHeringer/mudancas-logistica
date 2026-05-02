@@ -73,6 +73,13 @@ export class PublicController {
   }
 
   @Public()
+  @Get('materiais')
+  @ApiOperation({ summary: 'Listar materiais ativos com preço e imagem (público)' })
+  getMateriais(@Query('tenantId') tenantId: string) {
+    return this.publicService.getMateriais(tenantId);
+  }
+
+  @Public()
   @Get('tenant/:subdomain')
   @ApiOperation({ summary: 'Obter info do tenant por subdomain (público)' })
   getTenantInfo(@Param('subdomain') subdomain: string) {

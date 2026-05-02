@@ -154,6 +154,21 @@ export class PublicService {
     );
   }
 
+  async getMateriais(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant || tenant.estado !== 'ativa') throw new NotFoundException('Empresa não encontrada');
+
+    const cp = (tenant.configPreco as any) || {};
+    const materiais = [
+      { id: 'filme', nome: 'Proteção Filme', preco: cp.protecaoFilme || cp.materialFilmePreco || 0, imagemUrl: cp.materialFilmeImagemUrl || null, ativo: cp.materialFilmeAtivo !== false },
+      { id: 'cartao', nome: 'Proteção Cartão', preco: cp.protecaoCartao || cp.materialCartaoPreco || 0, imagemUrl: cp.materialCartaoImagemUrl || null, ativo: cp.materialCartaoAtivo !== false },
+      { id: 'caixas', nome: 'Caixas', preco: cp.caixas || cp.materialCaixasPreco || 0, imagemUrl: cp.materialCaixasImagemUrl || null, ativo: cp.materialCaixasAtivo !== false },
+      { id: 'fita', nome: 'Fita Cola', preco: cp.fitaCola || cp.materialFitaPreco || 0, imagemUrl: cp.materialFitaImagemUrl || null, ativo: cp.materialFitaAtivo !== false },
+    ];
+
+    return materiais.filter(m => m.ativo);
+  }
+
   async getTenantInfo(subdomain: string) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { subdomain },

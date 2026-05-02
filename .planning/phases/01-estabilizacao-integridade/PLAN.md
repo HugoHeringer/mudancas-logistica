@@ -4,40 +4,40 @@ Este plano detalha as etapas para corrigir os bugs críticos de isolamento, uplo
 
 ## Onda 1: Infraestrutura e Segurança (Isolamento e Setup)
 ### Tarefas
-- [ ] **T1.1: Instalação de Dependências**
+- [x] **T1.1: Instalação de Dependências**
     - Instalar `sharp` no `packages/backend`.
     - Instalar `date-fns-tz` se necessário para normalização de fuso horário.
-- [ ] **T1.2: Implementação do Tenant Guard**
+- [x] **T1.2: Implementação do Tenant Guard**
     - Criar `TenantActiveGuard` para validar se o tenant está ativo/não suspenso.
     - Registrar globalmente no `AppModule`.
-- [ ] **T1.3: Ajustes no Esquema de Tenant (Bloco A)**
+- [x] **T1.3: Ajustes no Esquema de Tenant (Bloco A)**
     - Adicionar `validadeTrial` (DateTime) e `faseTrial` (Boolean) ao modelo `Tenant`.
     - Executar migração.
-- [ ] **T1.4: Cron Job de Expiração de Trial (Bloco A)**
+- [x] **T1.4: Cron Job de Expiração de Trial (Bloco A)**
     - Criar `trial.service.ts` com um cron job diário.
     - Implementar lógica que suspende tenants cuja `validadeTrial` expirou.
-- [ ] **T1.5: Ajuste de Autenticação (E1)**
+- [x] **T1.5: Ajuste de Autenticação (E1)**
     - Refatorar `RegisterDto` para tornar `tenantId` opcional no body (usando contexto se autenticado).
     - Atualizar `AuthService.register` para aceitar `tenantId` do usuário logado e remover restrições de perfil para administradores.
 
 ## Onda 2: Lógica de Negócio e Estados Operacionais
 ### Tarefas
-- [ ] **T2.1: Atualização de Esquema Prisma**
+- [x] **T2.1: Atualização de Esquema Prisma**
     - Adicionar estados `reservado` (Veículo) e `em_mudanca` (Motorista) ao `schema.prisma`.
     - Executar `npx prisma generate` e migração.
-- [ ] **T2.2: Serviço de Detecção de Conflitos (Bloco D)**
+- [x] **T2.2: Serviço de Detecção de Conflitos (Bloco D)**
     - Criar `ConflictDetectorService` para unificar a verificação de agenda.
     - Implementar lógica que evita agendamentos duplicados para o mesmo motorista/veículo na mesma data.
-- [ ] **T2.3: Automação de Estados (Bloco C)**
+- [x] **T2.3: Automação de Estados (Bloco C)**
     - Atualizar o fluxo de `aprovar` no `MudancaService` para automatizar a reserva de recursos.
     - Garantir que a conclusão de uma mudança libere os recursos (`disponivel`).
 
 ## Onda 3: Dashboards, KPIs e Processamento de Imagens
 ### Tarefas
-- [ ] **T3.1: Refatoração de Queries do Dashboard (Bloco G)**
+- [x] **T3.1: Refatoração de Queries do Dashboard (Bloco G)**
     - Corrigir filtros de data no `MudancaService.getDashboard` (limites de mês e UTC).
     - Corrigir mapeamento de estados nas queries de KPI (excluindo `cancelada` e `recusada` da receita).
-- [ ] **T3.2: Redimensionamento Automático de Imagens (Bloco B)**
+- [x] **T3.2: Redimensionamento Automático de Imagens (Bloco B)**
     - Implementar middleware ou helper usando `sharp` no `UploadService`.
     - Garantir redimensionamento automático e compressão (max 1200px largura).
 - [ ] **T3.3: Ajuste no Fluxo de Upload (Bloco B)**

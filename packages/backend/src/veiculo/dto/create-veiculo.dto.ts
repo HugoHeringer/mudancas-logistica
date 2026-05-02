@@ -43,4 +43,9 @@ export class CreateVeiculoDto {
   @IsBoolean()
   @IsOptional()
   eParaUrgencias?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  imagemUrl?: string;
 }
