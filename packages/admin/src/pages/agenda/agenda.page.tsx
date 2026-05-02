@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, startOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Ban, Trash2, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Ban, Trash2, AlertTriangle, X, Clock, User, Truck } from 'lucide-react';
 import { agendaApi, motoristasApi } from '../../lib/api';
 import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
@@ -52,6 +52,7 @@ export function AgendaPage() {
   const [vista, setVista] = useState<Vista>('mensal');
   const [dataAtual, setDataAtual] = useState(new Date());
   const [filtroMotorista, setFiltroMotorista] = useState<string>('todos');
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
   // Bloqueio creation dialog
   const [showCriarBloqueio, setShowCriarBloqueio] = useState(false);
@@ -109,6 +110,16 @@ export function AgendaPage() {
       );
       return res.data;
     },
+  });
+
+  // Side panel: fetch day detail when a day is clicked
+  const { data: selectedDayData } = useQuery({
+    queryKey: ['agenda', 'diaria-panel', selectedDay ? format(selectedDay, 'yyyy-MM-dd') : null],
+    queryFn: async () => {
+      const res = await agendaApi.getDiaria(format(selectedDay!, 'yyyy-MM-dd'));
+      return res.data;
+    },
+    enabled: !!selectedDay,
   });
 
   // Mutations
@@ -305,6 +316,7 @@ export function AgendaPage() {
               const dayMudancas = getMudancasForDay(date);
               const isCurrentMonth = isSameMonth(date, dataAtual);
               const isToday = isSameDay(date, new Date());
+              const isSelected = selectedDay && isSameDay(date, selectedDay);
               const capInfo = getCapacidadeForDay(date);
               return (
                 <div
@@ -313,6 +325,8 @@ export function AgendaPage() {
                   style={{
                     background: !isCurrentMonth
                       ? 'var(--surface-container-low)'
+                      : isSelected
+                      ? 'hsl(var(--primary) / 0.10)'
                       : isToday
                       ? 'hsl(var(--primary) / 0.06)'
                       : capInfo.status === 'bloqueada'
@@ -320,8 +334,10 @@ export function AgendaPage() {
                       : 'transparent',
                     borderRight: '1px solid hsl(var(--border))',
                     borderBottom: '1px solid hsl(var(--border))',
+                    outline: isSelected ? '2px solid hsl(var(--primary))' : undefined,
+                    outlineOffset: '-2px',
                   }}
-                  onClick={() => { setDataAtual(date); setVista('diaria'); }}
+                  onClick={() => { setSelectedDay(date); }}
                 >
                   <div className="flex items-center gap-1 mb-1">
                     <span
@@ -556,6 +572,125 @@ export function AgendaPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Side Panel: Day Detail */}
+      {selectedDay && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/30"
+            onClick={() => setSelectedDay(null)}
+          />
+          {/* Panel */}
+          <div className="fixed right-0 top-0 bottom-0 z-50 w-[420px] max-w-full bg-card border-l border-border shadow-xl flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {format(selectedDay, "d 'de' MMMM", { locale: ptBR })}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {format(selectedDay, 'EEEE', { locale: ptBR })}
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setSelectedDay(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Capacity indicator */}
+            <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+              {(() => {
+                const capInfo = getCapacidadeForDay(selectedDay);
+                const pct = capInfo.total > 0 ? Math.round((capInfo.ocupada / capInfo.total) * 100) : 0;
+                return (
+                  <>
+                    <span className={`w-3 h-3 rounded-full ${getStatusColor(capInfo.status)}`} />
+                    <span className="text-sm font-medium">
+                      {capInfo.ocupada}/{capInfo.total} mudanças
+                    </span>
+                    <span className="text-xs text-muted-foreground">({pct}%)</span>
+                    <div className="flex-1" />
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      capInfo.status === 'livre' ? 'bg-green-100 text-green-800' :
+                      capInfo.status === 'parcial' ? 'bg-yellow-100 text-yellow-800' :
+                      capInfo.status === 'completo' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {getStatusLabel(capInfo.status)}
+                    </span>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Mudancas list */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {(() => {
+                const panelMudancas = selectedDayData?.mudancas || getMudancasForDay(selectedDay);
+                if (panelMudancas.length === 0) {
+                  return (
+                    <div className="py-12 text-center text-muted-foreground">
+                      <CalendarIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                      <p className="text-sm">Nenhuma mudança agendada para este dia.</p>
+                    </div>
+                  );
+                }
+                return panelMudancas.map((m: any) => (
+                  <div
+                    key={m.id}
+                    className="p-3 rounded-lg border border-border cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate(`/mudancas/${m.id}`)}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>
+                        {m.horaPretendida || '—'}
+                      </span>
+                      {m.tempoEstimadoHoras && (
+                        <span className="text-xs text-muted-foreground">
+                          ({Number(m.tempoEstimadoHoras)}h)
+                        </span>
+                      )}
+                      <div className="flex-1" />
+                      <StatusBadge status={m.estado} size="sm" />
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>{m.clienteNome || m.cliente || '—'}</span>
+                    </div>
+                    {(m.motorista?.nome || m.motoristaNome) && (
+                      <div className="flex items-center gap-2 text-sm mt-1 text-muted-foreground">
+                        <Truck className="h-3.5 w-3.5" />
+                        <span>{m.motorista?.nome || m.motoristaNome}</span>
+                      </div>
+                    )}
+                    {m.tipoServico === 'urgente' && (
+                      <span className="inline-block mt-1.5 text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-800 font-medium">
+                        URGENTE
+                      </span>
+                    )}
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {/* Footer actions */}
+            <div className="p-4 border-t border-border">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setDataAtual(selectedDay);
+                  setVista('diaria');
+                  setSelectedDay(null);
+                }}
+              >
+                Ver vista diária completa
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

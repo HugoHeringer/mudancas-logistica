@@ -12,6 +12,8 @@ export const publicApi = {
   getVeiculos: (tenantId: string) => api.get(`/public/veiculos?tenantId=${tenantId}`),
   getDisponibilidade: (tenantId: string, data: string) =>
     api.get(`/public/disponibilidade?tenantId=${tenantId}&data=${data}`),
+  getHorariosDisponiveis: (tenantId: string, data: string, horas?: number) =>
+    api.get(`/public/horarios-disponiveis?tenantId=${tenantId}&data=${data}${horas ? `&horas=${horas}` : ''}`),
   getTenantInfo: (subdomain: string) => api.get(`/public/tenant/${subdomain}`),
   getTenantBrand: (subdomain: string) => api.get(`/public/tenant/${subdomain}/brand`),
   getCamposFormulario: (tenantId: string) => api.get(`/public/formulario/campos?tenantId=${tenantId}`),

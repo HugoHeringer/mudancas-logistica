@@ -412,7 +412,7 @@ A disponibilidade de um horário é determinada por: existem motoristas E veícu
 
 ### TAREFAS
 
-- [ ] **G1 — Serviço de disponibilidade centralizado**
+- [x] **G1 — Serviço de disponibilidade centralizado**
   - Criar `packages/backend/src/agenda/disponibilidade.service.ts`:
     ```typescript
     async verificarDisponibilidade(
@@ -444,21 +444,21 @@ A disponibilidade de um horário é determinada por: existem motoristas E veícu
     - Se `motoristasDisponiveis.length === 0`: `{ disponivel: false, motivo: 'Sem motoristas disponíveis neste horário' }`
     - Se `veiculosDisponiveis.length === 0`: `{ disponivel: false, motivo: 'Sem veículos disponíveis neste horário' }`
 
-- [ ] **G2 — Endpoint público de disponibilidade**
+- [x] **G2 — Endpoint público de disponibilidade**
   - `packages/backend/src/public/public.controller.ts`:
     - `GET /public/tenant/:slug/disponibilidade?data=2026-04-30&hora=09:00&horas=2`
     - Chamar `disponibilidadeService.verificarDisponibilidade()`
     - Retornar `{ disponivel: boolean, horariosDisponiveisDia: string[] }`
   - `horariosDisponiveisDia`: lista de horários de meia em meia hora das `configAgenda.horaAbertura` até `configAgenda.horaFecho` que têm disponibilidade
 
-- [ ] **G3 — Site: horários de meia em meia hora**
+- [x] **G3 — Site: horários de meia em meia hora**
   - `packages/site/src/components/agendamento-form.tsx` → step de data/hora:
     - Gerar slots de meia em meia hora: `['06:00','06:30','07:00','07:30',...,'19:30','20:00']`
     - Filtrar pelos horários retornados pelo endpoint de disponibilidade
     - Horários indisponíveis: aparecem disabled com cor cinzenta e tooltip "Sem disponibilidade"
     - Sem pausa de almoço: usar todos os slots de abertura até fecho sem excepção
 
-- [ ] **G4 — Site: reajuste de preço em serviço urgente**
+- [x] **G4 — Site: reajuste de preço em serviço urgente**
   - `packages/site/src/pages/urgente.tsx` (ou componente equivalente):
     - Ao carregar os veículos: buscar `configAgenda.acrescimoUrgencia` do tenant
     - Para cada veículo: `precoUrgente = veiculo.precoHora * (1 + acrescimoUrgencia / 100)`
@@ -467,7 +467,7 @@ A disponibilidade de um horário é determinada por: existem motoristas E veícu
       ~~30€/hora~~ → 39€/hora (urgência +30%)
       ```
 
-- [ ] **G5 — Agenda admin: mostrar mudanças aprovadas**
+- [x] **G5 — Agenda admin: mostrar mudanças aprovadas**
   - `packages/admin/src/pages/agenda.page.tsx`:
     - Calendário mensal: cada dia com mudanças aprovadas deve mostrar badge com contagem
     - Cor do dia: verde (capacidade < 50%), amarelo (50-80%), vermelho (> 80%), cinzento (bloqueado)
@@ -797,7 +797,7 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | D | Aprovações — conflitos e consistência | 🔴 CRÍTICO | [x] |
 | E | Utilizadores e criação de motorista | 🔴 CRÍTICO | [x] |
 | F | Dashboard | 🔴 CRÍTICO | [x] |
-| G | Disponibilidade real | 🔴 CRÍTICO | [ ] |
+| G | Disponibilidade real | 🔴 CRÍTICO | [x] |
 | H | Formulário — materiais e preços | 🟠 ALTO | [ ] |
 | I | Comunicação e Resend por tenant | 🟠 ALTO | [ ] |
 | J | Sidebar — identidade tenant | 🟠 ALTO | [ ] |

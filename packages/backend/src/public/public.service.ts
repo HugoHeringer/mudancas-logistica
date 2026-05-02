@@ -2,12 +2,14 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMudancaDto } from '../mudanca/dto/create-mudanca.dto';
 import { EmailService } from '../comunicacao/email.service';
+import { DisponibilidadeService } from '../agenda/disponibilidade.service';
 
 @Injectable()
 export class PublicService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private disponibilidadeService: DisponibilidadeService,
   ) {}
 
   async criarMudanca(tenantId: string, dto: CreateMudancaDto) {
@@ -130,6 +132,26 @@ export class PublicService {
       disponivel: capacidadeRestante > 0,
       capacidadeRestante,
     };
+  }
+
+  /**
+   * G2: Retorna horários disponíveis (de meia em meia hora) para um dia,
+   * com base na disponibilidade real de motoristas e veículos.
+   */
+  async getHorariosDisponiveis(tenantId: string, data: string, horas?: number) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant || tenant.estado !== 'ativa') {
+      throw new NotFoundException('Empresa não encontrada');
+    }
+
+    return this.disponibilidadeService.getHorariosDisponiveisDiaOptimised(
+      tenantId,
+      data,
+      horas || 4,
+    );
   }
 
   async getTenantInfo(subdomain: string) {

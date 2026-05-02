@@ -66,7 +66,7 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
   const [files, setFiles] = useState<File[]>([]);
   const [filePreviews, setFilePreviews] = useState<string[]>([]);
   const [selectedDate] = useState(propDate || '');
-  const [selectedHora] = useState(propHora || '');
+  const [selectedHora, setSelectedHora] = useState(propHora || '');
   const [urgente] = useState(propUrgente);
   const [selectedVeiculoId, setSelectedVeiculoId] = useState('');
   const [veiculos, setVeiculos] = useState<any[]>([]);
@@ -76,6 +76,8 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
   const [consentimentoMarketing, setConsentimentoMarketing] = useState(false);
   const [veiculoError, setVeiculoError] = useState(false);
   const [dataHoraError, setDataHoraError] = useState(false);
+  const [horariosDisponiveis, setHorariosDisponiveis] = useState<string[]>([]);
+  const [horariosIndisponiveis, setHorariosIndisponiveis] = useState<string[]>([]);
 
   useEffect(() => {
     if (tenantId) {
@@ -87,6 +89,24 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
         .catch(() => setCamposPersonalizados([]));
     }
   }, [tenantId]);
+
+  // G3: Fetch available time slots when date changes
+  useEffect(() => {
+    if (tenantId && selectedDate) {
+      publicApi.getHorariosDisponiveis(tenantId, selectedDate)
+        .then(res => {
+          setHorariosDisponiveis(res.data?.horariosDisponiveis || []);
+          setHorariosIndisponiveis(res.data?.horariosIndisponiveis || []);
+        })
+        .catch(() => {
+          setHorariosDisponiveis([]);
+          setHorariosIndisponiveis([]);
+        });
+    } else {
+      setHorariosDisponiveis([]);
+      setHorariosIndisponiveis([]);
+    }
+  }, [tenantId, selectedDate]);
 
   const handleCampoChange = (campoId: string, value: any) => {
     setValoresCampos(prev => ({ ...prev, [campoId]: value }));
@@ -528,20 +548,71 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
                       onChange={() => setSelectedVeiculoId(v.id)}
                       className="rounded"
                     />
-                    {v.imagemUrl && (
+                    {v.imagemUrl ? (
                       <img src={v.imagemUrl} alt={v.nome} className="w-16 h-12 object-cover rounded" />
+                    ) : (
+                      <div className="w-16 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                        <Truck className="w-6 h-6 text-muted-foreground" />
+                      </div>
                     )}
                     <div className="flex-1">
                       <p className="font-medium text-sm">{v.nome}</p>
                       <p className="text-xs text-muted-foreground">{v.marca} {v.modelo}</p>
                     </div>
-                    <p className="text-sm font-medium text-primary">{v.precoHora}€/h</p>
+                    <p className="text-sm font-medium text-primary">
+                      {urgente && v.eParaUrgencias ? (
+                        <>
+                          <span className="line-through text-muted-foreground/50">{v.precoHora}€/h</span>
+                          {' → '}
+                          <span className="text-terracotta">{(Number(v.precoHora) * 1.3).toFixed(0)}€/h</span>
+                          <span className="text-xs text-terracotta/70 ml-1">(urg.)</span>
+                        </>
+                      ) : (
+                        <>{v.precoHora}€/h</>
+                      )}
+                    </p>
                   </label>
                 ))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Nenhum veiculo disponivel</p>
             )}
+
+            {/* G3: Time slot picker */}
+            {selectedDate && (horariosDisponiveis.length > 0 || horariosIndisponiveis.length > 0) && (
+              <div className="mt-6">
+                <h4 className="text-sm font-medium tracking-wide uppercase text-terracotta mb-3">Horario</h4>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {[...horariosDisponiveis, ...horariosIndisponiveis].sort().map((h) => {
+                    const isAvailable = horariosDisponiveis.includes(h);
+                    const isSelected = selectedHora === h;
+                    return (
+                      <button
+                        key={h}
+                        type="button"
+                        disabled={!isAvailable}
+                        onClick={() => isAvailable && setSelectedHora(h)}
+                        className={cn(
+                          'px-2 py-2 rounded-lg text-sm font-medium transition-all border',
+                          !isAvailable
+                            ? 'border-border bg-muted/30 text-muted-foreground/40 cursor-not-allowed line-through'
+                            : isSelected
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-border bg-muted/50 hover:border-primary/50 text-foreground'
+                        )}
+                        title={!isAvailable ? 'Sem disponibilidade' : undefined}
+                      >
+                        {h}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedHora && (
+                  <p className="text-xs text-primary mt-2">Selecionado: {selectedHora}</p>
+                )}
+              </div>
+            )}
+
             {veiculoError && (
               <p className="text-xs text-terracotta mt-2">Seleccione um veiculo para continuar</p>
             )}

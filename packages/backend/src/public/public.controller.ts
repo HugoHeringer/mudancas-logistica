@@ -62,6 +62,17 @@ export class PublicController {
   }
 
   @Public()
+  @Get('horarios-disponiveis')
+  @ApiOperation({ summary: 'Listar horários disponíveis por data com base em motoristas/veículos (público)' })
+  getHorariosDisponiveis(
+    @Query('tenantId') tenantId: string,
+    @Query('data') data: string,
+    @Query('horas') horas?: string,
+  ) {
+    return this.publicService.getHorariosDisponiveis(tenantId, data, horas ? Number(horas) : undefined);
+  }
+
+  @Public()
   @Get('tenant/:subdomain')
   @ApiOperation({ summary: 'Obter info do tenant por subdomain (público)' })
   getTenantInfo(@Param('subdomain') subdomain: string) {
