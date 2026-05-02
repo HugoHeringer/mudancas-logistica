@@ -6,7 +6,7 @@ import { api } from '../../lib/api';
 
 export function TrocarSenhaPage() {
   const navigate = useNavigate();
-  const { user, accessToken } = useAuthStore();
+  const { user, accessToken, clearRequirePasswordChange } = useAuthStore();
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmar, setConfirmar] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +30,7 @@ export function TrocarSenhaPage() {
       await api.post('/auth/change-password', { novaSenha }, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
+      clearRequirePasswordChange();
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao alterar senha');

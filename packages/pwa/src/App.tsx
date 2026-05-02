@@ -14,10 +14,15 @@ import { BottomNav } from './components/bottom-nav';
 import { OfflineIndicator } from './components/offline-indicator';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, requirePasswordChange } = useAuthStore();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Force redirect to trocar-senha when password change is required
+  if (requirePasswordChange && !window.location.pathname.includes('/trocar-senha')) {
+    return <Navigate to="/trocar-senha" replace />;
   }
 
   return children;

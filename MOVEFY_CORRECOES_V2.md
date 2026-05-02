@@ -686,7 +686,7 @@ O formato ISO `2026-04-30T00:00:00.000Z` deve ser tratado numa única função d
 
 ### TAREFAS
 
-- [ ] **M1 — Criar função de formatação centralizada**
+- [x] **M1 — Criar função de formatação centralizada**
   - `packages/shared/src/utils/format-date.ts`:
     ```typescript
     export function formatarData(data: string | Date): string {
@@ -708,7 +708,7 @@ O formato ISO `2026-04-30T00:00:00.000Z` deve ser tratado numa única função d
     }
     ```
 
-- [ ] **M2 — Substituir todas as apresentações de data nos frontends**
+- [x] **M2 — Substituir todas as apresentações de data nos frontends**
   - Busca global em `packages/admin/src/` por: `.toISOString()`, `toLocaleDateString()`, `toLocaleString()`
   - Substituir todas por `formatarData()` ou `formatarDataHora()` da shared
   - Mesma substituição em `packages/pwa/src/` e `packages/site/src/`
@@ -720,7 +720,7 @@ O formato ISO `2026-04-30T00:00:00.000Z` deve ser tratado numa única função d
 
 ### TAREFAS
 
-- [ ] **N1 — Backend: exception filter global**
+- [x] **N1 — Backend: exception filter global**
   - `packages/backend/src/common/filters/http-exception.filter.ts`:
     - Interceptar TODOS os erros e retornar:
       ```typescript
@@ -734,7 +734,7 @@ O formato ISO `2026-04-30T00:00:00.000Z` deve ser tratado numa única função d
     - Nunca retornar "Internal server error" sem mensagem adicional
     - Erros de validação Zod/class-validator: mapear cada campo para mensagem em português
 
-- [ ] **N2 — Frontend: interceptar e mostrar erros específicos**
+- [x] **N2 — Frontend: interceptar e mostrar erros específicos**
   - `packages/admin/src/lib/api.ts`:
     - No interceptor de response error: extrair `error.response.data.message`
     - Mostrar via toast: `toast.error(error.response.data.message || 'Erro desconhecido')`
@@ -748,7 +748,7 @@ O formato ISO `2026-04-30T00:00:00.000Z` deve ser tratado numa única função d
 
 > **Nota:** Implementado em parte no Bloco E (E4 e E5). Verificar se restam itens.
 
-- [ ] **O1 — Verificar que o redirect para troca de senha funciona no router do PWA**
+- [x] **O1 — Verificar que o redirect para troca de senha funciona no router do PWA**
   - `packages/pwa/src/router.tsx`: guard que verifica `requirePasswordChange` no estado do auth
   - Se `requirePasswordChange === true` e rota não é `/trocar-senha`: redirecionar
 
@@ -803,9 +803,9 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | J | Sidebar — identidade tenant | 🟠 ALTO | [x] |
 | K | Aprovações — UI e filtros | 🟠 ALTO | [x] |
 | L | Notificações | 🟠 ALTO | [x] |
-| M | Formatação de datas | 🟡 MÉDIO | [ ] |
-| N | Mensagens de erro | 🟡 MÉDIO | [ ] |
-| O | PWA — senha | 🟡 MÉDIO | [ ] |
+| M | Formatação de datas | 🟡 MÉDIO | [x] |
+| N | Mensagens de erro | 🟡 MÉDIO | [x] |
+| O | PWA — senha | 🟡 MÉDIO | [x] |
 | P | Banners | 🟡 MÉDIO | [ ] |
 
 ---

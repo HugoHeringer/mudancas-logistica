@@ -69,7 +69,7 @@ export function LoginPage() {
       // Remember the empresa slug for next login
       localStorage.setItem('tenantSubdomain', data.empresa);
 
-      login(user, accessToken, refreshToken, guardarSessao);
+      login(user, accessToken, refreshToken, guardarSessao, requirePasswordChange);
 
       if (requirePasswordChange) {
         navigate('/trocar-senha');
