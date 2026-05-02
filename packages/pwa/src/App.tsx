@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/auth.store';
 import { TenantProvider } from './theme/TenantProvider';
 import { ErrorBoundary } from './components/error-boundary';
 import { LoginPage } from './pages/auth/login.page';
+import { TrocarSenhaPage } from './pages/auth/trocar-senha.page';
 import { AgendaDiaPage } from './pages/agenda-dia.page';
 import { DetalheMudancaPage } from './pages/detalhe-mudanca.page';
 import { FichaConclusaoPage } from './pages/ficha-conclusao.page';
@@ -49,6 +50,7 @@ function App() {
       <TenantProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/trocar-senha" element={<ProtectedRoute><TrocarSenhaPage /></ProtectedRoute>} />
           <Route path="/*" element={<AppLayout />} />
         </Routes>
       </TenantProvider>

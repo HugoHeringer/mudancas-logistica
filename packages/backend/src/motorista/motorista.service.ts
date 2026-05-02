@@ -2,13 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMotoristaDto } from './dto/create-motorista.dto';
 import { UpdateMotoristaDto } from './dto/update-motorista.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class MotoristaService {
   constructor(private prisma: PrismaService) {}
 
   async create(tenantId: string, createMotoristaDto: CreateMotoristaDto) {
-    return this.prisma.motorista.create({
+    const motorista = await this.prisma.motorista.create({
       data: {
         tenantId,
         nome: createMotoristaDto.nome,
@@ -24,6 +25,36 @@ export class MotoristaService {
         veiculo: true,
       },
     });
+
+    // Auto-create User for motorista with obrigarTrocaSenha=true
+    const passwordHash = await bcrypt.hash('123456', 10);
+    try {
+      await this.prisma.user.create({
+        data: {
+          nome: motorista.nome,
+          email: motorista.email,
+          passwordHash,
+          perfil: 'motorista',
+          tenantId,
+          motoristaId: motorista.id,
+          obrigarTrocaSenha: true,
+        },
+      });
+      // Link user back to motorista
+      const user = await this.prisma.user.findFirst({
+        where: { motoristaId: motorista.id },
+      });
+      if (user) {
+        await this.prisma.motorista.update({
+          where: { id: motorista.id },
+          data: { userId: user.id },
+        });
+      }
+    } catch {
+      // User already exists (same email in tenant) — skip
+    }
+
+    return motorista;
   }
 
   async findAll(tenantId: string, filters?: any, user?: any) {

@@ -148,6 +148,7 @@ export class AuthService {
         tenantId: user.tenantId,
         motoristaId,
       },
+      requirePasswordChange: (user as any).obrigarTrocaSenha === true,
       accessToken: this.jwtService.sign(payload),
       refreshToken: this.jwtService.sign(payload, {
         secret: process.env.JWT_REFRESH_SECRET,
@@ -156,10 +157,16 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, creator?: any) {
+    const tenantId = registerDto.tenantId || creator?.tenantId;
+
+    if (!tenantId) {
+      throw new BadRequestException('Empresa não especificada');
+    }
+
     // Validar se tenant existe
     const tenant = await this.prisma.tenant.findUnique({
-      where: { id: registerDto.tenantId },
+      where: { id: tenantId },
       select: { id: true },
     });
 
@@ -167,22 +174,29 @@ export class AuthService {
       throw new BadRequestException('Empresa inválida');
     }
 
-    // Restringir perfis: register so permite motorista/operacional
-    const perfisPermitidos = ['motorista', 'operacional'];
+    // Restringir perfis: se houver criador admin, permite qualquer perfil
+    // Caso contrário, apenas motorista/operacional
+    const isAdmin = creator?.perfil === 'admin' || creator?.isSuperAdmin;
+    const perfisPermitidos = isAdmin
+      ? ['admin', 'gerente', 'financeiro', 'operacional', 'motorista']
+      : ['motorista', 'operacional'];
+
     if (!perfisPermitidos.includes(registerDto.perfil)) {
-      throw new BadRequestException('Registo apenas permitido para perfil motorista ou operacional');
+      throw new BadRequestException(
+        'Perfil não permitido para este nível de acesso',
+      );
     }
 
     // Verificar se usuário já existe
     const existingUser = await this.prisma.user.findFirst({
       where: {
         email: registerDto.email,
-        tenantId: registerDto.tenantId,
+        tenantId,
       },
     });
 
     if (existingUser) {
-      throw new ConflictException('Email já registado');
+      throw new ConflictException('Email já registado nesta empresa');
     }
 
     const passwordHash = await bcrypt.hash(registerDto.password, 10);
@@ -193,8 +207,10 @@ export class AuthService {
         email: registerDto.email,
         passwordHash,
         perfil: registerDto.perfil,
-        tenantId: registerDto.tenantId,
-        permissoes: registerDto.permissoes,
+        tenantId,
+        permissoes: registerDto.permissoes as any,
+        motoristaId: registerDto.motoristaId || null,
+        obrigarTrocaSenha: registerDto.obrigarTrocaSenha ?? false,
       },
     });
 
@@ -263,5 +279,30 @@ export class AuthService {
     });
 
     return { message: 'Senha atualizada com sucesso' };
+  }
+
+  async changePassword(userId: string, senhaAtual: string | undefined, novaSenha: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('Utilizador não encontrado');
+    }
+
+    // If obrigarTrocaSenha, skip current password check (first login forced change)
+    if (!user.obrigarTrocaSenha && senhaAtual) {
+      const isPasswordValid = await bcrypt.compare(senhaAtual, user.passwordHash);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Senha atual inválida');
+      }
+    } else if (!user.obrigarTrocaSenha && !senhaAtual) {
+      throw new BadRequestException('Senha atual é obrigatória');
+    }
+
+    const newPasswordHash = await bcrypt.hash(novaSenha, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newPasswordHash, obrigarTrocaSenha: false },
+    });
+
+    return { message: 'Senha alterada com sucesso' };
   }
 }

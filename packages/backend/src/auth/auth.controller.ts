@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Body,
+  Req,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -28,12 +29,13 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @Public()
   @Post('register')
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Registar novo utilizador (apenas admin)' })
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Req() req: any, @Body() registerDto: RegisterDto) {
+    const tenantId = req.user?.tenantId;
+    return this.authService.register({ ...registerDto, tenantId }, req.user);
   }
 
   @Public()
@@ -54,5 +56,13 @@ export class AuthController {
       updatePasswordDto.currentPassword,
       updatePasswordDto.newPassword,
     );
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Alterar senha (primeiro login ou voluntário)' })
+  async changePassword(@Req() req: any, @Body() body: { senhaAtual?: string; novaSenha: string }) {
+    return this.authService.changePassword(req.user.id, body.senhaAtual, body.novaSenha);
   }
 }

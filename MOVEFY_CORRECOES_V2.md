@@ -287,7 +287,7 @@ O erro 400 no registo de utilizador indica provavelmente que o DTO de registo n�
 
 ### TAREFAS
 
-- [ ] **E1 — Corrigir erro 400 ao criar utilizador admin/financeiro/gerente**
+- [x] **E1 — Corrigir erro 400 ao criar utilizador admin/financeiro/gerente**
   - `packages/backend/src/auth/dto/register.dto.ts`:
     - Verificar que o enum de `perfil` inclui: `'admin'`, `'gerente'`, `'financeiro'`, `'operacional'`, `'motorista'`
     - Verificar que todos os campos obrigatórios têm decorators `@IsNotEmpty()` com mensagens claras
@@ -297,7 +297,7 @@ O erro 400 no registo de utilizador indica provavelmente que o DTO de registo n�
     - Verificar que `tenantId` está a ser injectado do contexto e não esperado no body
     - Verificar que o hash de password está a ser feito antes de gravar
 
-- [ ] **E2 — Ao criar motorista: criar utilizador automaticamente**
+- [x] **E2 — Ao criar motorista: criar utilizador automaticamente**
   - `packages/backend/src/motoristas/motoristas.service.ts` → função `criar()`:
     - Após criar o motorista:
       ```typescript
@@ -318,13 +318,13 @@ O erro 400 no registo de utilizador indica provavelmente que o DTO de registo n�
     - Modelo `User` → adicionar campo `obrigarTrocaSenha Boolean @default(false)` se não existir
     - Modelo `User` → adicionar campo `motoristaId String? @unique` (relação 1:1 com Motorista)
 
-- [ ] **E3 — Remover perfil "motorista" do menu de Utilizadores**
+- [x] **E3 — Remover perfil "motorista" do menu de Utilizadores**
   - `packages/admin/src/pages/utilizadores.page.tsx`:
     - Select de perfil: remover opção `motorista`
     - Nota no formulário: "Para criar motoristas, aceda ao menu Motoristas"
     - Na listagem de utilizadores: ocultar utilizadores com perfil `motorista` (gerem-se no menu Motoristas)
 
-- [ ] **E4 — PWA: forçar troca de senha no primeiro login**
+- [x] **E4 — PWA: forçar troca de senha no primeiro login**
   - `packages/backend/src/auth/auth.service.ts` → função `login()`:
     - Se `user.obrigarTrocaSenha === true`: retornar resposta especial:
       ```typescript
@@ -338,7 +338,7 @@ O erro 400 no registo de utilizador indica provavelmente que o DTO de registo n�
     - Ao submeter: `PATCH /api/auth/change-password` com `{ novaSenha }`
     - Backend: `UPDATE User SET password=hash(novaSenha), obrigarTrocaSenha=false WHERE id=userId`
 
-- [ ] **E5 — PWA: alterar senha voluntariamente no perfil**
+- [x] **E5 — PWA: alterar senha voluntariamente no perfil**
   - `packages/pwa/src/pages/perfil.page.tsx`:
     - Adicionar secção "Segurança" com botão "Alterar Senha"
     - Formulário: senha actual + nova senha + confirmação
@@ -794,8 +794,8 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | A | Trial e activação de tenant | 🔴 CRÍTICO | [x] |
 | B | Upload de imagens | 🔴 CRÍTICO | [x] |
 | C | Estados de veículo/motorista/ajudante | 🔴 CRÍTICO | [x] |
-| D | Aprovações — conflitos e consistência | 🔴 CRÍTICO | [ ] |
-| E | Utilizadores e criação de motorista | 🔴 CRÍTICO | [ ] |
+| D | Aprovações — conflitos e consistência | 🔴 CRÍTICO | [x] |
+| E | Utilizadores e criação de motorista | 🔴 CRÍTICO | [x] |
 | F | Dashboard | 🔴 CRÍTICO | [ ] |
 | G | Disponibilidade real | 🔴 CRÍTICO | [ ] |
 | H | Formulário — materiais e preços | 🟠 ALTO | [ ] |

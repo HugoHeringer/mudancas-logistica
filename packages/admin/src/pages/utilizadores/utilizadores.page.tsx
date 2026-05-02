@@ -42,7 +42,6 @@ const PERFIS: Record<string, string> = {
   gerente: 'Gerente',
   financeiro: 'Financeiro',
   operacional: 'Operacional',
-  motorista: 'Motorista (PWA)',
 };
 
 export function UtilizadoresPage() {
@@ -76,7 +75,7 @@ export function UtilizadoresPage() {
     queryKey: ['utilizadores'],
     queryFn: async () => {
       const res = await utilizadoresApi.findAll();
-      return res.data as UserRow[];
+      return (res.data as UserRow[]).filter((u) => u.perfil !== 'motorista');
     },
   });
 
@@ -220,10 +219,13 @@ export function UtilizadoresPage() {
           <h2 className="text-2xl font-bold">Utilizadores</h2>
           <p className="text-muted-foreground">Gestão de utilizadores e permissões</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Novo Utilizador
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Novo Utilizador
+          </Button>
+          <p className="text-xs text-muted-foreground">Para criar motoristas, aceda ao menu Motoristas</p>
+        </div>
       </div>
 
       {/* Info sobre perfis */}

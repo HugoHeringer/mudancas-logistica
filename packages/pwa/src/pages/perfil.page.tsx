@@ -1,14 +1,54 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, Truck, LogOut, Info } from 'lucide-react';
+import { User, Mail, Phone, Truck, LogOut, Info, Lock, Loader2, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../stores/auth.store';
-import { motoristasApi } from '../lib/api';
+import { api, motoristasApi } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 
 export function PerfilPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [senhaAtual, setSenhaAtual] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmar, setConfirmar] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError('');
+    setPwSuccess(false);
+
+    if (novaSenha.length < 8) {
+      setPwError('A nova senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+    if (novaSenha !== confirmar) {
+      setPwError('As senhas não coincidem');
+      return;
+    }
+
+    setPwLoading(true);
+    try {
+      await api.post('/auth/change-password', { senhaAtual, novaSenha });
+      setPwSuccess(true);
+      setSenhaAtual('');
+      setNovaSenha('');
+      setConfirmar('');
+      setTimeout(() => {
+        setShowChangePassword(false);
+        setPwSuccess(false);
+      }, 1500);
+    } catch (err: any) {
+      setPwError(err.response?.data?.message || 'Erro ao alterar senha');
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   const { data: motorista } = useQuery({
     queryKey: ['motorista', 'me'],
@@ -74,6 +114,94 @@ export function PerfilPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Segurança */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">Segurança</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!showChangePassword ? (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowChangePassword(true)}
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Alterar Senha
+              </Button>
+            ) : (
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                {pwError && (
+                  <p className="text-xs text-red-500">{pwError}</p>
+                )}
+                {pwSuccess && (
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" /> Senha alterada com sucesso
+                  </p>
+                )}
+                <div>
+                  <label className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground/60">Senha Atual</label>
+                  <input
+                    type="password"
+                    value={senhaAtual}
+                    onChange={(e) => setSenhaAtual(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-transparent border-b border-muted-foreground/20 outline-none text-foreground"
+                    placeholder="Senha atual"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground/60">Nova Senha</label>
+                  <input
+                    type="password"
+                    value={novaSenha}
+                    onChange={(e) => setNovaSenha(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-transparent border-b border-muted-foreground/20 outline-none text-foreground"
+                    placeholder="Mínimo 8 caracteres"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground/60">Confirmar Nova Senha</label>
+                  <input
+                    type="password"
+                    value={confirmar}
+                    onChange={(e) => setConfirmar(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-transparent border-b border-muted-foreground/20 outline-none text-foreground"
+                    placeholder="Repita a nova senha"
+                    required
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowChangePassword(false);
+                      setPwError('');
+                      setSenhaAtual('');
+                      setNovaSenha('');
+                      setConfirmar('');
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="flex-1"
+                    disabled={pwLoading || !senhaAtual || !novaSenha || !confirmar}
+                  >
+                    {pwLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar'}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
 
         {/* App info */}
         <Card>

@@ -59,7 +59,7 @@ export function LoginPage() {
 
     try {
       const response = await authApi.login(data.email, data.password, data.empresa);
-      const { user, accessToken, refreshToken } = response.data;
+      const { user, accessToken, refreshToken, requirePasswordChange } = response.data;
 
       if (user.perfil !== 'motorista') {
         setError('Esta app é exclusiva para motoristas.');
@@ -70,7 +70,12 @@ export function LoginPage() {
       localStorage.setItem('tenantSubdomain', data.empresa);
 
       login(user, accessToken, refreshToken, guardarSessao);
-      navigate('/');
+
+      if (requirePasswordChange) {
+        navigate('/trocar-senha');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Credenciais inválidas');
     } finally {
