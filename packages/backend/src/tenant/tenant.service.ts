@@ -187,7 +187,7 @@ export class TenantService {
       {
         id: 'agenda',
         label: 'Agenda',
-        completed: !!(configAgenda.horaInicio || configAgenda.horaFim || configAgenda.diasUteis),
+        completed: !!(configAgenda.horaInicio || configAgenda.horaFim || configAgenda.diasUteis || (Array.isArray(configAgenda.diasDisponiveis) && configAgenda.diasDisponiveis.length > 0)),
       },
       {
         id: 'veiculos',

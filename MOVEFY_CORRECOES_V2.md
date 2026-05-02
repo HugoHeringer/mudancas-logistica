@@ -355,19 +355,19 @@ O dashboard é o primeiro ecrã que o admin vê. Se não mostra dados, a confian
 
 ### TAREFAS
 
-- [ ] **F1 — Investigar e corrigir a causa raiz do dashboard vazio**
+- [x] **F1 — Investigar e corrigir a causa raiz do dashboard vazio**
   - `packages/backend/src/mudancas/mudancas.service.ts` → função `getDashboard(tenantId)`:
     - Adicionar log: `console.log('getDashboard called for tenant:', tenantId)`
     - Verificar que o endpoint está a receber o `tenantId` correcto do JWT
     - Verificar que as queries têm `where: { tenantId }` em TODOS os selects
     - Testar directamente via Swagger: `GET /api/mudancas/dashboard` com Bearer token válido
 
-- [ ] **F2 — Corrigir query de mudanças pendentes**
+- [x] **F2 — Corrigir query de mudanças pendentes**
   - Query: `prisma.mudanca.count({ where: { tenantId, estado: 'pendente' } })`
   - Verificar que o valor do enum `estado` é exactamente `'pendente'` (case sensitive)
   - Retornar também a lista dos primeiros 5: `{ id, nomeCliente, dataPretendida, createdAt }`
 
-- [ ] **F3 — Corrigir query de mudanças hoje**
+- [x] **F3 — Corrigir query de mudanças hoje**
   - ```typescript
     const hoje = new Date();
     const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
@@ -377,7 +377,7 @@ O dashboard é o primeiro ecrã que o admin vê. Se não mostra dados, a confian
     })
     ```
 
-- [ ] **F4 — KPIs financeiros do mês**
+- [x] **F4 — KPIs financeiros do mês**
   - ```typescript
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
@@ -386,7 +386,7 @@ O dashboard é o primeiro ecrã que o admin vê. Se não mostra dados, a confian
     // margemMes: receitaMes - custosMes
     ```
 
-- [ ] **F5 — Counter de configuração (setup progress)**
+- [x] **F5 — Counter de configuração (setup progress)**
   - O contador de progresso verifica:
     - `marca`: `configMarca.logoUrl !== null` → ✅
     - `preco`: `configPreco.precoBaseHora > 0` → ✅
@@ -395,7 +395,7 @@ O dashboard é o primeiro ecrã que o admin vê. Se não mostra dados, a confian
     - `agenda`: `configAgenda.diasDisponiveis != null AND configAgenda.diasDisponiveis.length > 0` → ✅
   - Se a agenda não está a completar: verificar que `configAgenda.diasDisponiveis` é um array não-vazio após salvar
 
-- [ ] **F6 — Frontend: ligar KPIs a navegação**
+- [x] **F6 — Frontend: ligar KPIs a navegação**
   - `packages/admin/src/pages/dashboard.page.tsx`:
     - Card "Pendentes" clicável → `navigate('/aprovacoes?estado=pendente')`
     - Card "Hoje" clicável → `navigate('/agenda?data=' + formatDate(hoje))`
@@ -796,7 +796,7 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | C | Estados de veículo/motorista/ajudante | 🔴 CRÍTICO | [x] |
 | D | Aprovações — conflitos e consistência | 🔴 CRÍTICO | [x] |
 | E | Utilizadores e criação de motorista | 🔴 CRÍTICO | [x] |
-| F | Dashboard | 🔴 CRÍTICO | [ ] |
+| F | Dashboard | 🔴 CRÍTICO | [x] |
 | G | Disponibilidade real | 🔴 CRÍTICO | [ ] |
 | H | Formulário — materiais e preços | 🟠 ALTO | [ ] |
 | I | Comunicação e Resend por tenant | 🟠 ALTO | [ ] |

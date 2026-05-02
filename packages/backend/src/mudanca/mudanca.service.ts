@@ -954,7 +954,8 @@ export class MudancaService {
         where: {
           ...baseWhere,
           estado: 'concluida',
-          conclusao: Prisma.JsonNull,
+          concluidoEm: { not: null },
+          conclusao: null,
         },
       }),
       this.prisma.mudanca.aggregate({
