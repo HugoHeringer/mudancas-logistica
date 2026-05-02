@@ -38,4 +38,9 @@ export class RegisterDto {
   @IsOptional()
   @IsObject()
   permissoes?: Record<string, string>;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  tenantId?: string;
 }

@@ -212,8 +212,8 @@ export class MudancaService {
         updated.dataPretendida,
         updated.horaPretendida || '08:00',
         Number(updated.tempoEstimadoHoras || 4),
-        updated.motoristaId,
-        updated.veiculoId,
+        updated.motoristaId ?? undefined,
+        updated.veiculoId ?? undefined,
         id,
       );
       if (conflict.hasConflict) {
