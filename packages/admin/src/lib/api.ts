@@ -164,6 +164,9 @@ export const financeiroApi = {
 };
 
 export const comunicacaoApi = {
+  getConfig: () => api.get('/comunicacao/config'),
+  updateConfig: (data: any) => api.patch('/comunicacao/config', data),
+  testarEmail: (destinatario: string) => api.post('/comunicacao/testar-email', { destinatario }),
   getTemplates: () => api.get('/comunicacao/templates'),
   getTemplate: (nome: string) => api.get(`/comunicacao/templates/${nome}`),
   createTemplate: (data: any) => api.post('/comunicacao/templates', data),

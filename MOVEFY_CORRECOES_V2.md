@@ -548,13 +548,13 @@ Cada empresa cliente terá a sua própria conta Resend com os seus próprios 100
 
 ### TAREFAS
 
-- [ ] **I1 — Schema: API key Resend por tenant**
+- [x] **I1 — Schema: API key Resend por tenant**
   - `packages/backend/prisma/schema.prisma` → modelo `ConfigComunicacao` (ou `Tenant`):
     - Adicionar: `resendApiKey String?`
     - Adicionar: `resendFromEmail String?` (ex: `mudancas@silva-transportes.pt`)
     - Adicionar: `resendFromNome String?` (ex: `Silva Transportes`)
 
-- [ ] **I2 — Admin: configurar Resend no menu Comunicação**
+- [x] **I2 — Admin: configurar Resend no menu Comunicação**
   - `packages/admin/src/pages/comunicacao.page.tsx`:
     - Nova tab ou secção "Configuração de Email":
       - Campo "API Key Resend" (input password, masked)
@@ -564,7 +564,7 @@ Cada empresa cliente terá a sua própria conta Resend com os seus próprios 100
       - Instruções: "Crie uma conta gratuita em resend.com e crie um API Key"
     - `PATCH /api/comunicacao/config` → gravar no banco
 
-- [ ] **I3 — Backend: usar API key do tenant para envios**
+- [x] **I3 — Backend: usar API key do tenant para envios**
   - `packages/backend/src/email/email.service.ts`:
     - Receber `tenantId` em cada chamada
     - Buscar `configComunicacao.resendApiKey` do tenant
@@ -572,7 +572,7 @@ Cada empresa cliente terá a sua própria conta Resend com os seus próprios 100
     - Se não configurado: usar key global da Movefy (fallback)
     - Log de aviso se usar fallback: "Tenant X sem Resend configurado, usando key global Movefy"
 
-- [ ] **I4 — Preview de template: auto-preencher variáveis conhecidas**
+- [ ] **I4 — Preview de template: auto-preencher variáveis conhecidas** (deferred — context limit)
   - `packages/admin/src/pages/comunicacao.page.tsx` → preview de template:
     - Ao abrir preview, identificar quais variáveis o template tem: `{{nomeCliente}}`, `{{nomeEmpresa}}`, etc.
     - Variáveis que o sistema conhece → preencher automaticamente:

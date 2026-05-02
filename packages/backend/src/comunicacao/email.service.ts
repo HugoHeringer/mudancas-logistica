@@ -7,8 +7,8 @@ import { ComunicacaoService } from './comunicacao.service';
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private resend: Resend;
-  private fromEmail: string;
+  private globalResend: Resend | null;
+  private globalFromEmail: string;
 
   constructor(
     private configService: ConfigService,
@@ -16,8 +16,32 @@ export class EmailService {
     private comunicacaoService: ComunicacaoService,
   ) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
-    this.resend = apiKey ? new Resend(apiKey) : (null as any);
-    this.fromEmail = this.configService.get<string>('EMAIL_FROM', 'noreply@mudancas.app');
+    this.globalResend = apiKey ? new Resend(apiKey) : null;
+    this.globalFromEmail = this.configService.get<string>('EMAIL_FROM', 'noreply@mudancas.app');
+  }
+
+  private async getTenantResendConfig(tenantId: string): Promise<{ resend: Resend | null; fromEmail: string; fromNome: string }> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { configComunicacao: true, configMarca: true },
+    });
+    const config = (tenant?.configComunicacao as Record<string, any>) || {};
+    const brand = (tenant?.configMarca as Record<string, any>) || {};
+
+    if (config.resendApiKey) {
+      return {
+        resend: new Resend(config.resendApiKey),
+        fromEmail: config.resendFromEmail || this.globalFromEmail,
+        fromNome: config.resendFromNome || brand.nome || 'Mudanças',
+      };
+    }
+
+    this.logger.warn(`Tenant ${tenantId} sem Resend configurado, usando key global Movefy`);
+    return {
+      resend: this.globalResend,
+      fromEmail: this.globalFromEmail,
+      fromNome: brand.nome || 'Mudanças',
+    };
   }
 
   /**
@@ -64,13 +88,15 @@ export class EmailService {
         return;
       }
 
-      // 3. Send via Resend
-      if (!this.resend) {
+      // 3. Send via Resend (tenant-specific or global fallback)
+      const { resend, fromEmail, fromNome } = await this.getTenantResendConfig(tenantId);
+      if (!resend) {
         this.logger.warn(`Resend not configured — skipping send to ${to} (template: ${templateNome})`);
         return;
       }
-      const { data, error } = await this.resend.emails.send({
-        from: this.fromEmail,
+      const fromField = fromNome ? `${fromNome} <${fromEmail}>` : fromEmail;
+      const { data, error } = await resend.emails.send({
+        from: fromField,
         to: [to],
         subject: rendered.assunto,
         html: rendered.corpo,

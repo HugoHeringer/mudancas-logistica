@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Mail, Eye, Save } from 'lucide-react';
+import { Mail, Eye, Save, Settings, Send } from 'lucide-react';
 import { comunicacaoApi } from '../../lib/api';
 import { useToast } from '../../hooks/use-toast';
 import { EmptyState } from '../../components/empty-state';
@@ -11,6 +11,7 @@ import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Switch } from '../../components/ui/switch';
 import { Badge } from '../../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { TemplatePreviewModal } from '../../components/comunicacao/TemplatePreviewModal';
 
 interface Template {
@@ -40,6 +41,29 @@ export function ComunicacaoPage() {
   const [editAtivo, setEditAtivo] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [resendConfig, setResendConfig] = useState<any>({});
+  const [testEmail, setTestEmail] = useState('');
+
+  const { data: config } = useQuery({
+    queryKey: ['comunicacao', 'config'],
+    queryFn: () => comunicacaoApi.getConfig().then(r => r.data),
+  });
+
+  useEffect(() => {
+    if (config) setResendConfig(config);
+  }, [config]);
+
+  const saveConfigMutation = useMutation({
+    mutationFn: (data: any) => comunicacaoApi.updateConfig(data),
+    onSuccess: () => toast({ title: 'Configuração guardada' }),
+    onError: () => toast({ title: 'Erro ao guardar', variant: 'destructive' }),
+  });
+
+  const testEmailMutation = useMutation({
+    mutationFn: () => comunicacaoApi.testarEmail(testEmail),
+    onSuccess: () => toast({ title: 'Email de teste enviado' }),
+    onError: () => toast({ title: 'Erro ao enviar email de teste', variant: 'destructive' }),
+  });
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['comunicacao', 'templates'],
@@ -85,16 +109,58 @@ export function ComunicacaoPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Comunicação</h2>
-          <p className="text-muted-foreground">Templates de email para cada momento da jornada</p>
+          <p className="text-muted-foreground">Templates de email e configuração de envio</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => initializeMutation.mutate()}
-          disabled={initializeMutation.isPending}
-        >
-          Inicializar Templates Padrão
-        </Button>
       </div>
+
+      <Tabs defaultValue="templates" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="templates"><Mail className="h-4 w-4 mr-1" />Templates</TabsTrigger>
+          <TabsTrigger value="config"><Settings className="h-4 w-4 mr-1" />Configuração</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="config" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle>Configuração de Email (Resend)</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 rounded-lg border bg-muted/30 text-xs text-muted-foreground">
+                Crie uma conta gratuita em <strong>resend.com</strong> e obtenha uma API Key. Com a conta gratuita pode enviar até 100 emails/dia.
+              </div>
+              <div className="space-y-2">
+                <Label>API Key Resend</Label>
+                <Input type="password" placeholder="re_xxxxxxxxxx" value={resendConfig.resendApiKey || ''} onChange={(e) => setResendConfig({ ...resendConfig, resendApiKey: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Email de Envio</Label>
+                  <Input placeholder="noreply@suaempresa.pt" value={resendConfig.resendFromEmail || ''} onChange={(e) => setResendConfig({ ...resendConfig, resendFromEmail: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome de Envio</Label>
+                  <Input placeholder="Silva Transportes" value={resendConfig.resendFromNome || ''} onChange={(e) => setResendConfig({ ...resendConfig, resendFromNome: e.target.value })} />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={() => saveConfigMutation.mutate(resendConfig)} disabled={saveConfigMutation.isPending}>
+                  {saveConfigMutation.isPending ? 'A guardar...' : 'Guardar Configuração'}
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Input placeholder="Email de teste" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} className="w-60" />
+                  <Button variant="outline" onClick={() => testEmailMutation.mutate()} disabled={!testEmail || testEmailMutation.isPending}>
+                    <Send className="h-4 w-4 mr-1" />Testar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <div className="flex justify-end mb-4">
+            <Button variant="outline" onClick={() => initializeMutation.mutate()} disabled={initializeMutation.isPending}>
+              Inicializar Templates Padrão
+            </Button>
+          </div>
 
       {isLoading ? (
         <div className="space-y-4">
@@ -201,6 +267,8 @@ export function ComunicacaoPage() {
           )}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
 
       {/* Template Preview Modal */}
       {showPreview && previewTemplate && (

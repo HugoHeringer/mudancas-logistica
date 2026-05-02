@@ -17,13 +17,57 @@ import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { TenantRequest, getTenantId } from '../prisma';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from './email.service';
 
 @ApiTags('comunicacao')
 @Controller('comunicacao')
 @ApiBearerAuth()
 @Roles('admin', 'gerente')
 export class ComunicacaoController {
-  constructor(private readonly comunicacaoService: ComunicacaoService) {}
+  constructor(
+    private readonly comunicacaoService: ComunicacaoService,
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
+
+  @Get('config')
+  @ApiOperation({ summary: 'Obter configuração de email do tenant' })
+  async getConfig(@Request() req: TenantRequest) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: getTenantId(req) },
+      select: { configComunicacao: true },
+    });
+    return (tenant?.configComunicacao as Record<string, any>) || {};
+  }
+
+  @Patch('config')
+  @ApiOperation({ summary: 'Atualizar configuração de email do tenant' })
+  async updateConfig(@Request() req: TenantRequest, @Body() body: { resendApiKey?: string; resendFromEmail?: string; resendFromNome?: string }) {
+    const tenantId = getTenantId(req);
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const config = (tenant?.configComunicacao as Record<string, any>) || {};
+    if (body.resendApiKey !== undefined) config.resendApiKey = body.resendApiKey || null;
+    if (body.resendFromEmail !== undefined) config.resendFromEmail = body.resendFromEmail || null;
+    if (body.resendFromNome !== undefined) config.resendFromNome = body.resendFromNome || null;
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { configComunicacao: config },
+    });
+    return config;
+  }
+
+  @Post('testar-email')
+  @ApiOperation({ summary: 'Enviar email de teste' })
+  async testarEmail(@Request() req: TenantRequest, @Body() body: { destinatario: string }) {
+    if (!body.destinatario) throw new Error('Destinatário obrigatório');
+    this.emailService.send(getTenantId(req), body.destinatario, 'confirmacao_rececao', {
+      nomeCliente: 'Teste',
+      dataPretendida: new Date().toLocaleDateString('pt-PT'),
+      nomeEmpresa: 'Teste de Configuração',
+    });
+    return { ok: true, message: 'Email de teste enviado (verifique os logs)' };
+  }
 
   @Get('templates')
   @ApiOperation({ summary: 'Listar templates de email' })

@@ -16,13 +16,16 @@ model Tenant {
   id                String   @id @default(uuid())
   subdomain         String   @unique
   slug              String?  @unique  // identificador legível para login PWA e URL pública
-  estado            String   @default("em_setup") // ativa, suspensa, em_setup, cancelada
+  estado            String   @default("em_setup") // ativa, em_setup, suspensa, cancelada
   plano             String   @default("trial")     // trial, starter, pro, enterprise
-  trialExpiraEm     DateTime?
+  trialInicio       DateTime?  // quando o trial começou
+  trialFim          DateTime?  // quando o trial expira (30 dias após criação)
+  trialNotificadoEm DateTime? // para evitar notificações duplicadas de trial expirado
   eAtivo            Boolean  @default(true)
   configMarca       Json     @default("{}")
-  configPreco       Json     @default("{\"acrescimo1Ajudante\":0,\"acrescimo2Ajudantes\":0}")
+  configPreco       Json     @default("{\"acrescimo1Ajudante\":0,\"acrescimo2Ajudantes\":0,\"materialFilmeAtivo\":true,\"materialFilmePreco\":0,\"materialFilmeImagemUrl\":null,\"materialCartaoAtivo\":true,\"materialCartaoPreco\":0,\"materialCartaoImagemUrl\":null,\"materialCaixasAtivo\":true,\"materialCaixasPreco\":0,\"materialCaixasImagemUrl\":null,\"materialFitaAtivo\":true,\"materialFitaPreco\":0,\"materialFitaImagemUrl\":null}")
   configAgenda      Json     @default("{\"capacidadeMaximaDiaria\":3,\"acrescimoUrgencia\":0}")
+  configComunicacao Json     @default("{\"resendApiKey\":null,\"resendFromEmail\":null,\"resendFromNome\":null}")
   adminUserId       String?
   dataCriacao       DateTime @default(now())
   dataUltimoAcesso  DateTime?
@@ -61,6 +64,8 @@ model User {
   permissoes    Json?    // { motoristasPermitidos: ['id1', 'id2'], verTodosMotoristas: true }
   eAtivo        Boolean  @default(true)
   isSuperAdmin  Boolean  @default(false)
+  obrigarTrocaSenha Boolean @default(false)  // forçar troca de senha no primeiro login
+  motoristaId   String?  @unique  // ligação 1:1 com Motorista
   ultimoLogin   DateTime?
   ultimaSessao  DateTime?
   createdAt     DateTime @default(now())
@@ -192,7 +197,7 @@ model Motorista {
   validadeCarta      String
   valorHora          Decimal? @default(0) @db.Decimal(10,2) // valor pago ao motorista por hora trabalhada
   veiculoId          String?
-  estado             String   @default("disponivel") // disponivel, em_servico, indisponivel
+  estado             String   @default("disponivel") // disponivel, em_deslocamento, em_servico, inativo
   mudancasRealizadas Int      @default(0)
   horasTrabalhadasMes Decimal @default(0) @db.Decimal(10,2)
   valorRecebidoMes   Decimal  @default(0) @db.Decimal(10,2)
@@ -218,6 +223,7 @@ model Ajudante {
   telefone          String
   valorHora         Decimal? @default(0) @db.Decimal(10,2) // valor pago ao ajudante por hora trabalhada
   disponivel        Boolean  @default(true)
+  eAtivo            Boolean  @default(true)  // inactivar em vez de eliminar
   mudancasRealizadas Int    @default(0)
   horasTrabalhadasMes Decimal @default(0) @db.Decimal(10,2)
   valorRecebidoMes  Decimal  @default(0) @db.Decimal(10,2)
@@ -240,7 +246,7 @@ model Veiculo {
   matricula     String
   metrosCubicos Float
   precoHora     Decimal @db.Decimal(10,2)
-  estado        String   @default("disponivel") // disponivel, em_servico, em_manutencao
+  estado        String   @default("disponivel") // disponivel, em_servico, em_manutencao, indisponivel
   eParaUrgencias Boolean @default(false)
   imagemUrl    String?
   createdAt     DateTime @default(now())
