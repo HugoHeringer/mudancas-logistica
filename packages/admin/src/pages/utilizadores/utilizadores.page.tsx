@@ -1,3 +1,4 @@
+import { formatDateOnly } from '@movefy/shared';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, UserCog, Shield, Pencil, ToggleLeft, ToggleRight, Car } from 'lucide-react';
@@ -190,7 +191,7 @@ export function UtilizadoresPage() {
       accessorKey: 'ultimaSessao',
       header: 'Última Sessão',
       cell: ({ row }) => row.original.ultimaSessao
-        ? new Date(row.original.ultimaSessao).toLocaleDateString('pt-PT')
+        ? formatDateOnly(row.original.ultimaSessao)
         : '—',
     },
     {

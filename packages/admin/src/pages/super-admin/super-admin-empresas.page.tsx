@@ -1,3 +1,4 @@
+import { formatDateOnly } from '@movefy/shared';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -99,7 +100,7 @@ export function SuperAdminEmpresasPage() {
                   </div>
                   <div>
                     <p className="text-cream font-medium text-lg">{(tenant.configMarca as any)?.nome || tenant.subdomain}</p>
-                    <p className="text-cream/40 text-sm">{tenant.subdomain} — Criada em {new Date(tenant.createdAt).toLocaleDateString('pt-PT')}</p>
+                    <p className="text-cream/40 text-sm">{tenant.subdomain} — Criada em {formatDateOnly(tenant.createdAt)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">

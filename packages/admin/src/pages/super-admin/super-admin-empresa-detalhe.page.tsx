@@ -1,3 +1,4 @@
+import { formatDateOnly } from '@movefy/shared';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { superAdminApi, tenantsApi } from '../../lib/api';
@@ -116,11 +117,11 @@ export function SuperAdminEmpresaDetalhePage() {
               </div>
               <div>
                 <p className="text-cream/40 text-xs uppercase tracking-wider mb-1">Criada em</p>
-                <p className="text-cream">{new Date(tenant.createdAt).toLocaleDateString('pt-PT')}</p>
+                <p className="text-cream">{formatDateOnly(tenant.createdAt)}</p>
               </div>
               <div>
                 <p className="text-cream/40 text-xs uppercase tracking-wider mb-1">Último acesso</p>
-                <p className="text-cream">{tenant.dataUltimoAcesso ? new Date(tenant.dataUltimoAcesso).toLocaleDateString('pt-PT') : 'Nunca'}</p>
+                <p className="text-cream">{tenant.dataUltimoAcesso ? formatDateOnly(tenant.dataUltimoAcesso) : 'Nunca'}</p>
               </div>
               <div>
                 <p className="text-cream/40 text-xs uppercase tracking-wider mb-1">Admin</p>

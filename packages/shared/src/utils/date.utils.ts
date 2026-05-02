@@ -39,6 +39,26 @@ export function formatDateOnly(date: Date | string): string {
 }
 
 /**
+ * Formata data com hora opcional (M1): "2026-04-30 às 09:00"
+ */
+export function formatarDataHora(data: string | Date, hora?: string): string {
+  const d = typeof data === 'string' ? new Date(data) : data;
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}${hora ? ` às ${hora}` : ''}`;
+}
+
+/**
+ * Formata data por extenso (M1): "30 de abril de 2026"
+ */
+export function formatarDataLonga(data: string | Date): string {
+  return new Intl.DateTimeFormat('pt-PT', {
+    day: '2-digit', month: 'long', year: 'numeric'
+  }).format(typeof data === 'string' ? new Date(data) : data);
+}
+
+/**
  * Verifica se uma data é hoje
  */
 export function isToday(date: Date | string): boolean {

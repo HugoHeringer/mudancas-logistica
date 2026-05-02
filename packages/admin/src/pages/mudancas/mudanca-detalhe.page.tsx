@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, User, Truck, Wallet, FileText, CheckCircle, XCircle, Ban, AlertTriangle, Mail } from 'lucide-react';
 import { mudancasApi, comunicacaoApi } from '../../lib/api';
+import { formatDateTime } from '@movefy/shared';
 import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
@@ -704,7 +705,7 @@ export function MudancaDetalhePage() {
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground flex-shrink-0">
-                      {new Date(log.criadoEm).toLocaleString('pt-PT')}
+                      {formatDateTime(log.criadoEm)}
                     </span>
                   </CardContent>
                 </Card>
