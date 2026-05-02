@@ -599,7 +599,7 @@ A sidebar é o elemento sempre visível. Mostrar "Movefy" no topo de um painel q
 
 ### TAREFAS
 
-- [ ] **J1 — Substituir "Movefy" pelo logo e nome do tenant**
+- [x] **J1 — Substituir "Movefy" pelo logo e nome do tenant**
   - `packages/admin/src/components/sidebar.tsx` (ou componente equivalente):
     - Buscar `configMarca.logoUrl` e `tenant.nome` do contexto/store
     - Topo da sidebar:
@@ -617,7 +617,7 @@ A sidebar é o elemento sempre visível. Mostrar "Movefy" no topo de um painel q
     - `max-w-[120px]` com `truncate` garante responsividade com nomes compridos
     - O card inteiro é clicável → `navigate('/dashboard')`
 
-- [ ] **J2 — Sidebar colapsada: mostrar apenas logo/inicial**
+- [x] **J2 — Sidebar colapsada: mostrar apenas logo/inicial**
   - Se a sidebar tiver modo colapsado: mostrar apenas `<img>` ou inicial, sem texto
 
 ---
@@ -800,7 +800,7 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | G | Disponibilidade real | 🔴 CRÍTICO | [x] |
 | H | Formulário — materiais e preços | 🟠 ALTO | [x] |
 | I | Comunicação e Resend por tenant | 🟠 ALTO | [ ] |
-| J | Sidebar — identidade tenant | 🟠 ALTO | [ ] |
+| J | Sidebar — identidade tenant | 🟠 ALTO | [x] |
 | K | Aprovações — UI e filtros | 🟠 ALTO | [ ] |
 | L | Notificações | 🟠 ALTO | [ ] |
 | M | Formatação de datas | 🟡 MÉDIO | [ ] |

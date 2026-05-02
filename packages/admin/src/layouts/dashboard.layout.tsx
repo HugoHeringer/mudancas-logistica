@@ -79,30 +79,41 @@ function NavLink({
 function SidebarBrand({ brand, expanded }: { brand: any; expanded: boolean }) {
   if (expanded) {
     return brand.logoUrl ? (
-      <img src={brand.logoUrl} alt={brand.nome} className="h-8 object-contain max-w-[160px]" />
+      <Link to="/" className="flex items-center">
+        <img src={brand.logoUrl} alt={brand.nome} className="h-8 object-contain max-w-[160px]" />
+      </Link>
     ) : (
-      <span
-        className="text-base tracking-[0.15em] font-light truncate"
+      <Link
+        to="/"
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         style={{
           color: 'var(--sidebar-text)',
           fontFamily: 'var(--tenant-font-display)',
         }}
       >
-        {brand.nome?.toUpperCase() || 'PAINEL MOVEFY'}
-      </span>
+        <div className="w-8 h-8 rounded flex items-center justify-center text-white font-bold text-sm" style={{ background: 'var(--brand-primary)' }}>
+          {brand.nome?.charAt(0)?.toUpperCase() || 'M'}
+        </div>
+        <span className="text-base tracking-[0.15em] font-light truncate max-w-[120px]">
+          {brand.nome?.toUpperCase() || 'PAINEL'}
+        </span>
+      </Link>
     );
   }
 
   return (
-    <span
-      className="text-xl font-light"
-      style={{
-        color: 'var(--sidebar-accent)',
-        fontFamily: 'var(--tenant-font-display)',
-      }}
-    >
-      {brand.nome?.charAt(0)?.toUpperCase() || 'M'}
-    </span>
+    <Link to="/" className="hover:opacity-80 transition-opacity">
+      {brand.logoUrl ? (
+        <img src={brand.logoUrl} alt={brand.nome} className="h-7 w-7 object-contain rounded" />
+      ) : (
+        <div
+          className="w-8 h-8 rounded flex items-center justify-center text-white font-bold text-sm"
+          style={{ background: 'var(--brand-primary)' }}
+        >
+          {brand.nome?.charAt(0)?.toUpperCase() || 'M'}
+        </div>
+      )}
+    </Link>
   );
 }
 
@@ -138,7 +149,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             color: 'hsl(var(--foreground))',
           }}
         >
-          {brand.nome || 'Movefy'}
+          {brand.nome || 'Painel'}
         </span>
 
         <div className="w-10" />
