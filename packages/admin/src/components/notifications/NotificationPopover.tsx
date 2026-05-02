@@ -75,7 +75,7 @@ export function NotificationPopover() {
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[400px] overflow-y-auto">
             {notificacoes.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 Sem notificações
@@ -108,6 +108,22 @@ export function NotificationPopover() {
               ))
             )}
           </div>
+
+          {/* L2: Sticky footer with clear all + unread count */}
+          {notificacoes.length > 0 && (
+            <div className="sticky bottom-0 flex items-center justify-between px-4 py-2.5 border-t border-border bg-popover">
+              <span className="text-xs text-muted-foreground">
+                {totalNaoLidas > 0 ? `${totalNaoLidas} não lida${totalNaoLidas !== 1 ? 's' : ''}` : 'Todas lidas'}
+              </span>
+              <button
+                onClick={() => { markAllAsRead(); }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                Limpar todas
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

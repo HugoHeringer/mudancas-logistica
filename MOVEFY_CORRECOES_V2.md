@@ -664,14 +664,14 @@ A sidebar é o elemento sempre visível. Mostrar "Movefy" no topo de um painel q
 
 ### TAREFAS
 
-- [ ] **L1 — Mostrar até 5 notificações com scroll**
+- [x] **L1 — Mostrar até 5 notificações com scroll**
   - `packages/admin/src/components/notificacoes-dropdown.tsx`:
     - Container: `max-h-[400px] overflow-y-auto`
     - Buscar as últimas 20 não lidas + 10 lidas
     - Mostrar as primeiras 5 visivelmente, resto com scroll
     - Cada notificação: ícone + mensagem + tempo relativo (ex: "há 5 min") + estado lida/não lida
 
-- [ ] **L2 — Botão "Limpar notificações" fixo no fundo**
+- [x] **L2 — Botão "Limpar notificações" fixo no fundo**
   - No fundo do dropdown (posição sticky):
     - Botão "Limpar todas" → `DELETE /api/notificacoes/todas` → marca todas como lidas
     - Texto à esquerda: "X não lidas"
@@ -802,7 +802,7 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | I | Comunicação e Resend por tenant | 🟠 ALTO | [x] |
 | J | Sidebar — identidade tenant | 🟠 ALTO | [x] |
 | K | Aprovações — UI e filtros | 🟠 ALTO | [x] |
-| L | Notificações | 🟠 ALTO | [ ] |
+| L | Notificações | 🟠 ALTO | [x] |
 | M | Formatação de datas | 🟡 MÉDIO | [ ] |
 | N | Mensagens de erro | 🟡 MÉDIO | [ ] |
 | O | PWA — senha | 🟡 MÉDIO | [ ] |

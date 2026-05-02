@@ -7,7 +7,7 @@ export function useNotificacoes() {
   const query = useQuery({
     queryKey: ['notificacoes'],
     queryFn: async () => {
-      const { data } = await notificacoesApi.findAll();
+      const { data } = await notificacoesApi.findAll(); // fetches unread + recent read
       return data;
     },
     refetchInterval: 30000,
