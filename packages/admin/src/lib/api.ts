@@ -250,6 +250,20 @@ export const uploadApi = {
     });
   },
   gerarFavicon: () => api.post('/upload/favicon'),
+  uploadVeiculoImagem: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload/veiculo-imagem', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  uploadMaterialImagem: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload/material-imagem', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   uploadBanner: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

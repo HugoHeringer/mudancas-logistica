@@ -82,20 +82,36 @@ export class UploadController {
     return this.uploadService.salvarBanner(getTenantId(req), file);
   }
 
-  @Post('veiculo')
+  @Post('veiculo-imagem')
   @ApiBearerAuth()
   @Roles('admin')
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   }))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload de imagem do veículo' })
-  async uploadVeiculo(
+  @ApiOperation({ summary: 'Upload de imagem do veículo (retorna URL)' })
+  async uploadVeiculoImagem(
     @Request() req: TenantRequest,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('Nenhum ficheiro enviado');
-    return this.uploadService.salvarFicheiro(getTenantId(req), file, 'veiculo', undefined);
+    return this.uploadService.salvarVeiculoImagem(getTenantId(req), file);
+  }
+
+  @Post('material-imagem')
+  @ApiBearerAuth()
+  @Roles('admin')
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  }))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload de imagem de material (retorna URL)' })
+  async uploadMaterialImagem(
+    @Request() req: TenantRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Nenhum ficheiro enviado');
+    return this.uploadService.salvarMaterialImagem(getTenantId(req), file);
   }
 
   @Get('banners')

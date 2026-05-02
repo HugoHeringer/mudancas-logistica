@@ -483,7 +483,7 @@ Os materiais (filme, cartão, caixas, fita) são opcionais — o cliente marca s
 
 ### TAREFAS
 
-- [ ] **H1 — Schema: campos de materiais nas configurações**
+- [x] **H1 — Schema: campos de materiais nas configurações**
   - `packages/backend/prisma/schema.prisma` → modelo `ConfigPreco`:
     - Adicionar (se não existirem):
       ```
@@ -502,7 +502,7 @@ Os materiais (filme, cartão, caixas, fita) são opcionais — o cliente marca s
       ```
   - Executar migração
 
-- [ ] **H2 — Admin: configurar materiais com preço e imagem**
+- [x] **H2 — Admin: configurar materiais com preço e imagem**
   - `packages/admin/src/pages/configuracoes.page.tsx` → tab "Preços" → secção "Materiais":
     - Para cada material (Filme de Protecção, Protecção Cartão, Caixas, Fita Cola):
       - Toggle on/off (activo/inactivo)
@@ -510,12 +510,12 @@ Os materiais (filme, cartão, caixas, fita) são opcionais — o cliente marca s
       - Upload de imagem: `POST /upload/material-imagem` → resize 400×400
       - Preview da imagem
 
-- [ ] **H3 — Endpoint público: retornar materiais activos com preço e imagem**
+- [x] **H3 — Endpoint público: retornar materiais activos com preço e imagem**
   - `packages/backend/src/public/public.service.ts` → `getFormularioConfig()`:
     - Incluir no retorno: `materiais: Array<{ id, nome, preco, imagemUrl }>`
     - Apenas materiais com `ativo === true`
 
-- [ ] **H4 — Site: materiais como checkboxes no formulário**
+- [x] **H4 — Site: materiais como checkboxes no formulário**
   - `packages/site/src/components/agendamento-form.tsx`:
     - Remover qualquer campo de quantidade para materiais
     - Para cada material activo retornado pela API:
@@ -530,7 +530,7 @@ Os materiais (filme, cartão, caixas, fita) são opcionais — o cliente marca s
     - Nome correcto: "Protecção Cartão" (não "Proteção Cartão")
     - Incluir materiais seleccionados no payload de submissão: `materiais: ['filme', 'cartao']`
 
-- [ ] **H5 — Menu urgência: apenas veículos marcados como urgência**
+- [x] **H5 — Menu urgência: apenas veículos marcados como urgência**
   - `packages/admin/src/pages/configuracoes.page.tsx` → tab "Urgência":
     - Select de veículo urgente: filtrar apenas veículos com `permiteUrgencia === true`
   - `packages/backend/prisma/schema.prisma` → modelo `Veiculo`:
@@ -798,7 +798,7 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | E | Utilizadores e criação de motorista | 🔴 CRÍTICO | [x] |
 | F | Dashboard | 🔴 CRÍTICO | [x] |
 | G | Disponibilidade real | 🔴 CRÍTICO | [x] |
-| H | Formulário — materiais e preços | 🟠 ALTO | [ ] |
+| H | Formulário — materiais e preços | 🟠 ALTO | [x] |
 | I | Comunicação e Resend por tenant | 🟠 ALTO | [ ] |
 | J | Sidebar — identidade tenant | 🟠 ALTO | [ ] |
 | K | Aprovações — UI e filtros | 🟠 ALTO | [ ] |

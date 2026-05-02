@@ -34,10 +34,6 @@ const schema = z.object({
   recPais: z.string().optional(),
   entPais: z.string().optional(),
   veiculoId: z.string().optional(),
-  protecaoFilme: z.number().optional(),
-  cartao: z.number().optional(),
-  caixas: z.number().optional(),
-  fitaCola: z.number().optional(),
   observacoes: z.string().optional(),
   camposPersonalizados: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
 });
@@ -50,12 +46,12 @@ interface AgendamentoFormProps {
   urgente?: boolean;
 }
 
-const MATERIAIS = [
-  { key: 'protecaoFilme', label: 'Protecao Filme', unitPrice: 2.5 },
-  { key: 'cartao', label: 'Cartao', unitPrice: 3.0 },
-  { key: 'caixas', label: 'Caixas', unitPrice: 4.5 },
-  { key: 'fitaCola', label: 'Fita Cola', unitPrice: 1.5 },
-] as const;
+interface MaterialItem {
+  id: string;
+  nome: string;
+  preco: number;
+  imagemUrl: string | null;
+}
 
 export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora, urgente: propUrgente = false }: AgendamentoFormProps) {
   const { brand, tenantId } = useTenantTheme();
@@ -78,6 +74,8 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
   const [dataHoraError, setDataHoraError] = useState(false);
   const [horariosDisponiveis, setHorariosDisponiveis] = useState<string[]>([]);
   const [horariosIndisponiveis, setHorariosIndisponiveis] = useState<string[]>([]);
+  const [materiais, setMateriais] = useState<MaterialItem[]>([]);
+  const [materiaisSelecionados, setMateriaisSelecionados] = useState<string[]>([]);
 
   useEffect(() => {
     if (tenantId) {
@@ -87,6 +85,9 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
       publicApi.getCamposFormulario(tenantId)
         .then(res => setCamposPersonalizados(res.data || []))
         .catch(() => setCamposPersonalizados([]));
+      publicApi.getMateriais(tenantId)
+        .then(res => setMateriais(res.data || []))
+        .catch(() => setMateriais([]));
     }
   }, [tenantId]);
 
@@ -124,10 +125,6 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
       internacional: false,
       recElevador: false,
       entElevador: false,
-      protecaoFilme: 0,
-      cartao: 0,
-      caixas: 0,
-      fitaCola: 0,
     },
   });
 
@@ -217,12 +214,9 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
         horaPretendida: selectedHora,
         veiculoId: selectedVeiculoId || undefined,
         equipa,
-        materiais: {
-          protecaoFilme: data.protecaoFilme || 0,
-          protecaoCartao: data.cartao || 0,
-          caixas: data.caixas || 0,
-          fitaCola: data.fitaCola || 0,
-        },
+        materiais: materiaisSelecionados.length > 0
+          ? Object.fromEntries(materiaisSelecionados.map(id => [id, 1]))
+          : {},
         observacoes: data.observacoes,
         eInternacional: data.internacional || false,
         tenantId,
@@ -640,24 +634,40 @@ export function AgendamentoForm({ selectedDate: propDate, selectedHora: propHora
               Materiais
             </h3>
 
-            <div className="space-y-4">
-              {MATERIAIS.map((m) => (
-                <div key={m.key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm">{m.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+            <div className="space-y-3">
+              {materiais.length === 0 && (
+                <p className="text-sm text-muted-foreground">Nenhum material disponivel</p>
+              )}
+              {materiais.map((m) => {
+                const checked = materiaisSelecionados.includes(m.id);
+                return (
+                  <label
+                    key={m.id}
+                    className={cn(
+                      'flex items-center gap-3 p-3 bg-muted/30 rounded-lg cursor-pointer transition-colors',
+                      checked && 'ring-1 ring-primary/40 bg-primary/5'
+                    )}
+                  >
                     <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      {...register(m.key as any, { valueAsNumber: true })}
-                      className="w-16 px-2 py-1 bg-muted/50 border border-border rounded text-sm text-center focus:outline-none focus:border-primary/50"
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setMateriaisSelecionados((prev) =>
+                          prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id]
+                        )
+                      }
+                      className="rounded"
                     />
-                    <span className="text-sm text-muted-foreground">un x {m.unitPrice}€</span>
-                  </div>
-                </div>
-              ))}
+                    {m.imagemUrl && (
+                      <img src={m.imagemUrl} alt={m.nome} className="w-10 h-10 object-cover rounded" />
+                    )}
+                    <span className="text-sm flex-1">{m.nome}</span>
+                    {m.preco > 0 && (
+                      <span className="text-sm text-muted-foreground">{Number(m.preco).toFixed(2)}€</span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
 
             <div className="mt-6">

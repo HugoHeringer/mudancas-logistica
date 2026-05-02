@@ -751,10 +751,44 @@ export function ConfiguracoesPage() {
                 <Input type="number" step="0.5" value={precos?.minimoHoras || ''} onChange={(e) => setPrecos({ ...precos, minimoHoras: parseFloat(e.target.value) })} />
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>Proteção Filme (€/un)</Label><Input type="number" step="0.1" value={precos?.protecaoFilme || ''} onChange={(e) => setPrecos({ ...precos, protecaoFilme: parseFloat(e.target.value) })} /></div>
-                <div className="space-y-2"><Label>Proteção Cartão (€/un)</Label><Input type="number" step="0.1" value={precos?.protecaoCartao || ''} onChange={(e) => setPrecos({ ...precos, protecaoCartao: parseFloat(e.target.value) })} /></div>
-                <div className="space-y-2"><Label>Caixas (€/un)</Label><Input type="number" step="0.1" value={precos?.caixas || ''} onChange={(e) => setPrecos({ ...precos, caixas: parseFloat(e.target.value) })} /></div>
-                <div className="space-y-2"><Label>Fita Cola (€/un)</Label><Input type="number" step="0.1" value={precos?.fitaCola || ''} onChange={(e) => setPrecos({ ...precos, fitaCola: parseFloat(e.target.value) })} /></div>
+                {([
+                  { key: 'Filme', label: 'Proteção Filme' },
+                  { key: 'Cartao', label: 'Proteção Cartão' },
+                  { key: 'Caixas', label: 'Caixas' },
+                  { key: 'Fita', label: 'Fita Cola' },
+                ] as const).map((mat) => (
+                  <div key={mat.key} className="space-y-2 p-3 rounded-lg border bg-muted/10">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">{mat.label}</Label>
+                      <Switch
+                        checked={precos?.[`material${mat.key}Ativo`] !== false}
+                        onCheckedChange={(v) => setPrecos({ ...precos, [`material${mat.key}Ativo`]: v })}
+                      />
+                    </div>
+                    <Input type="number" step="0.1" placeholder="€/un" value={precos?.[`material${mat.key}Preco`] || ''} onChange={(e) => setPrecos({ ...precos, [`material${mat.key}Preco`]: parseFloat(e.target.value) })} />
+                    <div className="flex items-center gap-2">
+                      {precos?.[`material${mat.key}ImagemUrl`] && (
+                        <img src={precos[`material${mat.key}ImagemUrl`]} alt={mat.label} className="w-8 h-8 object-cover rounded" />
+                      )}
+                      <label className="cursor-pointer text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+                        <Upload className="w-3 h-3" /> Imagem
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            try {
+                              const res = await uploadApi.uploadMaterialImagem(f);
+                              setPrecos({ ...precos, [`material${mat.key}ImagemUrl`]: res.data.url });
+                            } catch { toast({ title: 'Erro ao carregar imagem', variant: 'destructive' }); }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ))}
               </div>
               <Button onClick={() => updateTenantMutation.mutate({ configPreco: precos })} disabled={updateTenantMutation.isPending}>
                 {updateTenantMutation.isPending ? 'A guardar...' : 'Guardar Preços'}
@@ -824,14 +858,14 @@ export function ConfiguracoesPage() {
                 >
                   <SelectTrigger><SelectValue placeholder="Selecionar veículo" /></SelectTrigger>
                   <SelectContent>
-                    {(veiculos || []).map((v: any) => (
+                    {(veiculos || []).filter((v: any) => v.eParaUrgencias).map((v: any) => (
                       <SelectItem key={v.id} value={v.id}>
                         {v.nome} ({v.matricula}) — {v.metrosCubicos}m³
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">Este veículo ficará reservado para pedidos urgentes</p>
+                <p className="text-xs text-muted-foreground">Apenas veículos marcados como "Para Urgências" aparecem aqui. Configure isso na página de Veículos.</p>
               </div>
               <div className="space-y-2">
                 <Label>Acréscimo de Urgência (%)</Label>

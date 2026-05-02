@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as sharp from 'sharp';
 
 @Injectable()
 export class UploadService {
@@ -17,13 +18,44 @@ export class UploadService {
     return uploadDir;
   }
 
-  private saveFileToDisk(tenantId: string, file: Express.Multer.File, subDir?: string) {
+  private async saveFileToDisk(tenantId: string, file: Express.Multer.File, subDir?: string, resizeOpts?: { maxWidth: number; maxHeight: number; fit?: keyof sharp.FitEnum }) {
     const uploadDir = this.ensureUploadDir(tenantId, subDir);
-    const fileName = `${Date.now()}-${file.originalname}`;
+    const fileName = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
     const filePath = path.join(uploadDir, fileName);
-    fs.writeFileSync(filePath, file.buffer);
+
+    let buffer = file.buffer;
+
+    // Redimensionar imagens com sharp
+    if (file.mimetype.startsWith('image/') && !file.mimetype.includes('svg')) {
+      try {
+        const resizeOptions: sharp.ResizeOptions = {
+          width: resizeOpts?.maxWidth,
+          height: resizeOpts?.maxHeight,
+          fit: resizeOpts?.fit || 'inside',
+          withoutEnlargement: true,
+        };
+
+        buffer = await sharp(file.buffer)
+          .resize(resizeOptions)
+          .jpeg({ quality: 85 })
+          .toBuffer();
+      } catch (error) {
+        console.error('Erro ao processar imagem com sharp:', error);
+      }
+    }
+
+    fs.writeFileSync(filePath, buffer);
     const urlPart = subDir ? `${tenantId}/${subDir}/${fileName}` : `${tenantId}/${fileName}`;
-    return { fileName, filePath, url: `/uploads/${urlPart}` };
+    return { fileName, filePath, url: `/uploads/${urlPart}`, size: buffer.length };
+  }
+
+  private validateImageMime(file: Express.Multer.File) {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Tipo de ficheiro não suportado (${file.mimetype}). Use JPEG, PNG ou WebP.`,
+      );
+    }
   }
 
   async salvarFicheiro(
@@ -31,8 +63,12 @@ export class UploadService {
     file: Express.Multer.File,
     entidade?: string,
     entidadeId?: string,
+    resizeOpts?: { maxWidth: number; maxHeight: number; fit?: keyof sharp.FitEnum },
   ) {
-    const { url } = this.saveFileToDisk(tenantId, file);
+    if (file.mimetype.startsWith('image/')) {
+      this.validateImageMime(file);
+    }
+    const { url, size } = await this.saveFileToDisk(tenantId, file, undefined, resizeOpts);
 
     const tipo = file.mimetype.startsWith('image/') ? 'imagem' :
                  file.mimetype.startsWith('application/pdf') ? 'documento' : 'outro';
@@ -42,7 +78,7 @@ export class UploadService {
         tenantId,
         url,
         tipo,
-        tamanho: file.size,
+        tamanho: size,
         nomeOriginal: file.originalname,
         entidade: entidade || null,
         entidadeId: entidadeId || null,
@@ -51,7 +87,8 @@ export class UploadService {
   }
 
   async salvarLogo(tenantId: string, file: Express.Multer.File) {
-    const { url } = this.saveFileToDisk(tenantId, file, 'logo');
+    this.validateImageMime(file);
+    const { url, size } = await this.saveFileToDisk(tenantId, file, 'logo', { maxWidth: 400, maxHeight: 400 });
 
     // Save file record
     const ficheiro = await this.prisma.ficheiro.create({
@@ -59,7 +96,7 @@ export class UploadService {
         tenantId,
         url,
         tipo: 'imagem',
-        tamanho: file.size,
+        tamanho: size,
         nomeOriginal: file.originalname,
         entidade: 'tenant_logo',
         entidadeId: tenantId,
@@ -108,8 +145,45 @@ export class UploadService {
     return { faviconUrl };
   }
 
+  async salvarVeiculoImagem(tenantId: string, file: Express.Multer.File) {
+    this.validateImageMime(file);
+    const { url, size } = await this.saveFileToDisk(tenantId, file, 'veiculos', { maxWidth: 800, maxHeight: 600 });
+
+    await this.prisma.ficheiro.create({
+      data: {
+        tenantId,
+        url,
+        tipo: 'imagem',
+        tamanho: size,
+        nomeOriginal: file.originalname,
+        entidade: 'veiculo',
+      },
+    });
+
+    return { url };
+  }
+
+  async salvarMaterialImagem(tenantId: string, file: Express.Multer.File) {
+    this.validateImageMime(file);
+    const { url, size } = await this.saveFileToDisk(tenantId, file, 'materiais', { maxWidth: 200, maxHeight: 200 });
+
+    await this.prisma.ficheiro.create({
+      data: {
+        tenantId,
+        url,
+        tipo: 'imagem',
+        tamanho: size,
+        nomeOriginal: file.originalname,
+        entidade: 'material',
+      },
+    });
+
+    return { url };
+  }
+
   async salvarBanner(tenantId: string, file: Express.Multer.File) {
-    const { url } = this.saveFileToDisk(tenantId, file, 'banners');
+    this.validateImageMime(file);
+    const { url, size } = await this.saveFileToDisk(tenantId, file, 'banners', { maxWidth: 1920, maxHeight: 600, fit: 'cover' });
 
     // Get current banners count for ordering
     const existingBanners = (await this.getBannersConfig(tenantId)) || [];
@@ -131,7 +205,7 @@ export class UploadService {
         tenantId,
         url,
         tipo: 'imagem',
-        tamanho: file.size,
+        tamanho: size,
         nomeOriginal: file.originalname,
         entidade: 'banner',
       },
