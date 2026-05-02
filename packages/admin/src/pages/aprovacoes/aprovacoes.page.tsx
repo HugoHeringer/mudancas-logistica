@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, XCircle, Eye, AlertTriangle } from 'lucide-react';
 import { mudancasApi } from '../../lib/api';
@@ -8,7 +8,6 @@ import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
 import { EmptyState } from '../../components/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { GlassCard } from '../../components/luxury/GlassCard';
 import { PageHeader } from '../../components/ui/page-header';
 import { Button } from '../../components/ui/button';
@@ -30,6 +29,7 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { AprovarMudancaModal } from '../../components/aprovar-mudanca-modal';
+import { cn } from '../../lib/utils';
 
 const EQUIPA_LABELS: Record<string, string> = {
   motorist: 'Motorista',
@@ -40,8 +40,15 @@ const EQUIPA_LABELS: Record<string, string> = {
   motorista_2_ajudantes: 'Motorista + 2 Ajudantes',
 };
 
+const ESTADO_OPTIONS = [
+  { value: 'pendente', label: 'Pendentes' },
+  { value: 'aprovada', label: 'Aprovadas' },
+  { value: 'recusada', label: 'Recusadas' },
+] as const;
+
 export function AprovacoesPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { podeVer } = usePermissao();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -49,13 +56,26 @@ export function AprovacoesPage() {
   const [showDetail, setShowDetail] = useState(false);
   const [showAprovar, setShowAprovar] = useState(false);
   const [showRecusar, setShowRecusar] = useState(false);
-  const [filtroTipo, setFiltroTipo] = useState<string>('todos');
   const [motivoRecusa, setMotivoRecusa] = useState('');
 
-  const { data: pendentes, isLoading } = useQuery({
-    queryKey: ['mudancas', 'pendentes', filtroTipo],
+  // K1: URL-driven filters with defaults
+  const filtroEstado = searchParams.get('estado') || 'pendente';
+  const filtroTipo = searchParams.get('tipo') || 'todos';
+
+  const setFilter = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value && value !== 'todos') {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    setSearchParams(params);
+  };
+
+  const { data: mudancasData, isLoading } = useQuery({
+    queryKey: ['mudancas', 'aprovacoes', filtroEstado, filtroTipo],
     queryFn: async () => {
-      const filters: any = { estado: ['pendente'] };
+      const filters: any = { estado: [filtroEstado] };
       if (filtroTipo !== 'todos') filters.tipoServico = filtroTipo;
       const res = await mudancasApi.findAll(filters);
       return res.data?.items || res.data || [];
@@ -94,53 +114,84 @@ export function AprovacoesPage() {
     return `${morada.rua || ''} ${morada.numero || ''}${morada.andar ? `, ${morada.andar}` : ''}, ${morada.codigoPostal || ''} ${morada.localidade || ''}${morada.elevador !== undefined ? ` | Elevador: ${morada.elevador ? 'Sim' : 'Não'}` : ''}`;
   };
 
-  const mudancas = pendentes || [];
+  const mudancas = mudancasData || [];
+  // K3: sort urgentes first
+  const sortedMudancas = [...mudancas].sort((a, b) => {
+    if (a.tipoServico === 'urgente' && b.tipoServico !== 'urgente') return -1;
+    if (a.tipoServico !== 'urgente' && b.tipoServico === 'urgente') return 1;
+    return 0;
+  });
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Aprovações"
-        subtitle={`${mudancas.length} solicitação(ões) pendente(s)`}
+        subtitle={`${mudancas.length} solicitação(ões)`}
         actions={
-          <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="normal">Normal</SelectItem>
-              <SelectItem value="urgente">Urgente</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3">
+            {/* K1: Estado filter */}
+            <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'hsl(var(--border))' }}>
+              {ESTADO_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFilter('estado', opt.value)}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-medium transition-colors',
+                    filtroEstado === opt.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-background text-muted-foreground hover:bg-muted'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {/* K1: Tipo filter */}
+            <Select value={filtroTipo} onValueChange={(v) => setFilter('tipo', v)}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="urgente">Urgente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         }
       />
 
-      {/* Lista de solicitações */}
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-32 rounded-xl animate-pulse" style={{ background: 'var(--surface-container-low)' }} />
           ))}
         </div>
-      ) : mudancas.length === 0 ? (
+      ) : sortedMudancas.length === 0 ? (
         <EmptyState
           icon={CheckCircle}
-          title="Sem solicitações pendentes"
-          description="Todas as solicitações foram processadas. Novas solicitações aparecerão aqui."
+          title="Sem solicitações"
+          description="Nenhuma solicitação encontrada para este filtro."
         />
       ) : (
         <div className="space-y-3">
-          {mudancas.map((mudanca: any) => (
-            <GlassCard key={mudanca.id} hover className="p-5">
+          {sortedMudancas.map((mudanca: any) => (
+            <GlassCard
+              key={mudanca.id}
+              hover
+              className={cn(
+                'p-5',
+                // K3: Urgent highlight
+                mudanca.tipoServico === 'urgente' && 'border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-950/20'
+              )}
+            >
               <div className="flex flex-col lg:flex-row lg:items-center gap-5">
-                {/* Info principal */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <StatusBadge status={mudanca.estado} />
                     {mudanca.tipoServico === 'urgente' && (
-                      <span className="px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full"
-                        style={{ background: 'hsl(var(--destructive)/0.1)', color: 'hsl(var(--destructive))' }}>
-                        Urgente
+                      <span className="px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                        URGENTE
                       </span>
                     )}
                   </div>
@@ -167,21 +218,20 @@ export function AprovacoesPage() {
                   </div>
                 </div>
 
-                {/* Separador vertical */}
                 <div className="hidden lg:block w-px self-stretch" style={{ background: 'hsl(var(--border))' }} />
 
-                {/* Ações */}
+                {/* K4: Hide approve/refuse for already processed */}
                 <div className="flex flex-row lg:flex-col gap-2 lg:min-w-[120px]">
                   <Button variant="outline" size="sm" className="flex-1 lg:flex-none" onClick={() => navigate(`/mudancas/${mudanca.id}`)}>
                     <Eye className="h-3.5 w-3.5 mr-1.5" /> Ver
                   </Button>
-                  {podeVer('aprovar') && (
+                  {mudanca.estado === 'pendente' && podeVer('aprovar') && (
                     <Button size="sm" className="flex-1 lg:flex-none bg-emerald-600 hover:bg-emerald-700 text-white border-0"
                       onClick={() => handleOpenAprovar(mudanca)}>
                       <CheckCircle className="h-3.5 w-3.5 mr-1.5" /> Aprovar
                     </Button>
                   )}
-                  {podeVer('recusar') && (
+                  {mudanca.estado === 'pendente' && podeVer('recusar') && (
                     <Button variant="destructive" size="sm" className="flex-1 lg:flex-none"
                       onClick={() => handleOpenRecusar(mudanca)}>
                       <XCircle className="h-3.5 w-3.5 mr-1.5" /> Recusar
@@ -194,7 +244,6 @@ export function AprovacoesPage() {
         </div>
       )}
 
-      {/* Shared AprovarMudancaModal — D3 */}
       <AprovarMudancaModal
         open={showAprovar}
         onOpenChange={setShowAprovar}
@@ -202,7 +251,6 @@ export function AprovacoesPage() {
         initialVeiculoId={selectedMudanca?.veiculoId}
       />
 
-      {/* Dialog de Recusa */}
       <Dialog open={showRecusar} onOpenChange={setShowRecusar}>
         <DialogContent>
           <DialogHeader>

@@ -627,30 +627,30 @@ A sidebar é o elemento sempre visível. Mostrar "Movefy" no topo de um painel q
 
 ### TAREFAS
 
-- [ ] **K1 — Filtros na página de aprovações**
+- [x] **K1 — Filtros na página de aprovações**
   - `packages/admin/src/pages/aprovacoes.page.tsx`:
     - Filtro de estado (botões toggle): `Pendente` (default) | `Aprovada` | `Recusada`
     - Filtro de tipo (botões toggle): `Todos` (default) | `Urgente` | `Normal`
     - URL params: `?estado=pendente&tipo=urgente` para permitir bookmarking e navegação do dashboard
     - Default ao carregar: `estado=pendente`
 
-- [ ] **K2 — Mudanças recusadas: histórico apenas em Aprovações**
+- [x] **K2 — Mudanças recusadas: histórico apenas em Aprovações**
   - Mudanças com estado `recusada` NÃO aparecem no menu Mudanças
   - Aparecem APENAS no menu Aprovações com filtro `estado=recusada`
   - No menu Mudanças: filtrar `where: { estado: { not: 'recusada' } }`
 
-- [ ] **K3 — Destaque visual para mudanças urgentes**
+- [x] **K3 — Destaque visual para mudanças urgentes**
   - Card/linha de mudança urgente:
     - Badge vermelho "URGENTE" à esquerda do nome do cliente
     - Fundo do card levemente avermelhado: `bg-red-50 dark:bg-red-950/20`
     - Border vermelha à esquerda: `border-l-4 border-red-500`
   - Mudanças urgentes devem aparecer no topo da lista mesmo sem filtro
 
-- [ ] **K4 — Esconder botões de aprovar/recusar em mudanças já processadas**
+- [x] **K4 — Esconder botões de aprovar/recusar em mudanças já processadas**
   - Se `mudanca.estado !== 'pendente'`: não mostrar botões de aprovação/recusa
   - Mostrar em vez: badge do estado actual
 
-- [ ] **K5 — Modal de aprovação responsivo**
+- [x] **K5 — Modal de aprovação responsivo**
   - `packages/admin/src/components/aprovar-mudanca-modal.tsx`:
     - Usar `max-h-[90vh] overflow-y-auto` no container do modal
     - Em mobile: modal ocupa `100vw` e `100vh` com scroll interno
@@ -799,9 +799,9 @@ O banner aparece no site público do cliente como imagem de topo/hero. Deve ser 
 | F | Dashboard | 🔴 CRÍTICO | [x] |
 | G | Disponibilidade real | 🔴 CRÍTICO | [x] |
 | H | Formulário — materiais e preços | 🟠 ALTO | [x] |
-| I | Comunicação e Resend por tenant | 🟠 ALTO | [ ] |
+| I | Comunicação e Resend por tenant | 🟠 ALTO | [x] |
 | J | Sidebar — identidade tenant | 🟠 ALTO | [x] |
-| K | Aprovações — UI e filtros | 🟠 ALTO | [ ] |
+| K | Aprovações — UI e filtros | 🟠 ALTO | [x] |
 | L | Notificações | 🟠 ALTO | [ ] |
 | M | Formatação de datas | 🟡 MÉDIO | [ ] |
 | N | Mensagens de erro | 🟡 MÉDIO | [ ] |

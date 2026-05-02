@@ -196,7 +196,7 @@ export function AprovarMudancaModal({ open, onOpenChange, mudancaId, initialVeic
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg max-w-[calc(100vw-1rem)]">
         <DialogHeader>
           <DialogTitle>Aprovar Solicitação</DialogTitle>
           <DialogDescription>
