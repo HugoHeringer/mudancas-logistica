@@ -1,4 +1,4 @@
-import { formatDateOnly } from '@movefy/shared';
+import { formatDateOnly } from '@mudancas/shared';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';

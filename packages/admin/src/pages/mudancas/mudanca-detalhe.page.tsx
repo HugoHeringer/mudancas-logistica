@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, User, Truck, Wallet, FileText, CheckCircle, XCircle, Ban, AlertTriangle, Mail } from 'lucide-react';
 import { mudancasApi, comunicacaoApi } from '../../lib/api';
-import { formatDateTime } from '@movefy/shared';
+import { formatDateOnly, formatDateTime, formatarDataHora } from '@mudancas/shared';
 import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
 import { StatusBadge } from '../../components/status-badge';
@@ -164,7 +164,7 @@ export function MudancaDetalhePage() {
             )}
           </div>
           <p className="text-muted-foreground">
-            {mudanca.dataPretendida}{mudanca.horaPretendida ? ` às ${mudanca.horaPretendida}` : ''} — {EQUIPA_LABELS[mudanca.equipa] || mudanca.equipa}
+            {formatarDataHora(mudanca.dataPretendida, mudanca.horaPretendida)} — {EQUIPA_LABELS[mudanca.equipa] || mudanca.equipa}
           </p>
         </div>
 

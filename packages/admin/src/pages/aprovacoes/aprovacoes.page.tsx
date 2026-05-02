@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, XCircle, Eye, AlertTriangle } from 'lucide-react';
 import { mudancasApi } from '../../lib/api';
+import { formatarDataHora } from '@mudancas/shared';
 import { useAuthStore } from '../../stores/auth.store';
 import { usePermissao } from '../../hooks/use-permissao';
 import { useToast } from '../../hooks/use-toast';
@@ -205,7 +206,7 @@ export function AprovacoesPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
                     {[
-                      { label: 'Data', value: `${mudanca.dataPretendida}${mudanca.horaPretendida ? ` às ${mudanca.horaPretendida}` : ''}` },
+                      { label: 'Data', value: formatarDataHora(mudanca.dataPretendida, mudanca.horaPretendida) },
                       { label: 'Equipa', value: EQUIPA_LABELS[mudanca.equipa] || mudanca.equipa },
                       { label: 'Recolha', value: renderMorada(mudanca.moradaRecolha) },
                       { label: 'Entrega', value: renderMorada(mudanca.moradaEntrega) },

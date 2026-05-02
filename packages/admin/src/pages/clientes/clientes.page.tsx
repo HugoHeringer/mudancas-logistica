@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Search, Users, Merge, ArrowRight, Plus } from 'lucide-react';
 import { clientesApi } from '../../lib/api';
+import { formatDateOnly } from '@mudancas/shared';
 import { useToast } from '../../hooks/use-toast';
 import { EmptyState } from '../../components/empty-state';
 import { DataTable } from '../../components/data-table';
@@ -196,7 +197,7 @@ export function ClientesPage() {
                         onClick={() => { setShowDetail(false); navigate(`/mudancas/${m.id}`); }}
                       >
                         <div className="flex-1">
-                          <p className="text-sm font-medium">{m.dataPretendida}</p>
+                          <p className="text-sm font-medium">{formatDateOnly(m.dataPretendida)}</p>
                           <p className="text-xs text-muted-foreground">{m.tipoServico} — {m.estado}</p>
                         </div>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />

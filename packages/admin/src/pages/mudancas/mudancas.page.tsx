@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Truck, Search, Plus } from 'lucide-react';
 import { mudancasApi, motoristasApi } from '../../lib/api';
+import { formatDateOnly } from '@mudancas/shared';
 import { StatusBadge } from '../../components/status-badge';
 import { EmptyState } from '../../components/empty-state';
 import { DataTable } from '../../components/data-table';
@@ -87,7 +88,7 @@ export function MudancasPage() {
         const hora = row.original.horaPretendida;
         return (
           <div>
-            <p className="font-medium">{data}</p>
+            <p className="font-medium">{formatDateOnly(data)}</p>
             {hora && <p className="text-xs text-muted-foreground">{hora}</p>}
           </div>
         );

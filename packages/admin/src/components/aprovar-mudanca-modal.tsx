@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, AlertTriangle, Search, X, UserPlus } from 'lucide-react';
 import { mudancasApi, motoristasApi, ajudantesApi, veiculosApi } from '../lib/api';
+import { formatarDataHora } from '@mudancas/shared';
 import { useAuthStore } from '../stores/auth.store';
 import { useToast } from '../hooks/use-toast';
 import { Label } from '../components/ui/label';
@@ -209,7 +210,7 @@ export function AprovarMudancaModal({ open, onOpenChange, mudancaId, initialVeic
             <div className="bg-primary/10 p-3 rounded-lg text-sm">
               <p className="font-medium text-foreground">{mudanca.clienteNome}</p>
               <p className="text-primary">
-                {mudanca.dataPretendida}{mudanca.horaPretendida ? ` às ${mudanca.horaPretendida}` : ''}
+                {formatarDataHora(mudanca.dataPretendida, mudanca.horaPretendida)}
               </p>
               {mudanca.veiculo && (
                 <p className="text-muted-foreground mt-1">Veículo: {mudanca.veiculo.nome || mudanca.veiculo.matricula}</p>

@@ -435,7 +435,7 @@ export function AgendaPage() {
                     <div className="flex items-center gap-2">
                       <Ban className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">{b.dataInicio} — {b.dataFim}</p>
+                        <p className="text-sm font-medium">{format(new Date(b.dataInicio), 'dd/MM/yyyy')} — {format(new Date(b.dataFim), 'dd/MM/yyyy')}</p>
                         <p className="text-xs text-muted-foreground">{b.motivo}</p>
                       </div>
                     </div>

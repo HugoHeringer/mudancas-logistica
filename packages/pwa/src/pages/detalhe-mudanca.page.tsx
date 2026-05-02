@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Phone, ArrowLeft, Navigation, Package, AlertCircle, CheckCircle2, Truck, Wrench } from 'lucide-react';
 import { mudancasApi } from '../lib/api';
+import { formatarDataHora } from '@mudancas/shared';
 import { StatusBadge } from '../components/status-badge';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -148,7 +149,7 @@ export function DetalheMudancaPage() {
           </Button>
           <div className="flex-1">
             <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--tenant-font-display)' }}>{mudanca.clienteNome}</h1>
-            <p className="text-cream-muted text-sm">{mudanca.dataPretendida} {mudanca.horaPretendida && `às ${mudanca.horaPretendida}`}</p>
+            <p className="text-cream-muted text-sm">{formatarDataHora(mudanca.dataPretendida, mudanca.horaPretendida)}</p>
           </div>
           <StatusBadge status={mudanca.estado} />
         </div>
